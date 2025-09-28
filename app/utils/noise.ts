@@ -1,4 +1,4 @@
-const SCALE = 0.1; // UV scalar
+const SCALE = 0.2; // UV scalar
 const SPEED = 0.2; // Time scalar
 
 // rotation matrix helper
@@ -38,12 +38,17 @@ export function pattern(p: [number, number], time: number): number {
     return fbm([p[0] + r[0], p[1] + r[1]], time);
 }
 
+function gradient(a: number) {
+    const out = 1 - a;
+    return Math.min(Math.max(0, out), 1); // Clamp between 0 and 1
+}
+
 // generate a 2D noise grid
 export function genNoiseGrid(rows: number, cols: number, time: number): number[][] {
     return Array.from({ length: rows }, (_, r) =>
         Array.from({ length: cols }, (_, c) => {
-            const uv: [number, number] = [c / cols * SCALE, r / rows * SCALE];
-            return pattern(uv, time * SPEED);
+            const uv: [number, number] = [c / cols * SCALE, r / cols * SCALE]; // Both divided by cols to keep an 1:1 aspect ratio
+            return pattern(uv, time * SPEED) * gradient(c / cols);
         })
     );
 }

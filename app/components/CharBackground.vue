@@ -1,21 +1,66 @@
-<template>
-  <div class="bg-grid" aria-hidden="true">
-    <pre class="font-trypewriter">{{ grid }}</pre>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import {genNoiseGrid} from "~/utils/noise";
+import { ref, onMounted } from 'vue';
+import { genNoiseGrid } from "~/utils/noise";
+
+const thisElement = ref<HTMLElement | null>(null);
+const preElement = ref<HTMLElement | null>(null);
 
 const props = defineProps({
-  fontSizePx: { type: Number, default: 40 },
-  opacity: { type: Number, default: 1 }
+  fontSizePx: { type: Number, default: 20 },
+  opacity: { type: Number, default: 1 },
 });
 
-const chars = ' .:-=+*#%@';
+const CHARS = ' .:-=+*#%@';
+const PADDING = 1;
+const MARGINS: [number, number] = [2, 1];
 
-const grid = ref('')
+let width = 0;
+let height = 0;
+
+let lastIndex = MARGINS[0];
+function addButton(button: AsciiUIElement) {
+  if (!preElement.value) return;
+
+  const textNode = Array.from(preElement.value.childNodes).find(
+      (n) => n.nodeType === Node.TEXT_NODE
+  ) as Text | undefined;
+
+  if (!textNode) return;
+
+  const index = (MARGINS[1] + 1) * width - button.label.length - lastIndex - PADDING + 1;
+  lastIndex += button.label.length + PADDING;
+
+  const before = textNode.wholeText.slice(0, index)
+  const after = textNode.wholeText.slice(index + button.label.length);
+
+  const a = document.createElement("a");
+      a.textContent = button.label;
+      a.href = button.url;
+      a.target = "_blank";
+      a.className = "link";
+      if (button.onClick) a.onclick = (event) => {
+        console.log('click')
+        event.preventDefault();
+        button.onClick?.(event);
+      };
+
+  const replacement = document.createDocumentFragment();
+  replacement.append(document.createTextNode(before), a, document.createTextNode(after));
+
+  preElement.value.replaceChild(replacement, textNode);
+}
+
+const uiElements: AsciiUIElement[] = [
+  { alignRight: true, label: '[BLOG]', url: '/blog'},
+  { alignRight: true, label: '[PROJECTS]',  url: '/projects'},
+  { alignRight: true, label: '[ART]',  url: '/art'},
+  { alignRight: true, label: '[◑]',  url: '#', onClick: toggleDarkMode},
+]
+
+function addAllButtons() {
+  for (const el of uiElements.toReversed()) addButton(el);
+  lastIndex = MARGINS[0];
+}
 
 function measureCharWidth(height: number): number {
   const span = document.createElement('span');
@@ -34,64 +79,94 @@ function measureCharWidth(height: number): number {
   return rect.width;
 }
 
-function makeGrid(rows: number, cols: number, time: number): string {
-  const numericGrid = genNoiseGrid(rows, cols, time);
+
+function makeGrid(time: number): string {
+  const numericGrid = genNoiseGrid(height, width, time);
 
   let out = '';
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const value = numericGrid[r][c];
-      const charIndex = Math.floor(value * (chars.length - 1));
-      out += chars[Math.max(0, Math.min(chars.length - 1, charIndex))];
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const value = numericGrid?.[r]?.[c] ?? 0;
+      const charIndex = Math.floor(value * (CHARS.length - 1));
+      out += CHARS[Math.max(0, Math.min(CHARS.length - 1, charIndex))];
     }
-    if (r < rows - 1) out += '\n';
+    if (r < height - 1) out += '\n';
   }
 
   return out;
 }
 
 function setDimensions() {
+  if (!thisElement.value) return;
+
   const charHeight = props.fontSizePx;
   const charWidth = measureCharWidth(props.fontSizePx);
 
-  const cols = Math.floor(window.innerWidth / charWidth + 1);
-  const rows = Math.floor(window.innerHeight / charHeight + 1);
-
-  grid.value = makeGrid(rows, cols, Date.now() / 1000);
+  const rect = thisElement.value.getBoundingClientRect();
+  width  = Math.floor(rect.width / charWidth);
+  height = Math.floor(rect.height / charHeight);
 }
 
-let resizeHandler: () => void
+function refreshCharacters() {
+  if (!preElement.value || !thisElement.value) return;
+
+  setDimensions();
+
+  preElement.value.textContent = makeGrid(Date.now() / 1000);
+  addAllButtons();
+}
 
 onMounted(() => {
-  setDimensions();
-  window.addEventListener('resize', setDimensions);
+  refreshCharacters();
+  setInterval(refreshCharacters, 125);
+});
 
-  const timer = setInterval(setDimensions, 1);
-  onBeforeUnmount(() => {
-    clearInterval(timer)
-    window.removeEventListener('resize', resizeHandler);
-  });
-})
+// Dark/light mode
+if (window) {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+}
+
+function toggleDarkMode() {
+  const current = document.documentElement.getAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+}
 </script>
 
-<style scoped>
+<template>
+  <div class="bg-grid" aria-hidden="true" ref="thisElement">
+    <pre class="font-trypewriter" ref="preElement">test</pre>
+  </div>
+</template>
+
+<style>
 .bg-grid {
-  position: fixed;
+  position: absolute;
+  width: 100%;
+  z-index: 0;
+
   inset: 0;
-  z-index: -1;
-  pointer-events: none;
   user-select: none;
-  overflow: hidden;
-  background-color: antiquewhite;
+  background-color: var(--col-background);
 }
 
 .bg-grid pre {
   margin: 0;
   font-size: v-bind('props.fontSizePx + "px"');
+
   line-height: 1;
+  display: block;
+
+  min-height: 100%;
   letter-spacing: 0;
-  color: #5d5066;
+  color: var(--col-element);
   opacity: v-bind('props.opacity');
   white-space: pre;
+}
+
+a.link {
+  all: unset;
+  cursor: pointer;
+  text-decoration: none;
 }
 </style>

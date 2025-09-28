@@ -4,6 +4,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/fonts'],
   fonts: {
+    defaults: {
+      weights: [900]
+    },
     families: [
       {
         name: 'trypewriter', // this becomes the CSS font-family
@@ -15,5 +18,5 @@ export default defineNuxtConfig({
       }
     ]
   },
-  css: [ '~/assets/main.css' ]
+  css: [ '~/assets/main.css' ],
 })

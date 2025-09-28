@@ -1,3 +1,32 @@
+:root {
+    --col-background: #faf6f0;
+    --col-element:    #81664f;
+    --col-text:       #3d2914;
+    --col-text-2:     #947d61;
+    --col-text-3:     #b29c7f;
+}
+
+[data-theme='dark'] {
+    --col-background: #1e1a16;
+    --col-element:    #9b7d67;
+    --col-text:       #d7c4aa;
+    --col-text-2:     #b29c91;
+    --col-text-3:     #8f7b68;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
 .font-trypewriter {
     font-family: 'trypewriter', monospace;
 }
