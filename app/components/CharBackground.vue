@@ -15,7 +15,7 @@ const uiElements: AsciiUIElement[] = [
   { alignRight: true, label: '[D]',  url: '#', onClick: toggleDarkMode},
 ]
 
-const CHARS = ' .:-=+*#%@';
+const CHARS = ' .-=:*#%@@@';
 const PADDING = 1;
 const MARGINS: [number, number] = [2, 1];
 

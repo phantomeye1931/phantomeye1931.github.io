@@ -1,5 +1,5 @@
 const SCALE = 0.2; // UV scalar
-const SPEED = 0.2; // Time scalar
+const SPEED = 0.15; // Time scalar
 
 // rotation matrix helper
 export function rotate(p: [number, number], angle: number): [number, number] {
