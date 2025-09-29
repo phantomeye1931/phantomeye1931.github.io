@@ -77,7 +77,7 @@ onMounted(() => {
   color: var(--col-text);
 
   font-weight: 900;
-  font-size: 7rem;
+  font-size: clamp(2rem, 10vw, 7rem);;
   line-height: 1;
   margin: 0;
   white-space: pre; /* keep line breaks from \n */

@@ -5,10 +5,15 @@ import { genNoiseGrid } from "~/utils/noise";
 const thisElement = ref<HTMLElement | null>(null);
 const preElement = ref<HTMLElement | null>(null);
 
-const props = defineProps({
-  fontSizePx: { type: Number, default: 20 },
-  opacity: { type: Number, default: 1 },
-});
+let fontSize = ref(20);
+const fontSizePx = computed(() => fontSize.value + 'px');
+
+const uiElements: AsciiUIElement[] = [
+  { alignRight: true, label: '[BLOG]', url: '/blog'},
+  { alignRight: true, label: '[PROJECTS]',  url: '/projects'},
+  { alignRight: true, label: '[ART]',  url: '/art'},
+  { alignRight: true, label: '[D]',  url: '#', onClick: toggleDarkMode},
+]
 
 const CHARS = ' .:-=+*#%@';
 const PADDING = 1;
@@ -16,8 +21,15 @@ const MARGINS: [number, number] = [2, 1];
 
 let width = 0;
 let height = 0;
+let verticalLayout = () => window ? (window.innerWidth < 1000) : 0;
 
-let lastIndex = MARGINS[0];
+let lastIndex: number, lastRow: number;
+function resetIndexes() {
+  lastIndex = MARGINS[0] - (verticalLayout() ? MARGINS[0] + 2 : 0);
+  lastRow = MARGINS[1] + (verticalLayout() ? uiElements.length : 0);
+}
+resetIndexes();
+
 function addButton(button: AsciiUIElement) {
   if (!preElement.value) return;
 
@@ -27,8 +39,10 @@ function addButton(button: AsciiUIElement) {
 
   if (!textNode) return;
 
-  const index = (MARGINS[1] + 1) * width - button.label.length - lastIndex - PADDING + 1;
-  lastIndex += button.label.length + PADDING;
+  const index = (lastRow + 1) * width - button.label.length - lastIndex - PADDING + 1;
+
+  lastIndex += verticalLayout() ? 1 : button.label.length + PADDING;
+  lastRow -= verticalLayout() ? 1 : 0;
 
   const before = textNode.wholeText.slice(0, index)
   const after = textNode.wholeText.slice(index + button.label.length);
@@ -50,16 +64,9 @@ function addButton(button: AsciiUIElement) {
   preElement.value.replaceChild(replacement, textNode);
 }
 
-const uiElements: AsciiUIElement[] = [
-  { alignRight: true, label: '[BLOG]', url: '/blog'},
-  { alignRight: true, label: '[PROJECTS]',  url: '/projects'},
-  { alignRight: true, label: '[ART]',  url: '/art'},
-  { alignRight: true, label: '[◑]',  url: '#', onClick: toggleDarkMode},
-]
-
 function addAllButtons() {
   for (const el of uiElements.toReversed()) addButton(el);
-  lastIndex = MARGINS[0];
+  resetIndexes();
 }
 
 function measureCharWidth(height: number): number {
@@ -97,10 +104,13 @@ function makeGrid(time: number): string {
 }
 
 function setDimensions() {
-  if (!thisElement.value) return;
+  if (!thisElement.value || !window) return;
 
-  const charHeight = props.fontSizePx;
-  const charWidth = measureCharWidth(props.fontSizePx);
+  fontSize.value = verticalLayout() ? 30 : 20;
+  console.log(window.innerWidth)
+
+  const charHeight = fontSize.value;
+  const charWidth = measureCharWidth(fontSize.value);
 
   const rect = thisElement.value.getBoundingClientRect();
   width  = Math.floor(rect.width / charWidth);
@@ -152,7 +162,7 @@ function toggleDarkMode() {
 
 .bg-grid pre {
   margin: 0;
-  font-size: v-bind('props.fontSizePx + "px"');
+  font-size: v-bind('fontSizePx');
 
   line-height: 1;
   display: block;
@@ -160,7 +170,6 @@ function toggleDarkMode() {
   min-height: 100%;
   letter-spacing: 0;
   color: var(--col-element);
-  opacity: v-bind('props.opacity');
   white-space: pre;
 }
 
