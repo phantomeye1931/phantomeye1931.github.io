@@ -5,8 +5,10 @@
     <div class="page_content">
       <HeroSection />
 
-      <IntroSection />
-      <WeblogSection />
+      <div class="top">
+        <IntroSection />
+        <WeblogSection />
+      </div>
     </div>
   </div>
 </template>
@@ -18,7 +20,7 @@
   width: 100%;
 }
 
-.page_content {
+.page_wrapper .top {
   position: relative;
   z-index: 1;
 }
