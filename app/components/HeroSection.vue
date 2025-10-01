@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
-const titleText = "ARMAND\nDE VRIES";
+const titleText = "HELLO\nWORLD";
 const titleChars = titleText.split('');
 
 const currentIndex = ref(0);
@@ -45,7 +45,7 @@ onMounted(() => {
 
 <style scoped>
 .container {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   justify-content: flex-end;
   align-items: center;

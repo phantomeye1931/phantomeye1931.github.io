@@ -2,71 +2,69 @@
 import { ref, onMounted } from 'vue';
 import { genNoiseGrid } from "~/utils/noise";
 
+const props = defineProps<{
+  showButtons?: boolean,
+}>();
+
 const thisElement = ref<HTMLElement | null>(null);
-const preElement = ref<HTMLElement | null>(null);
+const asciiGrid = ref<HTMLElement | null>(null);
+const buttonGrid = ref<HTMLElement | null>(null);
 
-let fontSize = ref(20);
+const fontSize = ref(0); // Set in setDimensions()
 const fontSizePx = computed(() => fontSize.value + 'px');
-
-const uiElements: AsciiUIElement[] = [
-  { alignRight: true, label: '[BLOG]', url: '/blog'},
-  { alignRight: true, label: '[PROJECTS]',  url: '/projects'},
-  { alignRight: true, label: '[ART]',  url: '/art'},
-  { alignRight: true, label: '[D]',  url: '#', onClick: toggleDarkMode},
-]
-
-const CHARS = ' .-=:*#%@@@';
-const PADDING = 1;
-const MARGINS: [number, number] = [2, 1];
 
 let width = 0;
 let height = 0;
+
+const { $toggleDarkMode } = useNuxtApp();
+
+const uiElements: AsciiUIElement[] = [
+  { alignRight: true, label: '</>', url: 'https://github.com/phantomeye1931/phantomeye1931.github.io'},
+  { alignRight: true, label: 'WEBLOG', url: '/weblog'},
+  { alignRight: true, label: 'PROJECTS',  url: '/projects'},
+  { alignRight: true, label: 'ART',  url: '/art'},
+  { alignRight: true, label: 'D',  url: '#', onClick: $toggleDarkMode},
+]
+
 let verticalLayout = () => window ? (window.innerWidth < 1000) : 0;
 
-let lastIndex: number, lastRow: number;
-function resetIndexes() {
-  lastIndex = MARGINS[0] - (verticalLayout() ? MARGINS[0] + 2 : 0);
-  lastRow = MARGINS[1] + (verticalLayout() ? uiElements.length : 0);
-}
-resetIndexes();
-
-function addButton(button: AsciiUIElement) {
-  if (!preElement.value) return;
-
-  const textNode = Array.from(preElement.value.childNodes).find(
-      (n) => n.nodeType === Node.TEXT_NODE
-  ) as Text | undefined;
-
-  if (!textNode) return;
-
-  const index = (lastRow + 1) * width - button.label.length - lastIndex - PADDING + 1;
-
-  lastIndex += verticalLayout() ? 1 : button.label.length + PADDING;
-  lastRow -= verticalLayout() ? 1 : 0;
-
-  const before = textNode.wholeText.slice(0, index)
-  const after = textNode.wholeText.slice(index + button.label.length);
-
-  const a = document.createElement("a");
-      a.textContent = button.label;
-      a.href = button.url;
-      a.target = "_blank";
-      a.className = "link";
-      if (button.onClick) a.onclick = (event) => {
-        console.log('click')
-        event.preventDefault();
-        button.onClick?.(event);
-      };
-
-  const replacement = document.createDocumentFragment();
-  replacement.append(document.createTextNode(before), a, document.createTextNode(after));
-
-  preElement.value.replaceChild(replacement, textNode);
-}
+const MARGINS: [number, number] = [4, 1];
+const PADDING = 1;
 
 function addAllButtons() {
-  for (const el of uiElements.toReversed()) addButton(el);
-  resetIndexes();
+  if (!buttonGrid?.value) return;
+  buttonGrid.value.textContent = "";
+
+  const useVertical = verticalLayout();
+
+  const uiWidth = uiElements.map(e => e.label).join(".".repeat(PADDING + 2)).length + MARGINS[0];
+
+  // Initial offset
+  buttonGrid.value.appendChild(document.createTextNode(
+      '\n '.repeat(MARGINS[1]) + (useVertical ? ''
+          : ' '.repeat(width - uiWidth - 1)))
+  );
+
+  for (const button of uiElements) {
+    const a = document.createElement("a");
+    a.textContent = button.label;
+    a.href = button.url;
+    a.className = "link";
+    if (button.onClick) a.onclick = (event) => {
+      event.preventDefault();
+      button.onClick?.(event);
+    };
+
+    const span = document.createElement("span");
+    span.className = "button bg";
+
+    span.appendChild(document.createTextNode("["));
+    span.appendChild(a);
+    span.appendChild(document.createTextNode("]"));
+
+    buttonGrid.value.appendChild(span);
+    buttonGrid.value.appendChild(document.createTextNode(useVertical ? '\n ' : ' '));
+  }
 }
 
 function measureCharWidth(height: number): number {
@@ -86,8 +84,8 @@ function measureCharWidth(height: number): number {
   return rect.width;
 }
 
-
-function makeGrid(time: number): string {
+const CHARS = ' .-=:*@@';
+function makeAsciiString(time: number): string {
   const numericGrid = genNoiseGrid(height, width, time);
 
   let out = '';
@@ -103,79 +101,86 @@ function makeGrid(time: number): string {
   return out;
 }
 
-function setDimensions() {
+async function setDimensions() {
   if (!thisElement.value || !window) return;
+  await document.fonts.load('20px trypewriter', 'M');
 
   fontSize.value = verticalLayout() ? 30 : 20;
-  console.log(window.innerWidth)
-
-  const charHeight = fontSize.value;
-  const charWidth = measureCharWidth(fontSize.value);
 
   const rect = thisElement.value.getBoundingClientRect();
-  width  = Math.floor(rect.width / charWidth);
-  height = Math.floor(rect.height / charHeight);
+  width  = Math.floor(rect.width / measureCharWidth(fontSize.value));
+  height = Math.floor(rect.height / fontSize.value);
+
+  if (props.showButtons) addAllButtons();
 }
 
 function refreshCharacters() {
-  if (!preElement.value || !thisElement.value) return;
+  if (!asciiGrid.value) return;
 
-  setDimensions();
-
-  preElement.value.textContent = makeGrid(Date.now() / 1000);
-  addAllButtons();
+  asciiGrid.value.textContent = makeAsciiString(Date.now() / 1000);
 }
 
-onMounted(() => {
-  refreshCharacters();
-  setInterval(refreshCharacters, 125);
+useResize(setDimensions);
+onMounted(async () => {
+  // await document.fonts.ready;
+  // console.log('fonts ready');
+  refreshCharacters(); // Fill the ascii grid
+
+  setInterval(refreshCharacters, 125); // Refresh ascii characters
 });
-
-// Dark/light mode
-if (window) {
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-}
-
-function toggleDarkMode() {
-  const current = document.documentElement.getAttribute('data-theme');
-  document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-}
 </script>
 
 <template>
   <div class="bg-grid" aria-hidden="true" ref="thisElement">
-    <pre class="font-trypewriter" ref="preElement">test</pre>
+    <pre class="font-trypewriter bg" ref="asciiGrid"></pre>
+    <pre class="font-trypewriter" ref="buttonGrid"></pre>
   </div>
 </template>
 
 <style>
 .bg-grid {
   position: absolute;
-  width: 100%;
-  z-index: 0;
-
   inset: 0;
-  user-select: none;
+  width: 100%;
+  overflow: hidden;
   background-color: var(--col-background);
 }
 
-.bg-grid pre {
-  margin: 0;
-  font-size: v-bind('fontSizePx');
-
-  line-height: 1;
+pre {
   display: block;
-
+  position: absolute;
+  margin: 0;
+  color: var(--col-element);
+  font-size: v-bind(fontSizePx);
+  line-height: 1;
   min-height: 100%;
   letter-spacing: 0;
-  color: var(--col-element);
   white-space: pre;
+  user-select: none;
+}
+
+pre.ascii {
+  z-index: -1;
+  color: var(--col-element);
+  pointer-events: none;
+}
+
+pre.buttons {
+  z-index: 1;
+  color: var(--col-element);
+}
+
+span.bg {
+  background-color: var(--col-background);
 }
 
 a.link {
   all: unset;
   cursor: pointer;
   text-decoration: none;
+}
+
+a.link:hover {
+  text-decoration: underline;
 }
 </style>

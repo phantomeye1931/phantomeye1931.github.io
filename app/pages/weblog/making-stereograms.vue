@@ -1,12 +1,9 @@
 <template>
   <div class="page_wrapper">
-    <CharBackground showButtons />
+    <CharBackground />
 
     <div class="page_content">
-      <HeroSection />
-
-      <IntroSection />
-      <WeblogSection />
+      woo brick upon ye
     </div>
   </div>
 </template>
@@ -16,11 +13,6 @@
   position: absolute;
   min-height: 100vh;
   width: 100%;
-}
-
-.page_content {
-  position: relative;
-  z-index: 1;
 }
 </style>
 

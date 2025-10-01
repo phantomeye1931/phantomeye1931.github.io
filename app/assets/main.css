@@ -1,17 +1,22 @@
 :root {
-    --col-background: #faf6f0;
-    --col-element:    #6b523e;
-    --col-text:       #3d2914;
-    --col-text-2:     #947d61;
-    --col-text-3:     #b29c7f;
+    --col-background:   #faf6f0;
+    --col-background-2: #e7dad2;
+    --col-element:      #6b523e;
+    --col-text:         #3d2914;
+    --col-text-2:       #947d61;
+    --col-text-3:       #b29c7f;
+
+    --col-drop-shadow:  #00000030;
+    --drop-shadow: drop-shadow(0 10px 5px var(--col-drop-shadow));
 }
 
 [data-theme='dark'] {
-    --col-background: #1e1a16;
-    --col-element:    #9b7d67;
-    --col-text:       #d7c4aa;
-    --col-text-2:     #b29c91;
-    --col-text-3:     #8f7b68;
+    --col-background:   #1e1a16;
+    --col-background-2: #3b332d;
+    --col-element:      #9b7d67;
+    --col-text:         #d7c4aa;
+    --col-text-2:       #b29c91;
+    --col-text-3:       #8f7b68;
 }
 
 html, body {

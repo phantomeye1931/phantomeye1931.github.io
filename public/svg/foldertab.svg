@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1" width="200px" height="50px" preserveAspectRatio="none">
+    <path d="
+      M 0 1
+      Q 0.03125 1 0.0625 0.75
+      L 0.125 0.25
+      Q 0.15625 0 0.1875 0
+      L 0.859375 0
+      Q 0.890625 0 0.921875 0.25
+      L 0.984375 0.75
+      Q 1 0.875 1 1
+      Z"/>
+</svg>
