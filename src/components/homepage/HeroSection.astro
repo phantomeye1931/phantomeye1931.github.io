@@ -1,0 +1,113 @@
+---
+const titleText = "ARMAND\nDE VRIES";
+const titleChars = titleText.split('');
+---
+
+<script>
+    $(function() {
+        // Find all spans we just rendered
+        const $chars = $(".name .char");
+
+        function reveal(index: number) {
+            if (index < $chars.length) {
+                $chars.eq(index).css("visibility", "visible");
+
+                // Random delay for the next one
+                const delay = 50 + Math.random() * 150;
+                setTimeout(() => reveal(++index), delay);
+            }
+        }
+
+        reveal(0);
+    });
+</script>
+
+<div class="hero">
+    <div class="name">
+        {
+            titleChars.map((char: string) => (
+                <span class="char" style="visibility: hidden">{char}</span>
+            ))
+        }
+    </div>
+
+    <div class="pronunciation">
+        /'ɑɹ.mɑnt də ˈvris/
+    </div>
+
+    <div class="about">
+        <div class="info-item">Computing Science Student</div>
+        <div class="info-item">Code Enthusiast</div>
+        <div class="info-item">Digital Artist</div>
+    </div>
+</div>
+
+<style>
+    .hero {
+        position: relative;
+        height: 100vh;
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-end;
+        gap: 2rem;
+
+        padding: 1rem;
+        box-sizing: border-box;
+
+        pointer-events: none;
+
+        & * {
+            text-align: right;
+            pointer-events: auto;
+        }
+    }
+
+    .name {
+        padding-inline: 1rem;
+        margin-right: -1rem;
+
+        background-color: var(--col-background);
+
+        color: var(--col-text);
+        font-family: 'Playfair Display', serif;
+        position: relative;
+
+        font-weight: 900;
+        //font-size: clamp(2rem, 10vw, 7rem); /* TODO: what the fuck */
+        line-height: 1;
+        white-space: pre; /* allow \n line breaks */
+
+        container-type: inline-size;
+
+        width: 100%;
+        max-width: 600px;
+
+        & > span {
+            position: relative;
+            font-size: 19cqw;
+        }
+    }
+
+    .pronunciation {
+        padding-inline: 0.5rem;
+
+        background-color: var(--col-background);
+
+        color: var(--col-text-3);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.7rem;
+    }
+
+    .about {
+        padding-inline: 0.75rem;
+
+        background-color: var(--col-background);
+
+        color: var(--col-text-2);
+        font-family: 'Inter', sans-serif;
+        font-size: 1.5rem;
+    }
+</style>

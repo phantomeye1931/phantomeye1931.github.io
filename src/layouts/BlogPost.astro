@@ -1,10 +1,9 @@
 ---
-import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
-import BaseHead from '../components/BaseHead.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import ShapePaperClip from '../components/shapes/ShapePaperClip.astro';
 import {getPageStyle} from "../utils/random_blog_style.ts";
+import Page from "./Page.astro";
 
 type Props = CollectionEntry<'blog'>['data'];
 
@@ -12,70 +11,23 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 
 ---
 
-<html lang="en">
-	<head>
-		<BaseHead title={title} description={description} />
-		<!--<style>-->
-		<!--	main {-->
-		<!--		width: calc(100% - 2em);-->
-		<!--		max-width: 100%;-->
-		<!--		margin: 0;-->
-		<!--	}-->
-		<!--	.hero-image {-->
-		<!--		width: 100%;-->
-		<!--	}-->
-		<!--	.hero-image img {-->
-		<!--		display: block;-->
-		<!--		margin: 0 auto;-->
-		<!--		border-radius: 12px;-->
-		<!--		box-shadow: var(&#45;&#45;box-shadow);-->
-		<!--	}-->
-		<!--	.prose {-->
-		<!--		width: 720px;-->
-		<!--		max-width: calc(100% - 2em);-->
-		<!--		margin: auto;-->
-		<!--		padding: 1em;-->
-		<!--		color: rgb(var(&#45;&#45;gray-dark));-->
-		<!--	}-->
-		<!--	.title {-->
-		<!--		margin-bottom: 1em;-->
-		<!--		padding: 1em 0;-->
-		<!--		text-align: center;-->
-		<!--		line-height: 1;-->
-		<!--	}-->
-		<!--	.title h1 {-->
-		<!--		margin: 0 0 0.5em 0;-->
-		<!--	}-->
-		<!--	.date {-->
-		<!--		margin-bottom: 0.5em;-->
-		<!--		color: rgb(var(&#45;&#45;gray));-->
-		<!--	}-->
-		<!--	.last-updated-on {-->
-		<!--		font-style: italic;-->
-		<!--	}-->
-		<!--</style>-->
-	</head>
-
-	<body>
-		<main>
-			<article>
-				<div class="paper" style={ getPageStyle(description) }>
-					<ShapePaperClip class="paperclip"/>
-					<div class="heading">
-						<a href="/#weblog" class="back-link">[x] Close</a>
-						<div class="top">
-							<div class="title">{ title }</div>
-							<div class="date">
-								Posted:  <FormattedDate date={ pubDate } /> <br>
-								Updated: <FormattedDate date={ pubDate } />
-							</div>
-						</div>
-						<div class="description">{ description }</div>
+<Page>
+	<article>
+		<div class="paper" style={ getPageStyle(description) }>
+			<ShapePaperClip class="paperclip"/>
+			<div class="heading">
+				<a href="/#weblog" class="back-link">[x] Close</a>
+				<div class="top">
+					<div class="title">{ title }</div>
+					<div class="date">
+						Posted:  <FormattedDate date={ pubDate } /> <br>
+						Updated: <FormattedDate date={ pubDate } />
 					</div>
-
-					<slot />
 				</div>
-			</article>
-		</main>
-	</body>
-</html>
+				<div class="description">{ description }</div>
+			</div>
+
+			<slot />
+		</div>
+	</article>
+</Page>

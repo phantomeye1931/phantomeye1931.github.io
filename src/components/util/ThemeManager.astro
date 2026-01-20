@@ -1,0 +1,57 @@
+<script>
+    const ColorScheme = {
+        DARK: "dark",
+        LIGHT: "light",
+        SYNC: "sync",
+    } as const;
+
+    // 1. Define the setter function globally
+    function applyColorScheme(theme: string) {
+        document.documentElement.setAttribute("color-scheme", theme);
+    }
+
+    // 2. Define the toggle function globally
+    window.cycleColorScheme = () => {
+        const current = getColorScheme();
+
+        switch (current) {
+            case ColorScheme.SYNC: { setColorScheme(ColorScheme.DARK); break; }
+            case ColorScheme.DARK: { setColorScheme(ColorScheme.LIGHT); break; }
+            default: { setColorScheme(ColorScheme.SYNC); break; }
+        }
+
+        apply();
+
+        return getColorScheme();
+    };
+
+    // Initial color scheme
+    function apply() {
+        const theme = (() => {
+            const savedColorScheme = getColorScheme();
+            if (savedColorScheme !== ColorScheme.SYNC) return savedColorScheme;
+
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? ColorScheme.DARK : ColorScheme.LIGHT;
+        })();
+
+        applyColorScheme(theme ?? ColorScheme.LIGHT);
+    }
+    apply();
+
+    document.addEventListener('astro:after-swap', () => {
+        apply();
+    });
+
+    function getColorScheme() {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem("color-scheme")) {
+            return localStorage.getItem("color-scheme");
+        }
+
+        return ColorScheme.SYNC;
+    }
+    window.getColorScheme = getColorScheme;
+
+    function setColorScheme(color_scheme: string) {
+        localStorage.setItem("color-scheme", color_scheme);
+    }
+</script>

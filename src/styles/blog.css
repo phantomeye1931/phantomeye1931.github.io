@@ -17,7 +17,7 @@
     --paper-padding: 40px;
 }
 
-[data-theme='dark'] {
+[color-scheme='dark'] {
     --col-paper: #363633;
     --col-text-reading: #cac8b5;
     --col-text-reading-2: #c6b9a5;

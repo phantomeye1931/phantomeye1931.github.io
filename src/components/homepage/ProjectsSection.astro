@@ -1,0 +1,137 @@
+---
+    const projects = [
+        { name: "PortalMod", description: "Portal-inspired technical mod for Minecraft", url: "https://portalmod.net/" },
+        { name: "GLaDOS Discord Bot", description: "Overengineered general-utility and 'fun' Discord bot with", url: "#" },
+        { name: "Static Chess engine", description: "Chess algorithm to evaluate validity of moves statically", url: "#" },
+        { name: "Tic Tac Tesseract", description: "Playable tic-tac-toe in 4 dimensions", url: "/pages/tic-tac-tesseract" },
+        { name: "APF Image format converter", description: "Command line utility to convert images to APF", url: "#" },
+        { name: "Untitled game", description: "Untitled 2D platformer game being developed in Java", url: "#" }
+    ]
+
+    const websites = [
+        { name: "PortalMod Website", description: "Homepage for PortalMod, including payment functionality", url: "https://portalmod.net/" },
+        { name: "ECL Website", description: "Website for Energiecooperatie ECL", url: "https://eclenergie.nl/" },
+        { name: "Personal Website", description: "Simple homepage for my weblogs and links. You're looking at it right now!", url: "/" },
+        { name: "██████⠀ ██████", description: "█████████⠀ ███⠀ ██████████⠀ ███⠀ ██⠀ ███", url: "#", extra: "censored" }
+    ]
+
+    const art_cards = [
+        { name: "Sketchfab", description: "Here I've posted some of the 3D models I've made over the years", url: "https://sketchfab.com/PhantomEye/" },
+        { name: "Instagram", description: "My art Instagram page, containing some renders, as well as 2D pixel art", url: "https://instagram.com/phantomeye1931/" },
+        { name: "Contact me", description: "I'm often available for commission work, so feel free to contact me", url: "#contact" }
+    ]
+---
+
+<div class="section">
+    <div class="projects-websites">
+        <section class="column">
+            <div class="title" id="projects">Projects</div>
+            <div class="grid cols3">
+                {
+                    projects.map((p) => (
+                        <a href={p.url} class="card">
+                            <strong>{p.name}</strong>
+                            <p>{p.description}</p>
+                        </a>
+                    ))
+                }
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section class="column">
+            <div class="title" id="websites">Websites</div>
+            <div class="grid cols2">
+                {
+                        websites.map((w) => (
+                            <a href={w.url} class={['card', w.extra].join(' ')}>
+                                <strong>{w.name}</strong>
+                                <p>{w.description}</p>
+                            </a>
+                    ))
+                }
+            </div>
+        </section>
+    </div>
+    <div class="art">
+        <div class="title" id="art">Art</div>
+        <div class="grid art-cards">
+            {
+                art_cards.map((w) => (
+                    <a href={w.url} class="card">
+                        <strong>{w.name}</strong>
+                        <p>{w.description}</p>
+                    </a>
+                ))
+            }
+        </div>
+    </div>
+</div>
+
+
+<style>
+.section {
+    max-width: 1500px;
+    width: 100%;
+    margin-inline: auto;
+}
+
+.projects-websites {
+    display: grid;
+    grid-template-columns: 3fr auto 2fr;
+    gap: 2rem;
+}
+
+.grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.cols2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.cols3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.card {
+    border: 1px solid var(--col-divider);
+    padding: 1rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.art-cards {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+}
+
+.censored {
+    letter-spacing: -0.05em;
+    color: var(--col-text-3);
+}
+
+.divider {
+    margin-block: 5.5rem 0.5rem;
+    width: 1px;
+    background-color: var(--col-divider);
+    z-index: 1;
+}
+
+/* Mobile */
+@media (max-width: 1040px) {
+    .projects-websites {
+        grid-template-columns: 1fr;
+    }
+
+    .divider {
+        height: 0;
+        margin: 0;
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    }
+}
+</style>

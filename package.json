@@ -15,5 +15,8 @@
     "astro": "^5.16.11",
     "sharp": "^0.34.3",
     "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jquery": "^3.5.33"
   }
 }

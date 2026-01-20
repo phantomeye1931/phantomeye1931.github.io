@@ -1,0 +1,33 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+
+import ThemeManager from "../components/util/ThemeManager.astro";
+import {SITE_DESCRIPTION, SITE_TITLE} from "../consts.ts";
+import Background from "../components/Background.astro";
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    </head>
+    <body>
+        <main>
+            <div class="page-wrapper">
+                <ThemeManager />
+                <Background />
+                <div class="page-contents">
+                    <slot />
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
+
+<style>
+.page-wrapper,
+.page-contents {
+    background-color: var(--col-background);
+    color: var(--col-text);
+}
+</style>

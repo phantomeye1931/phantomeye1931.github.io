@@ -1,0 +1,47 @@
+<div class="section-wrapper">
+    <div class="section about">
+        <div class="title">About</div>
+        Hi! I'm Armand! I'm a developer and artist from the Netherlands.<br>
+        <br>
+        While I study Computing Science, I spend my free time working on various passion projects. I love creating websites, front-end but also back-end, always looking for excuses to learn new languages, frameworks and design patterns.<br>
+        <br>
+        I also love older technology, and will always keep trying to understand and play with it. Explorations of this might be posted on my weblog!
+    </div>
+
+    <div class="section experience">
+        <div class="title">Experience</div>
+        I've worked on quite a few websites, using (meta-) frameworks such as React, Astro, Nuxt and Vue. A few examples can be found under <a href="#projects">projects</a>.<br>
+        <br>
+        I also have a passion for project and team management. Bringing people together to work on projects.<br>
+        <br>
+        In general, here's the languages I'm proficient at:<br>
+        JavaScript (TypeScript), Java, C, C++, Rust, Python, lua, Haskell, CSS<br>
+        <br>
+        I can make merge conflicts disappear.
+
+    </div>
+</div>
+
+<style>
+.section-wrapper {
+    display: flex;
+    justify-content: space-evenly;
+    gap: var(--page-padding);
+
+    @media (max-width: 1000px) {
+        display: grid;
+    }
+
+    & .about {
+        flex: 1;
+    }
+
+    & .experience {
+        flex: 2;
+    }
+
+    a {
+        color: inherit;
+    }
+}
+</style>

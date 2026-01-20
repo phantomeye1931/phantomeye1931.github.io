@@ -13,7 +13,7 @@
 	--page-padding: 2.5rem;
 }
 
-[data-theme='dark'] {
+[color-scheme='dark'] {
 	--col-background:   #1e1a16;
 	--col-background-2: #3b332d;
 	--col-element:      #9b7d67;

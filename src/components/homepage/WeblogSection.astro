@@ -1,0 +1,78 @@
+---
+import { getCollection } from 'astro:content';
+
+const blogs = await getCollection('blog');
+
+const posts = blogs
+    .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
+
+const formatFancy = (date: Date) => {
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+---
+
+<div class="section" id="weblog">
+    <div class="title top-title">Recent weblogs</div>
+    Thoughts, write-ups, you name it. Well, I do.
+
+    {
+        posts.map((post) => (
+            <a href={`/blog/${post.id}`}>
+                <div class="item">
+                    <div class="header">
+                        <div class="title f-stamp">{post.data.title}</div>
+                        <div class="date f-dotmatrix">
+                            {formatFancy(new Date(post.data.pubDate))}
+                        </div>
+                    </div>
+                    {post.data.description}
+                </div>
+            </a>
+        ))
+    }
+</div>
+
+<style>
+.section {
+    margin-inline: auto;
+    max-width: 1000px;
+    margin-block: 2rem;
+}
+
+a {
+    text-decoration: none;
+}
+
+.item {
+    display: flex;
+    flex-direction: column;
+    color: var(--col-text);
+    padding-bottom: 1rem;
+
+    & > .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        & > .title {
+            color: var(--col-text-reading);
+            margin-bottom: -0.5rem;
+            display: flex;
+            width: 100%;
+
+            &::after {
+                content: "";
+                display: flex;
+                border-bottom: 2px solid var(--col-text-3);
+                flex: 1;
+                margin-inline: 1rem;
+                align-self: center;
+            }
+        }
+
+        & > .date {
+            text-wrap: nowrap;
+        }
+    }
+}
+</style>
