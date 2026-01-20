@@ -1,0 +1,10 @@
+---
+import { getItemStyle } from "../../utils/random_blog_style.ts";
+
+const { alt } = Astro.props;
+---
+
+<div class="item-wrapper code-wrapper" style={ getItemStyle(alt) }>
+    <pre class="code-block wants-tape"><slot /></pre>
+    <div class="alt-text">{alt}</div>
+</div>

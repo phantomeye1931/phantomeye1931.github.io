@@ -1,0 +1,363 @@
+:root {
+    --col-paper: #ffeed3;
+    --col-text-reading: #362b25;
+    --col-text-reading-2: #564738;
+
+    --col-matrix-1: #e1ead4;
+    --col-matrix-2: #fcf8ea;
+    --col-matrix-line: #b6c3cd;
+    --col-photo-border: var(--col-matrix-2);
+
+    --tape-opacity: 0.8;
+    --code-filter: invert() hue-rotate(180deg);
+
+    --shadow: drop-shadow(0px 7px 15px #00000022);
+
+    --hole-size: 30px;
+    --paper-padding: 40px;
+}
+
+[data-theme='dark'] {
+    --col-paper: #363633;
+    --col-text-reading: #cac8b5;
+    --col-text-reading-2: #c6b9a5;
+
+    --col-matrix-1: #4f5952;
+    --col-matrix-2: #484c4c;
+    --col-matrix-line: #30383f;
+
+    --tape-opacity: 0.3;
+    --code-filter: none;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+.back-link {
+    font-family: "Doto", monospace;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.heading .description {
+    text-align: justify;
+    margin: 0.5rem 0;
+}
+
+.heading .top {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.heading .title {
+    font-family: "Type right!", sans-serif;
+    font-weight: bold;
+    font-size: 2.6rem;
+
+    margin-top: 0.7rem;
+}
+
+.heading .date {
+    font-weight: bold;
+    align-self: flex-end;
+    font-family: "Doto", monospace;
+}
+
+.paperclip {
+    position: absolute;
+    transform: translate(0, -58px);
+    align-self: flex-end;
+    translate: calc(var(--paper-padding) * -1) calc(var(--paper-padding) * -1);
+
+    & svg {
+        fill: gray;
+    }
+}
+
+.paper {
+    color: var(--col-text-reading);
+    background-color: var(--col-paper);
+
+    display: flex;
+    flex-direction: column;
+
+    box-sizing: border-box;
+    max-width: 800px;
+    width: 100%;
+    /* overflow-x: hidden; */
+
+    padding: var(--paper-padding);
+
+    margin: 3em auto;
+    font-family: "Roboto Slab", serif;
+    filter: var(--shadow);
+
+    /* perforation holes */
+    &::before {
+        content: '';
+        position: absolute;
+        transform: translate(calc(var(--hole-size) * -1 - var(--paper-padding)), calc(var(--paper-padding) * -1));
+
+        width: var(--hole-size); /* width of the perforation strip */
+        height: 100%;
+
+        /* repeating radial gradient for holes */
+        background-image: radial-gradient(circle, transparent 40%, var(--col-paper) 40%);
+        background-size: var(--hole-size) var(--hole-size);
+
+        border-right: 3px dotted var(--col-text-3);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+
+        transform: translateX(calc(var(--hole-size) * -1));
+        width: calc(100% + var(--hole-size));
+        height: 100%;
+
+        background-image: var(--coffee-images);
+        background-position: var(--coffee-positions);
+        background-size: 250px;
+        background-repeat: no-repeat;
+
+        pointer-events: none;
+
+        mix-blend-mode: color-burn;
+        opacity: 0.3;
+    }
+}
+
+/* # Markdown styling */
+hr { /* Separator */
+    border: 1px solid var(--col-text-2);
+    margin: 0.7rem;
+}
+
+p,
+li {
+    color: var(--col-text-reading-2)
+}
+
+/* Headers */
+h1, h2, h3, h4, h5 {
+    font-size: 120%;
+
+    & > a {
+        text-decoration: none;
+    }
+}
+
+a {
+    color: inherit;
+}
+
+/* Block quotes */
+blockquote::before {
+    content: "☞"; /* Prepends paragraph symbol */
+    position: absolute;
+
+    color: var(--col-text-reading-2);
+    font-size: 2rem;
+
+    left: var(--paper-padding);
+    padding-left: 2px;
+
+    font-weight: bold;
+}
+
+h3 {
+    display: flex;
+    font-size: 1.618rem;
+
+    &::after {
+        content: "";
+        border-bottom: 2px solid var(--col-text-2);
+
+        flex: 1;
+
+        align-self: center;
+        margin: 0 0.5rem;
+    }
+}
+
+/* Section wrappers */
+.section {
+    overflow: hidden auto;
+}
+
+/* Code blocks */
+pre.astro-code {
+    background-color: transparent !important;
+}
+
+.code-block {
+    position: relative;
+    max-height: fit-content;
+    background: linear-gradient(
+            0deg,
+            var(--col-matrix-line) 0%,
+            var(--col-matrix-line) 1%,
+            var(--col-matrix-1) 1%,
+            var(--col-matrix-1) 50%,
+            var(--col-matrix-line) 50%,
+            var(--col-matrix-line) 51%,
+            var(--col-matrix-2) 51%,
+            var(--col-matrix-2) 100%
+    ) repeat-y;
+    background-size: 100% 6rem;
+
+    padding: 0.75rem;
+    /*width: max-content;*/
+
+    line-height: 1.5rem;
+
+    rotate: -1deg;
+    filter: var(--shadow);
+
+    margin-bottom: 0.5rem;
+
+    & .astro-code {
+        background-color: transparent !important;
+    }
+
+    & > pre {
+        overflow: auto;
+
+        & > code {
+            width: max-content;
+        }
+    }
+
+    /* Perforation strip */
+    &::before {
+        --hole-size: 1.5rem;
+        --paper-padding: 0.75rem;
+
+        position: absolute;
+        transform: translate(calc(var(--hole-size) * -1 - var(--paper-padding)), calc(var(--paper-padding) * -1));
+
+        content: '';
+        width: var(--hole-size); /* width of the perforation strip */
+        height: 100%;
+
+        /* repeating radial gradient for holes */
+        background-image: radial-gradient(circle, transparent 40%, var(--col-matrix-2) 40%);
+        background-size: var(--hole-size) var(--hole-size);
+
+        border-right: 1px solid var(--col-matrix-line);
+    }
+
+    & span.line {
+        filter: var(--code-filter);
+        font-family: "Doto", monospace;
+        font-size: 0.85rem;
+        counter-increment: line;
+        padding-left: 1.2rem;
+
+        &::before {
+            content: counter(line);
+            position: absolute;
+            color: gray;
+            left: 0;
+        }
+    }
+}
+
+.item-wrapper {
+    max-width: 90%;
+    margin: 1.5rem;
+
+    width: fit-content;
+    margin-inline: auto;
+}
+
+.image {
+    position: relative;
+
+    width: fit-content;
+    height: fit-content;
+
+    background-color: var(--col-photo-border);
+    padding: 1rem 1.6rem;
+
+    rotate: var(--rotation);
+    filter: var(--shadow);
+
+    display: flex;
+    gap: 1.6rem;
+    z-index: 5;
+
+    margin-bottom: 3em;
+
+    & > img {
+        max-height: 300px;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.alt-text {
+    font-family: "Caveat", sans-serif;
+    font-size: 1.5em;
+
+    display: block;
+    inline-size: 0;
+    min-inline-size: 100%;
+
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+    margin-left: 3rem;
+    margin-top: -1rem;
+}
+
+/* Images */
+.image-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 2rem;
+
+    & img {
+        max-height: 250px;
+    }
+
+    & .item-wrapper {
+        padding-top: 1.5rem;
+        margin: 0;
+    }
+}
+
+/* Tape */
+.wants-tape::after {
+    content: "";
+    position: absolute;
+    inset: -2rem;
+    pointer-events: none;
+    z-index: 5;
+
+    background-image: var(--tape-a), var(--tape-b);
+    background-repeat: no-repeat;
+
+    background-position: var(--tape-alignment);
+
+    opacity: var(--tape-opacity);
+}
+
+.float {
+    &.right {
+        float: right;
+    }
+
+    &.left {
+        float: left;
+    }
+}

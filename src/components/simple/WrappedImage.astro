@@ -1,0 +1,18 @@
+---
+interface Props {
+    src: string;
+    alt?: string;
+}
+
+const { src, alt } = Astro.props;
+---
+
+<div class="item-wrapper image-wrapper">
+    <div class="image wants-tape">
+        <img src={src} alt={alt} />
+    </div>
+    <div class="alt-text">
+        <slot/>
+    </div>
+</div>
+

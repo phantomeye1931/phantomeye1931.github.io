@@ -1,0 +1,13 @@
+---
+import { getItemStyle } from "../../utils/random_blog_style.ts";
+import BlogItemCaption from "./BlogItemCaption.astro";
+
+const { src, alt } = Astro.props;
+---
+
+<div class="item-wrapper image-wrapper" style={ getItemStyle(alt) }>
+    <div class="image wants-tape">
+        <img src={src} alt={alt} />
+    </div>
+    <BlogItemCaption>{alt}</BlogItemCaption>
+</div>

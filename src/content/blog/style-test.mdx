@@ -1,0 +1,41 @@
+---
+title: 'Style Test'
+description: 'Lorem ipsum sit dolor amet'
+pubDate: 'Jun 01 2024'
+---
+import Wrapper from '../../components/simple/Wrapper.astro';
+import WrappedImage from '../../components/simple/WrappedImage.astro';
+import WrappedCodeBlock from '../../components/simple/WrappedCodeBlock.astro';
+
+<Wrapper classes="image-row">
+    <Wrapper>
+        - [But Why?](#but-why)
+        - [Piece movement](#piece-movement)
+        - [Special moves](#special-moves)
+    </Wrapper>
+    <Wrapper>
+        - [In check](#in-check)
+        - [Pinned pieces](#pinned-pieces)
+        - [Edge cases](#edge-cases)
+    </Wrapper>
+    <Wrapper>
+        - [Checkmate & Stalemate detection](#checkmate--stalemate-detection)
+        - [Concluded game flow](#concluded-game-flow)
+    </Wrapper>
+</Wrapper>
+
+![Movement of the rook](/weblog/chess/movement-rook.png)
+
+```ts
+function knightMoves() {
+  knightOffsets = [
+    (2, 1), (2, -1), ... (-1, 2), (-1, -2)
+  ]
+
+  for ( offset in knightOffsets ) {
+    if ( !pos.friendlyPiece && pos.onBoard)
+    markValid(pos + offset)
+  }
+}
+```
+###### Pseudo-code of knight movement
