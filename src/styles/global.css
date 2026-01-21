@@ -11,6 +11,7 @@
 	--col-drop-shadow:  #00000030;
 	--drop-shadow: drop-shadow(0 10px 5px var(--col-drop-shadow));
 	--page-padding: 2.5rem;
+	--bezier-transition: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [color-scheme='dark'] {

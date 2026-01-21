@@ -1,25 +1,56 @@
 ---
-import ModalCard from "../test/ModalCard.astro";
+import ModalCard from "../ModalCard.astro";
 const projects = [
-        { name: "PortalMod", description: "Portal-inspired technical mod for Minecraft", url: "https://portalmod.net/" },
-        { name: "GLaDOS Discord Bot", description: "Overengineered general-utility and 'fun' Discord bot with", url: "#" },
-        { name: "Static Chess engine", description: "Chess algorithm to evaluate validity of moves statically", url: "#" },
-        { name: "Tic Tac Tesseract", description: "Playable tic-tac-toe in 4 dimensions", url: "/pages/tic-tac-tesseract" },
-        { name: "APF Image format converter", description: "Command line utility to convert images to APF", url: "#" },
-        { name: "Untitled game", description: "Untitled 2D platformer game being developed in Java", url: "#" }
-    ]
+    {
+        name: "PortalMod",
+        description: "Portal-inspired technical mod for Minecraft",
+        information: "Written in Java\n\nPortalMod is a big fan project for Minecraft that brings components from the Portal franchise by Valve Software into Minecraft and incorporates them into Minecraft's gameplay loop, artstyle, sound design etc.\n\nThe project has sparked a very active community on its Discord server, growing to more than 5000 members.",
+        buttons: [{ label: "PortalMod Website", url: "https://portalmod.net/" }, { label: "Discord Community", url: "https://discord.gg/portalmod" }],
+    }, {
+        name: "GLaDOS Discord Bot",
+        description: "Overengineered general-utility and 'fun' Discord bot",
+        information: "",
+    }, {
+        name: "Static Chess engine",
+        description: "Chess algorithm to evaluate validity of moves statically",
+        information: ""
+    }, {
+        name: "Tic Tac Tesseract",
+        description: "Playable tic-tac-toe in 4 dimensions",
+        url: "/pages/tic-tac-tesseract",
+        information: "",
+        buttons: [{ label: "Play in browser", url: "/pages/tic-tac-tesseract" }, { label: "View source code", url: "" }],
+    }, {
+        name: "APF Image format converter",
+        description: "Command line utility to convert images to APF",
+        url: "#",
+        information: ""
+    }, {
+        name: "Untitled game",
+        description: "Untitled 2D platformer game being developed in Java",
+        url: "#",
+        information: ""
+    }
+]
 
     const websites = [
-        { name: "PortalMod Website", description: "Homepage for PortalMod, including payment functionality", url: "https://portalmod.net/" },
-        { name: "ECL Website", description: "Website for Energiecooperatie ECL", url: "https://eclenergie.nl/" },
-        { name: "Personal Website", description: "Simple homepage for my weblogs and links. You're looking at it right now!", url: "/" },
-        { name: "██████⠀ ██████", description: "█████████⠀ ███⠀ ██████████⠀ ███⠀ ██⠀ ███", url: "#", extra: "censored" }
+        { name: "PortalMod Website", description: "Homepage for PortalMod, including payment functionality", url: "https://portalmod.net/",
+            information: "" },
+        { name: "ECL Website", description: "Website for Energiecooperatie ECL", url: "https://eclenergie.nl/",
+            information: "" },
+        { name: "Personal Website", description: "Simple homepage for my weblogs and links. You're looking at it right now!", url: "/",
+            information: "" },
+        { name: "██████⠀ ██████", description: "█████████⠀ ███⠀ ██████████⠀ ███⠀ ██⠀ ███", url: "#", extra: "censored",
+            information: "" }
     ]
 
     const art_cards = [
-        { name: "Sketchfab", description: "Here I've posted some of the 3D models I've made over the years", url: "https://sketchfab.com/PhantomEye/" },
-        { name: "Instagram", description: "My art Instagram page, containing some renders, as well as 2D pixel art", url: "https://instagram.com/phantomeye1931/" },
-        { name: "Contact me", description: "I'm often available for commission work, so feel free to contact me", url: "#contact" }
+        { name: "Sketchfab", description: "Here I've posted some of the 3D models I've made over the years", url: "https://sketchfab.com/PhantomEye/",
+            information: "" },
+        { name: "Instagram", description: "My art Instagram page, containing some renders, as well as 2D pixel art", url: "https://instagram.com/phantomeye1931/",
+            information: "" },
+        { name: "Contact me", description: "I'm often available for commission work, so feel free to contact me", url: "#contact",
+            information: "" }
     ]
 ---
 
@@ -30,7 +61,7 @@ const projects = [
             <div class="grid cols3">
                 {
                     projects.map((p) => (
-                        <ModalCard title={p.name} description={p.description} />
+                        <ModalCard title={p.name} description={p.description} information={p.information} buttons={p.buttons} />
                     ))
                 }
             </div>
@@ -43,7 +74,7 @@ const projects = [
             <div class="grid cols2">
                 {
                     websites.map((w) => (
-                        <ModalCard title={w.name} description={w.description} classes={w.extra} />
+                        <ModalCard title={w.name} description={w.description} information={w.information} classes={w.extra} />
                     ))
                 }
             </div>
@@ -54,7 +85,7 @@ const projects = [
         <div class="grid art-cards">
             {
                 art_cards.map((w) => (
-                    <ModalCard title={w.name} description={w.description} />
+                    <ModalCard title={w.name} description={w.description} information={w.information} />
                 ))
             }
         </div>
