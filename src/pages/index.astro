@@ -5,6 +5,7 @@ import HeroSection from "../components/homepage/HeroSection.astro";
 import IntroSection from "../components/homepage/IntroSection.astro";
 import ProjectsSection from "../components/homepage/ProjectsSection.astro";
 import WeblogSection from "../components/homepage/WeblogSection.astro";
+import Spacing from "../components/simple/Spacing.astro";
 ---
 <Page>
 	<HeaderButtons />
@@ -12,8 +13,9 @@ import WeblogSection from "../components/homepage/WeblogSection.astro";
 
 	<div class="parts">
 		<IntroSection />
+		<Spacing x="4em" />
 		<ProjectsSection />
-
+		<Spacing x="4em" />
 		<WeblogSection />
 		<!--<ContactSection />-->
 	</div>
@@ -24,11 +26,14 @@ import WeblogSection from "../components/homepage/WeblogSection.astro";
 	display: none;
 }
 
+html {
+	font-family: 'Roboto Slab', sans-serif;
+}
+
 :global(.section) {
-	font-family: 'Inter', sans-serif;
+	color: var(--col-text-2);
 	font-size: 1.2rem;
 	line-height: 1.6;
-	color: var(--col-text-2);
 
 	& :global(.title) {
 		font-family: 'Playfair Display', serif;

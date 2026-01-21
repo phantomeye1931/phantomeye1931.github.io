@@ -1,0 +1,196 @@
+---
+import '../../styles/global.css';
+
+interface Props {
+    title: string
+    description: string
+    buttons?: string[]
+    classes?: string
+}
+
+const props = Astro.props;
+---
+
+<div class=`card card-original ${props.classes}`>
+    <div class="card-inner">
+        <strong>{props.title}</strong>
+        <p>{props.description}</p>
+        <div class="extra-info">
+            <p>This content fades in once the morph is complete.</p>
+            <button class="close-trigger">Close</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    html {
+        background-color: var(--col-background);
+    }
+
+    .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: 180px;
+        gap: 20px;
+        padding: 40px;
+    }
+    .card.wide { grid-column: span 2; }
+    .card.tall { grid-row: span 2; }
+
+    .card {
+        background-color: var(--col-background);
+        color: var(--col-text-2);
+        border: 1px solid var(--col-divider);
+
+        padding: 1rem;
+
+        font-family: "Roboto Slab", serif;
+        font-size: 1.2rem !important;
+        line-height: 1.6;
+
+        box-sizing: border-box;
+    }
+
+    .censored {
+        letter-spacing: -0.05em;
+        color: var(--col-text-3);
+    }
+
+    .card-original {
+        cursor: pointer;
+
+        transition: scale 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        &:hover {
+            scale: 105%;
+        }
+
+        & .extra-info {
+            display: none;
+        }
+
+        &[opened] {
+            background-color: var(--col-text-3) !important;
+
+            border-color: transparent;
+
+            & > * {
+                visibility: hidden;
+            }
+        }
+    }
+
+    .extra-info {
+        opacity: 0;
+        margin-top: 20px;
+        transition: opacity 0.3s;
+    }
+
+    /* THE CLONE */
+    :global(.morph-clone) {
+        position: fixed !important;
+        z-index: 1001;
+        //cursor: auto !important;
+
+        /* We use !important on the transition to ensure it's always active */
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        overflow: hidden;
+    }
+
+    :global(.morph-clone.is-expanded) {
+        --inset: 10rem;
+        inset: var(--inset) !important;
+        width: calc(100% - 2 * var(--inset)) !important;
+        height: calc(100% - 2 * var(--inset)) !important;
+
+    }
+
+    :global(.morph-clone.is-expanded .extra-info) {
+        opacity: 1;
+        pointer-events: auto;
+    }
+</style>
+
+<script>
+    $(function() {
+        // We only keep the active card reference globally to manage its opacity
+        // but the clones will handle themselves.
+
+        const $overlay = $('.overlay');
+
+        $('.card').on('click', function() {
+            const $activeCard = $(this);
+
+            if ($activeCard.data('is-open') === true) return;
+            $activeCard.data('is-open', true);
+
+            const rect = this.getBoundingClientRect();
+
+            const $currentClone = $activeCard.clone();
+            $currentClone.removeClass('card-original');
+            $currentClone.addClass('morph-clone');
+
+            // Set starting position
+            const startPos = {
+                top: rect.top + 'px',
+                left: rect.left + 'px',
+                width: rect.width + 'px',
+                height: rect.height + 'px'
+            }
+            $currentClone.css(startPos);
+
+            $('body').append($currentClone);
+            $activeCard.attr('opened', 'true');
+
+            $overlay.fadeIn(300);
+
+            // EXPAND !!
+            setTimeout(() => {
+                $currentClone.addClass('is-expanded');
+            }, 20);
+
+            const closeHandler = function() {
+                if (!$currentClone.hasClass('is-expanded')) return;
+
+                $activeCard.css("scale")
+                const currentRect = $activeCard[0].getBoundingClientRect();
+
+                $('.morph-clone').css("z-index: 10 !important");
+
+                $currentClone.removeClass('is-expanded');
+                $currentClone.css({
+                    top: currentRect.top + 'px',
+                    left: currentRect.left + 'px',
+                    width: currentRect.width + 'px',
+                    height: currentRect.height + 'px'
+                });
+
+                // Only fade out overlay if no other clones are expanded
+                if ($('.morph-clone.is-expanded').length === 0) {
+                    $overlay.fadeOut(20);
+                }
+
+                // Cleanup this specific instance
+                $currentClone.on('transitionend', function(e: any) {
+                    const prop = e?.originalEvent?.propertyName;
+                    if ((prop === 'top' || prop === 'inset' || prop === 'width') &&
+                        !$currentClone.hasClass('is-expanded')) {
+
+                        $activeCard.removeAttr('opened');
+                        $activeCard.data('is-open', false);
+                        $currentClone.remove();
+                    }
+                });
+            };
+
+            // Attach close events
+            $currentClone.find('.close-trigger').on('click', closeHandler);
+            $overlay.off('click').on('click', function() {
+                // When overlay is clicked, close ALL expanded clones
+                $('.morph-clone.is-expanded').each(function() {
+                    // We trigger the close logic for each
+                    $(this).find('.close-trigger').trigger('click');
+                });
+            });
+        });
+    });
+</script>

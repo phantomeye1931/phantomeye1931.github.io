@@ -1,0 +1,16 @@
+---
+interface Props {
+    x: string
+}
+
+const spacing = Astro.props.x;
+---
+
+<div class="spacing" />
+
+<style define:vars={{ spacing }}>
+    .spacing {
+        width: var(--spacing);
+        height: var(--spacing);
+    }
+</style>

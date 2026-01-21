@@ -20,11 +20,25 @@ import Background from "../components/Background.astro";
                     <slot />
                 </div>
             </div>
+
+            <div class="overlay"></div>
         </main>
     </body>
 </html>
 
 <style>
+html {
+    scroll-behavior: smooth;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    display: none;
+}
+
 .page-wrapper,
 .page-contents {
     background-color: var(--col-background);

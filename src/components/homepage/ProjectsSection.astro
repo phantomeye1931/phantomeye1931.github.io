@@ -1,5 +1,6 @@
 ---
-    const projects = [
+import ModalCard from "../test/ModalCard.astro";
+const projects = [
         { name: "PortalMod", description: "Portal-inspired technical mod for Minecraft", url: "https://portalmod.net/" },
         { name: "GLaDOS Discord Bot", description: "Overengineered general-utility and 'fun' Discord bot with", url: "#" },
         { name: "Static Chess engine", description: "Chess algorithm to evaluate validity of moves statically", url: "#" },
@@ -29,10 +30,7 @@
             <div class="grid cols3">
                 {
                     projects.map((p) => (
-                        <a href={p.url} class="card">
-                            <strong>{p.name}</strong>
-                            <p>{p.description}</p>
-                        </a>
+                        <ModalCard title={p.name} description={p.description} />
                     ))
                 }
             </div>
@@ -44,11 +42,8 @@
             <div class="title" id="websites">Websites</div>
             <div class="grid cols2">
                 {
-                        websites.map((w) => (
-                            <a href={w.url} class={['card', w.extra].join(' ')}>
-                                <strong>{w.name}</strong>
-                                <p>{w.description}</p>
-                            </a>
+                    websites.map((w) => (
+                        <ModalCard title={w.name} description={w.description} classes={w.extra} />
                     ))
                 }
             </div>
@@ -59,10 +54,7 @@
         <div class="grid art-cards">
             {
                 art_cards.map((w) => (
-                    <a href={w.url} class="card">
-                        <strong>{w.name}</strong>
-                        <p>{w.description}</p>
-                    </a>
+                    <ModalCard title={w.name} description={w.description} />
                 ))
             }
         </div>
@@ -105,11 +97,6 @@
 
 .art-cards {
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
-}
-
-.censored {
-    letter-spacing: -0.05em;
-    color: var(--col-text-3);
 }
 
 .divider {
