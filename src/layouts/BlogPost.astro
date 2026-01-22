@@ -8,10 +8,11 @@ import Page from "./Page.astro";
 type Props = CollectionEntry<'blog'>['data'];
 
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const background = {wearOff: false, onlyLanding: false};
 
 ---
 
-<Page>
+<Page title={title} description={description} background={background} >
 	<article>
 		<div class="paper" style={ getPageStyle(description) }>
 			<ShapePaperClip class="paperclip"/>

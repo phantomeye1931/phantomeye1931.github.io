@@ -6,8 +6,11 @@ import IntroSection from "../components/homepage/IntroSection.astro";
 import ProjectsSection from "../components/homepage/ProjectsSection.astro";
 import WeblogSection from "../components/homepage/WeblogSection.astro";
 import Spacing from "../components/simple/Spacing.astro";
+
+import {SITE_DESCRIPTION, SITE_TITLE} from "../consts.ts";
+const background = { wearOff: true, onlyLanding: true };
 ---
-<Page>
+<Page title={SITE_TITLE} description={SITE_DESCRIPTION} background={background} >
 	<HeaderButtons />
 	<HeroSection />
 

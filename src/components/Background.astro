@@ -1,8 +1,13 @@
 ---
+interface Props {
+    onlyLanding: boolean,
+    wearOff: boolean,
+}
 
+const props = Astro.props;
 ---
 
-<div class="bg-grid bg-wrapper" aria-hidden="true">
+<div class="bg-grid bg-wrapper" aria-hidden="true" only-landing={ props.onlyLanding } wear-off={ props.wearOff }  >
     <pre class="font-trypewriter bg text-grid"></pre>
 </div>
 
@@ -44,8 +49,10 @@
             height = Math.floor(rect.height / fontSize);
         }
 
+        const wearOff = $thisElement.attr('wear-off') === "true";
+
         function refreshCharacters() {
-            const ascii = get_ascii_grid(true, width, height, Date.now() / 1000)
+            const ascii = get_ascii_grid(wearOff, width, height, Date.now() / 1000);
             $asciiGrid.text(ascii);
         }
 
@@ -66,10 +73,15 @@
 <style>
 .bg-grid {
     position: absolute;
+    inset: 0;
     width: 100%;
     min-height: 100vh;
     overflow: hidden;
     background-color: var(--col-background);
+
+    &[only-landing="true"] {
+        height: 100vh;
+    }
 }
 
 pre {

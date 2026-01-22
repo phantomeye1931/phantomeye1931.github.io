@@ -2,20 +2,27 @@
 import BaseHead from "../components/BaseHead.astro";
 
 import ThemeManager from "../components/util/ThemeManager.astro";
-import {SITE_DESCRIPTION, SITE_TITLE} from "../consts.ts";
 import Background from "../components/Background.astro";
+
+interface Props {
+    background: { onlyLanding: boolean, wearOff: boolean },
+    title: string,
+    description: string,
+}
+
+const props = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
     <head>
-        <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+        <BaseHead title={props.title} description={props.description} />
     </head>
     <body>
         <main>
             <div class="page-wrapper">
                 <ThemeManager />
-                <Background />
+                <Background wearOff={ props.background.wearOff } onlyLanding={ props.background.onlyLanding } />
                 <div class="page-contents">
                     <slot />
                 </div>
@@ -48,9 +55,31 @@ html {
     }
 }
 
-.page-wrapper,
-.page-contents {
+.page-wrapper {
     background-color: var(--col-background);
+    position: absolute;
+    min-height: 100vh;
+    width: 100%;
+
+    &:after {
+        content: "";
+        z-index: 1000;
+        inset: 0;
+        position: absolute;
+
+        background-image: url("/svg/grain.svg");
+        background-size: 400px 400px;
+        pointer-events: none;
+
+        mix-blend-mode: multiply;
+        opacity: 0.5;
+    }
+}
+
+.page-contents {
+    position: relative;
+    z-index: 1;
     color: var(--col-text);
 }
+
 </style>
