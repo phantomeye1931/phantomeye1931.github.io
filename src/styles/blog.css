@@ -172,7 +172,7 @@ blockquote::before {
     font-weight: bold;
 }
 
-h3 {
+h2 {
     display: flex;
     font-size: 1.618rem;
 
