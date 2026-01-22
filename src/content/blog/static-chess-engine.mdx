@@ -1,0 +1,475 @@
+---
+title: 'Static Chess Engine'
+description: 'A small dive into chess programming to create a chess engine that can validate moves without looking into the future.'
+pubDate: 'Jun 01 2024'
+---
+import Wrapper from '../../components/simple/Wrapper.astro';
+
+- [But Why?](#but-why)
+- [Piece movement](#piece-movement)
+- [Special moves](#special-moves)
+- [In check](#in-check)
+- [Pinned pieces](#pinned-pieces)
+- [Edge cases](#edge-cases)
+- [Checkmate & Stalemate detection](#checkmate--stalemate-detection)
+- [Concluded game flow](#concluded-game-flow)
+
+## But why?
+I've long been fascinated with the game of chess, and I've wanted to make my own chess engine for a while. To make this interesting, I decided I wanted to make chess playable in vanilla Minecraft, so you could play chess with your friends in everyone's favorite sandbox game.
+
+However, vanilla Minecraft has a lot of technical limitations that would make this challenging. Minecraft allows players to create data packs, which can contain scripts written in Minecraft's own scripting language: [mcfunction](https://minecraft.wiki/w/Function_(Java_Edition)).
+
+I wanted players to be able to design their own boards, so I decided to do all the game logic on the actual board.
+
+The goal of this blog post is to hopefully make it easier for new chess programmers to get a working efficient chess move validation engine without having to go through the same amount of research and debugging as me.
+
+At the end of this article, you can find a simple implementation of this algorithm.
+
+### "Static"?
+In this case, with "static", I mean to refer to creating a chess engine **without simulating future board states**. In the Minecraft environment I'm working with, recursion and branching is really hard and computationally expensive. So we need a move validator that considers only the current board state, without simulating future moves.
+
+## Piece movement
+To validate which moves are valid for any piece in a given position, we should first define the movesets of pieces. That is, how they are allowed to move and capture other pieces.
+
+![Movement of the knight](/weblog/chess/movement-knight.png)
+
+These seem really simple, but quickly reveal some caveats during actual implementation.
+
+### Knights
+
+The knight is probably the simplest. In any of the 4 directions, it can move 2 squares, followed by 1 square to the side. Forming an L shape.
+
+The "only" condition to this movement is that it cannot move to this square if there is a piece of the same color here.
+
+```ts
+function knightMoves() {
+  knightOffsets = [
+  (2, 1), (2, -1), ... (-1, 2), (-1, -2)
+]
+
+  for ( offset in knightOffsets ) {
+    if ( !pos.friendlyPiece && pos.onBoard)
+    markValid(pos + offset)
+  }
+}
+```
+###### Pseudocode of knight movement
+
+### Long-range pieces
+The long-range pieces—the queen, bishop and rook—also have quite simple movement patterns. In certain directions, they can move any distance as long as there isn't a piece in between.
+
+But, we have to pay attention here. **Rays should stop at friendly pieces, but may capture enemy pieces**.
+
+The rook and bishop move in orthogonal & diagonal lines respectively:
+
+<Wrapper classes="image-row">
+    ![Movement of the rook](/weblog/chess/movement-rook.png)
+    ![Movement of the bishop](/weblog/chess/movement-bishop.png)
+</Wrapper>
+
+While the queen combines these two movesets, such that it can move in all 8 orthogonal and diagonal directions:
+
+![Movement of the queen](/weblog/chess/movement-queen.png)
+
+These long range moves can be evaluated quite easy. In all directions that these pieces can move, we can perform the following recursive algorithm to mark all valid spots:
+
+```ts
+// Pseudocode
+function traceSpots(pos, dir) {
+  if ( pos.friendlyPiece ) return // <- Remember this line
+
+  markValid(pos) // Move or capture
+
+  if ( !pos.inFront.occupied )
+  traceSpots(pos.inFront, dir)
+}
+```
+###### Pseudocode of recursive long-range move validation
+
+### Pawns
+The movement of a pawn seems really simple at first, but it's actually the most complicated piece in terms of what moves it's allowed to make, as it behaves different in multiple scenarios.
+
+Excluding captures, the pawn can only move 1 square forward, except for when it hasn't moved yet, in which case it may also move 2 squares forward. A pawn cannot move forward if the square is occupied by another piece, **regardless of its color**.
+
+Unlike other pieces, **the pawn is the only piece in normal chess that captures differently than how it moves**. A pawn can only capture a piece that's diagonally in front of it.
+
+<Wrapper classes="image-row">
+    ![Moves of a pawn](/weblog/chess/movement-pawn1.png)
+    ![Captures of a pawn](/weblog/chess/movement-pawn2.png)
+</Wrapper>
+
+We can validate the moves of a pawn as such:
+
+```ts
+// Pseudocode
+function pawnMoves(pos, dir) {
+  // Simple moves
+  if ( !pos.inFront.occupied ) markValid( pos.inFront )
+  if ( !pos.inFront.occupied && !pos.inFront.inFront.occupied
+  && !pos.moved ) markValid( pos.inFront.inFront )
+
+  if ( pos.inFront.left.enemyPiece ) markValid( pos.inFront.left )
+  if ( pos.inFront.right.enemyPiece ) markValid( pos.inFront.right )
+}
+```
+###### Pseudocode of pawn movement
+
+Great, 5 pieces done, 1 to go.
+
+### The King
+Compared to the rest of the pieces, the king has a special condition that should be met for a move to be valid: The square can't be attacked/defended by an enemy piece, as moving there would put the king in check.
+
+![Movement of the king](/weblog/chess/movement-king.png)
+
+The classic way to deal with this is: move the king to the square we're trying to validate, then see if it is now in check, and if so, move back. But with our goal of static validation, we can't do this. We have to detect whether a square is defended more efficiently.
+
+Even then, detecting if a square is being attacked might sound really easy at first, but there's still some considerations to be made. If we try to check if each of the king's move squares is defended, we could look at all enemy pieces and see if they're defending this square.
+
+This is obviously terrible, and we're trying to create something *somewhat* efficient over here, so we have to find a more elegant approach. In the end, the best way to do this is marking which squares are attacked beforehand, so we only have to calculate it once for the entire board.
+
+We can do this after every move. For each piece, this is what squares they attack:
+- Knight: All valid move squares
+- Long-range: All valid moves, plus squares with friendly pieces hit by rays. (So now in this case in our algorithm, squares should be validated regardless of the color of the occupying piece, so we can ignore the check in the long-range validation algorithm that I marked with a comment)
+- King: All 8 adjacent squares
+- Pawn: Diagonal-forward capture squares
+
+> ***Note that we don't have to do this at the start of the game**, as—in the normal chess configuration—none of the king's adjacent squares can be attacked before at least a few moves are made, so the kings can't move to a square that's defended anyway*.
+
+We now have an algorithm to detect valid king moves, but it's not perfect just yet. Let me give you the following example:
+
+![A king attacked by a bishop](/weblog/chess/example-kingcheckray.png)
+
+In our current algorithm, we only invalidated one of the move squares for the king—the top right—as it's attacked by the bishop. **However**, if we were to move to the bottom-left square, our king **would still be attacked**! This isn't allowed, so we must do something about this.
+
+Luckily, the solution is really simple. In our recursive long-range piece function, we should simply pass through kings when we're marking which pieces attack which squares. Now the king can't escape the bishop by directly moving away from it.
+
+Great! We now know pretty much how all pieces can move in normal chess! That's already the biggest part out of the way. That was easy, right? Let's move on to some less trivial considerations.
+
+## Special moves
+### En passant
+The **En Passant** rule was added to make our lives as developers difficult. It introduces a tricky exception to the movement of a pawn, where it can now capture pawns that just did a double move by jumping behind them. **For one turn only**, an opposing pawn may capture this piece as if it only moved forward one square.
+
+![En Passant](/weblog/chess/en-passant.png)
+
+To detect these moves statically, we can:
+- Track which pawn has just moved two squares.
+- Mark said pawn as 'En-Passantable'.
+- An adjacent enemy pawn may treat the square behind the "En-Passantable" pawn as a valid capturing square.
+
+We can implement this by extending our implementation of pawn moves:
+
+```ts
+function pawnMoves(pos, dir) {
+  // ... existing code
+
+  // En Passant
+  if ( pos.left.is('en-passantable') ) markValid( pos.left.inFront )
+  if ( pos.right.is('en-passantable') ) markValid( pos.right.inFront )
+}
+```
+###### Expansion of the pawn moveset to include 'En Passant'
+
+**But wait**! If we move to the spot we just validated in the En Passant case, we still have to capture the En-Passantable pawn. In our static system it's easiest to do this when the move is actually made. When the pawn moves, we can check if the new position is behind an En-Passantable piece, and if so, capture said piece.
+
+Don't worry, this isn't the end of our En Passant troubles, it will return to haunt us.
+
+### Castling
+Castling is a special move in chess, where in specific conditions, the king and a rook can swap around. To be specific, the king can move two squares at once sideways, and the rook will move to the other side of the king.
+
+<Wrapper classes="image-row">
+    !["Short Castling"](/weblog/chess/castling1.png)
+    !["Long Castling"](/weblog/chess/castling2.png)
+</Wrapper>
+
+The conditions that have to be met for castling to a side to be possible are:
+- The **king** has **not moved**.
+- The **rook** on that side has **not moved**.
+- The **king** is **not in check**.
+- The two squares the **king traverses** are **not attacked**, and **not occupied**.
+
+Given that we've marked what squares are attacked, this is pretty easy to implement.
+
+```ts
+function attemptCastle(pos, dir) {
+if ( pos.attacked || pos.moved || pos.find(dir, ROOK).moved ) return
+
+  if ( pos.to(dir).occupied ) return
+  if ( pos.to(dir).to(dir).occupied ) return
+
+  if ( pos.to(dir).attacked ) return
+  if ( pos.to(dir).to(dir).attacked ) return
+
+  // TODO: Check if the rook is blocked
+
+  markValid( pos.to(dir).to(dir) )
+}
+```
+###### Pseudocode of castling-checking algorithm
+
+We have to do one final thing to make castling functional: when the castling move is made, the rook should move to the other side of the king. We can implement this by checking if the last move was a double king move, and if so, teleport the **nearest rook** (from the new king position) to the other side of the king.
+
+### Promotion
+Promotion is another fun rule in chess that usually comes into play in the final stages of a match. It allows a pawn that has reached the opposite edge of the board to 'promote' to one of the following pieces:
+- A knight
+- A bishop
+- A rook
+- A queen
+
+This is a move that's different from all others, as it essentially requires 1 extra input. Besides what piece you're moving and where you're moving it to, you also have to decide what piece to promote to, specifically after the pawn has moved.
+
+Luckily for us, **promotion is mandatory**, so we don't have to handle the case where a player decides not to promote.
+
+An easy way to handle this is to, after moving a pawn, check if the position right in front of it is still on the board. If it isn't, prompt the player to choose a promotion, and pause the game until that choice is made.
+
+## In check
+Woah! Your opponent attacked your king. You're now in check, what do we do?
+
+Well the chess gods dictate that your only option is to get out of check. (if you even have options, but we haven't gotten to that part yet)
+
+How do we do this? There are exactly 3 ways to get out of check:
+1. **Move the king** to a square that is not attacked
+2. **Block the line of check** with a piece, such that the attacking piece no longer has direct sight on the king.
+3. **Capture the piece that's attacking** the king, such that the threat vanishes.
+
+**HOWEVER**, depending on the situation, not all of these options are actually valid ways of getting out of check. Let me present you with the following scenario:
+
+![A king in check by both a rook and a bishop](/weblog/chess/example-doublecheck.png)
+
+Here, the white rook just moved to attack the king, which also revealed a bishop attack on the king. But we have a rook to capture the offenders! Let's try. If we capture the rook, the bishop is still attacking the king. If we capture the bishop, the rook is still attacking the king. So wait, both of these moves are invalid! There would also be no hope in blocking the line of the check, as there's two check lines, which cannot both be blocked in one move.
+
+This only leaves king moves to run to safety. And **this is the case for any scenario where there are two or more pieces attacking the king**. In that situation you can't use the last two check-evading methods (though a king running to safety might still be able to still capture one of the pieces that put it in check).
+
+> If you have some free time, try to visualize for yourself why this is the case. Try finding a way to get out of a double check without moving the king, and reason why it's impossible.
+
+Alright, so let's actually get to validating moves while we're in check, that's what we're here for! We will explore all 3 methods outlined above.
+
+### Moving the king
+This is always a valid way to get out of check (assuming there is a safe adjacent square to move to).
+
+Lucky for us, we already handled this logic and thus validated these moves with the normal king movement logic, so we can skip it here!
+
+### Blocking the line of check
+Like we outlined above, this is not a valid option if there is more than 1 piece attacking the king, and this only applies if the attacking piece is one of the long-range pieces. Have fun trying to block check inflicted by a knight.
+
+So in this scenario, we can validate any *pseudo-valid* move if it blocks the "line of check". But how do we know that a move blocks this imaginary line? We should mark it beforehand again.
+
+When tracing squares for long-range pieces, we can take advantage of the recursion by adding a line to the algorithm, and the markValid function:
+
+```ts
+function markValid(pos) {
+  // ... existing code
+
+  if ( pos.enemyKing ) {
+    checkOrigin = true
+    pos.markAs( 'check origin' )
+    // We can also increment a check counter here to
+    // use for invalidating non-king moves when it's over 1
+  }
+}
+
+checkOrigin = false // Whether the current piece is checking the king
+function traceSpots(pos, dir) {
+  // ... existing code
+  traceSpots(pos.inFront, dir)
+
+  // This will always run after the recursion has ended,
+  // at all positions of the ray
+  if ( checkOrigin ) pos.markAs( 'line of check' )
+}
+```
+###### Expanded long-range algorithm to mark "lines of check"
+
+Now we know exactly what squares make up the line of check, and we can validate any *pseudo-valid* move that steps onto this line.
+
+### Capturing the attacking piece
+For this option, we can remove king moves from the equation, as we already validated all possible moves for the king, and we can again assume there is only 1 piece attacking the king.
+
+For any moves generated by our piece movement algorithms, we can allow it if it captures the piece that is responsible for putting the king in check. Quite simple. For long-range pieces, we know what square is the origin of the check from the modification we made to markValid() in exploring the previous option. For other pieces we can simply mark its square as the origin of the check if one of its attacking squares is the enemy king.
+
+## Pinned pieces
+Pinned pieces are the next chapter in the book of headaches. These pieces are special, because they are your king's last line of defense against long-range pieces of your opponent.
+
+In other words, pinned pieces are pieces that would have the potential to make a move that puts the king into check, which is of course not valid, so we have to take care of this.
+
+<Wrapper classes="image-row">
+    ![A pinned piece](/weblog/chess/example-pin.png)
+    ![Allowed moves for a pinned piece](/weblog/chess/example-pin-moves.png)
+</Wrapper>
+
+To start getting these pieces to follow the proper safety guidelines, we should first identify them!
+
+### Pin detection
+This is where we have to make yet another modification to our long-range validation function.
+
+The idea is this: When we hit an enemy piece that would stop the ray from going, instead of actually stopping, we "silently" continue the ray without marking new squares to be validated. We keep going until we hit a **second** piece. If this second piece happens to be the enemy king, we know that there's only 1 piece in the way for our current piece that blocks an attack. That means that we can mark the **first piece we hit** as pinned.
+
+```ts
+firstHit = null
+foundKing = false
+function traceSpots(pos, dir) {
+if ( pos.friendlyPiece ) return // Friendly pieces still block
+
+  if ( pos.enemyPiece && pieceHit != null ) return // Second enemy piece
+  if ( pos.enemyPiece ) pieceHit = pos // First enemy piece
+
+  if ( pos.enemyKing ) foundKing = true // Remember the king was hit
+
+  if ( !pieceHit ) markValid(pos) // Move or capture
+
+  // ... existing code
+}
+// After tracing a direction
+if ( foundKing ) markAs( 'pinned', pieceHit )
+```
+###### Expanded long-range algorithm to detect pinned pieces
+
+> It's important for both this code and the code responsible for saving the line of check that the temporary variables are reset for each trace/direction.
+
+Great, we now know what pieces are pinned!
+
+### Pin move validation
+It's surprisingly easy to validate moves for pinned pieces.
+
+A potential move of a pinned piece may be validated if it lies on the same line as the current position and the king. In other words, from the current position, we move directly towards or directly away from the king.
+
+This holds for all cases of a pinned piece, as it's impossible to reveal an attack on the king by staying on the same line with the king as you currently are.
+
+> For my Minecraft implementation, a friend proposed a smart approach: validate moves by checking if the angle to the potential move matches the angle to the king from the current location. Move 1 unit in the first direction, then 1 unit back along the second; if I end up in the same spot, the move is on the line and therefore valid.
+
+## Edge cases
+En Passant troubles II: Electric Boogaloo
+(the final part)
+
+We've covered most situations that can happen in a game of chess, but there's just a few board positions remaining that reveal flaws in our implementation. These are unlikely to happen in real games, but we should probably deal with them anyway.
+
+### En Passant check
+
+Let me show you the following scenario, where a pawn that just moved two squares is also attacking the king.
+
+![A king in check by an En-Passantable pawn](/weblog/chess/en-passant-check.png)
+
+In this position, black should be able to capture the white pawn using the 'Capture the attacking piece' way to get out of check.
+
+But This move is currently not being validated, because that pawn move isn't going to the position of the captured piece.
+
+So we have to create a special case for pawn moves in check so that it can also move *behind* an 'En-Passantable' 'origin of check' piece.
+
+> Depending on your implementation, this edge case might already be handled with, but it's good to keep in mind.
+
+### En Passant pseudo-pin
+
+While looking into further possible edge cases I might have left unhandled, I found [this](https://chess.stackexchange.com/a/18397) scenario, in which another obvious issue with En Passant is highlighted.
+
+![A situation where capturing En Passant would put you in check, without pinned pieces](/weblog/chess/en-passant-pin.png)
+
+Turns out, capturing with En Passant is the **only way** to move a non-pinned piece while still revealing an attack on your king.
+
+If the black pawn were to capture En Passant in this position, it would reveal a direct rook attack on the king.
+
+So capturing En Passant here is not allowed! But because we detected no pinned pieces, we are allowing the pawn to move however it wants, including this illegal capture! So what do we do about this?
+
+Well, we have to revisit our pin detection algorithm, to include this case.
+
+In the part of the ray where we already hit one piece, to potentially be marked as pinned: If we encounter an En-Passantable piece, we can remember this and skip it. If we then end up finding the king, we find ourselves in our edge case.
+
+We can then mark the first piece we hit as 'En Passant pseudo-pinned'.
+
+With that, we now know when one of our pawns is in this predicament, and we can specifically not allow it to capture via En Passant in the next move.
+
+## Checkmate & Stalemate detection
+Mate and stalemate detection is actually quite easy to implement in our current system.
+
+We already have a way of finding the valid moves for all pieces, so we can simply run this for all pieces and count how many valid moves there are for each side.
+
+This is sufficient for finding when a player has no more valid moves, and from there on it's a simple matter on whether their king is checked or not to decide whether it's checkmate or stalemate.
+
+That's our mate detection system almost done already!
+
+There's just one issue remaining. It's possible for a player to make a move, after which it would not be able to instantly make another move. This doesn't count as stalemate, as you can't move twice in a row. The enemy gets to move first, which can give you valid moves again, thus preventing stalemate.
+
+We can fix this, and greatly improve performance, by only running this mate detection code for the enemy side of the player that just moved.
+
+> If we choose to mark all possible positions instead of just counting them, we can also re-use this to do a quicker look-up for the possible moves for any valid move. In that case, when selecting a piece to move, we already have all valid moves for it marked, so we can simply show them.
+
+## Concluded game flow
+So with all of these puzzle pieces together, let's stitch together a game flow.
+
+# TODO: reset flags
+
+- At the start of the game, we don't have to do anything.
+- When a piece is selected, we run its validation logic to present the possible moves.
+- When a valid move square is selected, we do the following:
+1. Move the piece over, capture the piece that was at that location.
+2. Perform special move logic:
+- En Passant
+- Castling
+- Promotion
+- After a move is made, we do the following:
+1. Compute what squares the last moved player is attacking.
+2. Count how many valid moves the enemy of last moved player can make.
+3. Determine if one of the players is in Checkmate or Stalemate.
+4. Switch whose turn it is
+
+To keep track of what phase we're in, it's useful to keep track of a global 'state' variable.
+
+```ts
+function select(piece) {
+gameState = PIECE_SELECTED
+piece.runValidation()
+}
+```
+###### Pseudocode for piece selection stage
+
+```ts
+function move(piece, location) {
+gameState = PIECE_MOVING
+piece.moveTo(location)
+
+  // Castling
+  if ( piece.is(king) && location.distance >= 2 )
+      castle(location)
+
+  // En passant
+  if ( piece.behind.is('en-passantable') )
+      capture(piece.behind)
+
+  // Promotion
+  if ( !piece.infront.onBoard ) {
+    promote(piece)
+    gameState = PIECE_PROMOTING
+  }
+
+  // If the player still has to choose
+  // what to promote to, we can stop here
+  if (gameState != PIECE_PROMOTING) postMove()
+}
+```
+###### Pseudocode for piece moving stage
+
+```ts
+function postMove() {
+// Scanning attacks
+gameState = SCANNING_ATTACKS
+getPieces( currentTurn ).runValidation()
+
+  // Scanning valid moves
+  gameState = COUNTING_MOVES
+  getPieces( currentTurn.opposite ).runValidation()
+
+  // Determine game state
+  determineGameState()
+
+  // Switch turns
+  currentTurn = currentTurn.opposite
+
+  gameState = IDLE
+}
+```
+###### Pseudocode for post-move stage
+
+## Happy chessing
+Thanks for reading!
+
+TODO: uh write some actual good conclusion here
+
+If this blog was any use to you, I'd love to hear about your project, so contact me!
