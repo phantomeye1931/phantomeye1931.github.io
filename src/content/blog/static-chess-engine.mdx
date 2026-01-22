@@ -44,12 +44,13 @@ The "only" condition to this movement is that it cannot move to this square if t
 ```ts
 function knightMoves() {
   knightOffsets = [
-  (2, 1), (2, -1), ... (-1, 2), (-1, -2)
-]
+    (2, 1), (2, -1), ... (-1, 2), (-1, -2)
+  ]
 
-  for ( offset in knightOffsets ) {
-    if ( !pos.friendlyPiece && pos.onBoard)
-    markValid(pos + offset)
+  for (offset in knightOffsets) {
+    move = pos + offset
+    if (!hasFriendlyPiece(move) && move.onBoard)
+      markValid(move)
   }
 }
 ```
@@ -76,12 +77,12 @@ These long range moves can be evaluated quite easy. In all directions that these
 ```ts
 // Pseudocode
 function traceSpots(pos, dir) {
-  if ( pos.friendlyPiece ) return // <- Remember this line
+  if (hasFriendlyPiece(pos)) return // <- Remember this line
 
   markValid(pos) // Move or capture
 
-  if ( !pos.inFront.occupied )
-  traceSpots(pos.inFront, dir)
+  if (!hasPiece(pos.inFront))
+    traceSpots(pos.inFront, dir)
 }
 ```
 ###### Pseudocode of recursive long-range move validation
@@ -104,12 +105,14 @@ We can validate the moves of a pawn as such:
 // Pseudocode
 function pawnMoves(pos, dir) {
   // Simple moves
-  if ( !pos.inFront.occupied ) markValid( pos.inFront )
-  if ( !pos.inFront.occupied && !pos.inFront.inFront.occupied
-  && !pos.moved ) markValid( pos.inFront.inFront )
+  if (!hasPiece(pos.inFront)) markValid(pos.inFront)
+  if (!hasPiece(pos.inFront)
+      && !hasPiece(pos.inFront.inFront)
+      && !hasBeenMoved(pos)
+  ) markValid(pos.inFront.inFront)
 
-  if ( pos.inFront.left.enemyPiece ) markValid( pos.inFront.left )
-  if ( pos.inFront.right.enemyPiece ) markValid( pos.inFront.right )
+  if (hasEnemy(pos.inFront.left)) markValid(pos.inFront.left)
+  if (hasEnemy(pos.inFront.right)) markValid(pos.inFront.right)
 }
 ```
 ###### Pseudocode of pawn movement
@@ -133,7 +136,7 @@ We can do this after every move. For each piece, this is what squares they attac
 - King: All 8 adjacent squares
 - Pawn: Diagonal-forward capture squares
 
-> ***Note that we don't have to do this at the start of the game**, as—in the normal chess configuration—none of the king's adjacent squares can be attacked before at least a few moves are made, so the kings can't move to a square that's defended anyway*.
+> ***Note that we don't have to do this at the start of the game**, as — in the normal chess configuration — none of the king's adjacent squares can be attacked before at least a few moves are made, so the kings can't move to a square that's defended anyway*.
 
 We now have an algorithm to detect valid king moves, but it's not perfect just yet. Let me give you the following example:
 
@@ -161,10 +164,20 @@ We can implement this by extending our implementation of pawn moves:
 ```ts
 function pawnMoves(pos, dir) {
   // ... existing code
+  
+  if (!hasPiece(pos.inFront)
+      && !hasPiece(pos.inFront.inFront)
+      && !hasBeenMoved(pos)
+  ) {
+    markValid(pos.inFront.inFront)
+    markEnPassantable(pos.inFront) // <-- new
+  }
 
   // En Passant
-  if ( pos.left.is('en-passantable') ) markValid( pos.left.inFront )
-  if ( pos.right.is('en-passantable') ) markValid( pos.right.inFront )
+  if (isEnPassantable(pos.left)) markValid(pos.left.inFront)
+  if (isEnPassantable(pos.right)) markValid(pos.right.inFront)
+
+  // ... existing code
 }
 ```
 ###### Expansion of the pawn moveset to include 'En Passant'
@@ -191,17 +204,21 @@ Given that we've marked what squares are attacked, this is pretty easy to implem
 
 ```ts
 function attemptCastle(pos, dir) {
-if ( pos.attacked || pos.moved || pos.find(dir, ROOK).moved ) return
+  if (isAttacked(pos) 
+      || hasBeenMoved(pos) 
+      || hasBeenMoved(pos.find(dir, ROOK))) {
+    return
+  }
 
-  if ( pos.to(dir).occupied ) return
-  if ( pos.to(dir).to(dir).occupied ) return
+  if (hasPiece(pos.to(dir))) return
+  if (hasPiece(pos.to(dir).to(dir))) return
 
-  if ( pos.to(dir).attacked ) return
-  if ( pos.to(dir).to(dir).attacked ) return
+  if (isAttacked(pos.to(dir))) return
+  if (isAttacked(pos.to(dir).to(dir))) return
 
   // TODO: Check if the rook is blocked
 
-  markValid( pos.to(dir).to(dir) )
+  markValid(pos.to(dir).to(dir))
 }
 ```
 ###### Pseudocode of castling-checking algorithm
@@ -259,9 +276,9 @@ When tracing squares for long-range pieces, we can take advantage of the recursi
 function markValid(pos) {
   // ... existing code
 
-  if ( pos.enemyKing ) {
+  if (hasEnemyKing(pos)) {
     checkOrigin = true
-    pos.markAs( 'check origin' )
+    markCheckOrigin(pos)
     // We can also increment a check counter here to
     // use for invalidating non-king moves when it's over 1
   }
@@ -274,7 +291,7 @@ function traceSpots(pos, dir) {
 
   // This will always run after the recursion has ended,
   // at all positions of the ray
-  if ( checkOrigin ) pos.markAs( 'line of check' )
+  if (checkOrigin) markLineOfCheck(pos)
 }
 ```
 ###### Expanded long-range algorithm to mark "lines of check"
@@ -307,19 +324,19 @@ The idea is this: When we hit an enemy piece that would stop the ray from going,
 firstHit = null
 foundKing = false
 function traceSpots(pos, dir) {
-if ( pos.friendlyPiece ) return // Friendly pieces still block
+  if (hasFriendlyPiece(pos)) return // Friendly pieces still block
 
-  if ( pos.enemyPiece && pieceHit != null ) return // Second enemy piece
-  if ( pos.enemyPiece ) pieceHit = pos // First enemy piece
+  if (hasEnemyPiece(pos) && firstHit != null) return // Second enemy piece
+  if (hasEnemyPiece(pos)) firstHit = pos // First enemy piece
 
-  if ( pos.enemyKing ) foundKing = true // Remember the king was hit
+  if (hasEnemyKing(pos)) foundKing = true // Remember the king was hit
 
-  if ( !pieceHit ) markValid(pos) // Move or capture
+  if (firstHit == null) markValid(pos) // Move or capture
 
   // ... existing code
 }
 // After tracing a direction
-if ( foundKing ) markAs( 'pinned', pieceHit )
+if (foundKing) markAsPinned(firstHit)
 ```
 ###### Expanded long-range algorithm to detect pinned pieces
 
@@ -410,31 +427,31 @@ So with all of these puzzle pieces together, let's stitch together a game flow.
 3. Determine if one of the players is in Checkmate or Stalemate.
 4. Switch whose turn it is
 
-To keep track of what phase we're in, it's useful to keep track of a global 'state' variable.
+To keep track of what phase we're in, it's useful to keep track of a global 'gameState' variable.
 
 ```ts
 function select(piece) {
-gameState = PIECE_SELECTED
-piece.runValidation()
+  gameState = PIECE_SELECTED
+  piece.runValidation()
 }
 ```
 ###### Pseudocode for piece selection stage
 # TODO: this section is still WIP
 ```ts
 function move(piece, location) {
-gameState = PIECE_MOVING
-piece.moveTo(location)
+  gameState = PIECE_MOVING
+  piece.moveTo(location)
 
   // Castling
-  if ( piece.is(king) && location.distance >= 2 )
+  if (piece.isKing() && location.distance >= 2)
       castle(location)
 
   // En passant
-  if ( piece.behind.is('en-passantable') )
+  if (isEnPassantable(piece.behind))
       capture(piece.behind)
 
   // Promotion
-  if ( !piece.infront.onBoard ) {
+  if (!isOnBoard(piece.infront)) {
     promote(piece)
     gameState = PIECE_PROMOTING
   }
@@ -448,13 +465,13 @@ piece.moveTo(location)
 
 ```ts
 function postMove() {
-// Scanning attacks
-gameState = SCANNING_ATTACKS
-getPieces( currentTurn ).runValidation()
+  // Scanning attacks
+  gameState = SCANNING_ATTACKS
+  getPieces(currentTurn).runValidation()
 
   // Scanning valid moves
   gameState = COUNTING_MOVES
-  getPieces( currentTurn.opposite ).runValidation()
+  getPieces(currentTurn.opposite).runValidation()
 
   // Determine game state
   determineGameState()
