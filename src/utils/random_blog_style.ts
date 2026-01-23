@@ -16,14 +16,14 @@ export function getItemStyle(seed: string) {
 }
 
 export function getPageStyle(seed: string) {
-    const hash = xmur3(seed);
+    const hash = xmur3(seed + "y");
     const rand = mulberry32(hash);
 
     const coffeeCount = 16;
     const images: string[] = [];
     const positions: string[] = [];
 
-    let currentY = 200;
+    let currentY = 300;
     const maxHeight = 20000;
 
     while (currentY < maxHeight) {
