@@ -31,13 +31,13 @@ In this case, with "static", I mean to refer to creating a chess engine **withou
 ## Piece movement
 To validate which moves are valid for any piece in a given position, we should first define the movesets of pieces. That is, how they are allowed to move and capture other pieces.
 
-![Movement of the knight](/weblog/chess/movement-knight.png)
-
 These seem really simple, but quickly reveal some caveats during actual implementation.
 
 ### Knights
 
 The knight is probably the simplest. In any of the 4 directions, it can move 2 squares, followed by 1 square to the side. Forming an L shape.
+
+![Movement of the knight](/weblog/chess/movement-knight.png)
 
 The "only" condition to this movement is that it cannot move to this square if there is a piece of the same color here.
 
