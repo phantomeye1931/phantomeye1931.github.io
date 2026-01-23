@@ -18,11 +18,11 @@ const props = Astro.props;
 <html lang="en">
     <head>
         <BaseHead title={props.title} description={props.description} />
+        <ThemeManager />
     </head>
     <body>
         <main>
             <div class="page-wrapper">
-                <ThemeManager />
                 <Background wearOff={ props.background.wearOff } onlyLanding={ props.background.onlyLanding } />
                 <div class="page-contents">
                     <HeaderButtons all={ props.background.wearOff } />
