@@ -71,7 +71,7 @@ html {
 .paperclip {
     position: absolute;
     transform: translate(0, -58px);
-    align-self: flex-end;
+    right: 0;
     translate: calc(var(--paper-padding) * -1) calc(var(--paper-padding) * -1);
 
     & svg {
@@ -83,7 +83,7 @@ html {
     color: var(--col-text-reading);
     background-color: var(--col-paper);
 
-    display: flex;
+    display: block;
     flex-direction: column;
 
     box-sizing: border-box;
@@ -218,10 +218,12 @@ pre.astro-code {
 
     line-height: 1.5rem;
 
+    clear: both;
+
     rotate: -1deg;
     filter: var(--shadow);
 
-    margin-bottom: 0.5rem;
+    margin: 3em 1.2em;
 
     & .astro-code {
         background-color: transparent !important;
@@ -270,6 +272,10 @@ pre.astro-code {
     }
 }
 
+.tiny > .item-wrapper {
+    max-width: 65%;
+}
+
 .item-wrapper {
     max-width: 90%;
     margin: 1.5rem;
@@ -295,6 +301,7 @@ pre.astro-code {
     z-index: 5;
 
     margin-bottom: 3em;
+    margin-inline: 1.2em;
 
     & > img {
         max-height: 300px;
@@ -333,6 +340,10 @@ pre.astro-code {
     & .item-wrapper {
         padding-top: 1.5rem;
         margin: 0;
+    }
+
+    & .image {
+        margin-inline: 0;
     }
 }
 

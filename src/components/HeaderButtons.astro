@@ -1,11 +1,25 @@
 ---
 const buttons = [
     { alignRight: true, label: "</>", url: "https://github.com/phantomeye1931/phantomeye1931.github.io"},
-    { alignRight: true, label: "WEBLOG", url: "/#weblog"},
-    { alignRight: true, label: "PROJECTS",  url: "/#projects"},
-    { alignRight: true, label: "ART",  url: "/#art"},
     { alignRight: true, label: "sync",  url: "javascript:void(0)", behavior: "toggle-dark-mode"},
 ]
+
+interface Props {
+    all: boolean,
+}
+const props = Astro.props;
+
+if (Astro.props.all) {
+    buttons.push(
+        { alignRight: true, label: "WEBLOG", url: "/#weblog"},
+        { alignRight: true, label: "PROJECTS",  url: "/#projects"},
+        { alignRight: true, label: "ART",  url: "/#art"},
+    )
+} else {
+    buttons.push(
+        { alignRight: true, label: "BACK TO TOP", url: "#"}
+    )
+}
 ---
 
 <div class="buttons">
@@ -38,6 +52,7 @@ const buttons = [
         justify-content: flex-end;
         align-items: flex-start;
         flex-wrap: wrap;
+        top: 0;
 
         width: 100%;
 

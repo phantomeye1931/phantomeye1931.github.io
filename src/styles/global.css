@@ -6,6 +6,8 @@
 	--col-text-2:       #947d61;
 	--col-text-3:       #b29c7f;
 
+	--col-selection: var(--col-background-2);
+
 	--col-divider: var(--col-text-3);
 
 	--col-drop-shadow:  #00000030;
@@ -27,9 +29,6 @@ html, body {
 	margin: 0;
 	padding: 0;
 	height: 100%;
-
-	/*-ms-overflow-style: none;
-    scrollbar-width: none;*/
 
 	font-family: "Roboto Slab", serif; /* Default font */
 }
@@ -75,14 +74,14 @@ html, body {
 
 /* TODO: Bleh */
 *::selection {
-	background: #cc0000;
-	color: #ffffff;
+	background: var(--col-text);
+	color: var(--col-background-2);
 }
 *::-moz-selection {
-	background: #cc0000;
-	color: #ffffff;
+	background: var(--col-text);
+	color: var(--col-background-2);;
 }
 *::-webkit-selection {
-	background: #cc0000;
-	color: #ffffff;
+	background: var(--col-text);
+	color: var(--col-background-2);;
 }

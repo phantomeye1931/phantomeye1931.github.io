@@ -1,12 +1,12 @@
-<script>
+<script is:inline>
     const ColorScheme = {
         DARK: "dark",
         LIGHT: "light",
         SYNC: "sync",
-    } as const;
+    }
 
     // 1. Define the setter function globally
-    function applyColorScheme(theme: string) {
+    function applyColorScheme(theme) {
         document.documentElement.setAttribute("color-scheme", theme);
     }
 
@@ -51,7 +51,7 @@
     }
     window.getColorScheme = getColorScheme;
 
-    function setColorScheme(color_scheme: string) {
+    function setColorScheme(color_scheme) {
         localStorage.setItem("color-scheme", color_scheme);
     }
 </script>
