@@ -71,7 +71,7 @@ html {
 .paperclip {
     position: absolute;
     transform: translate(0, -58px);
-    align-self: flex-end;
+    right: 0;
     translate: calc(var(--paper-padding) * -1) calc(var(--paper-padding) * -1);
 
     & svg {
