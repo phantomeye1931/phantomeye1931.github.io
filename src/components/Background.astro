@@ -72,14 +72,15 @@ const props = Astro.props;
 
 <style>
 .bg-grid {
-    position: absolute;
+    position: fixed;
     inset: 0;
     width: 100%;
-    min-height: 100svh;
+    min-height: 100dvh;
     overflow: hidden;
     background-color: var(--col-background);
 
     &[only-landing="true"] {
+        position: absolute;
         height: 100svh;
     }
 }
