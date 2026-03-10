@@ -20,12 +20,12 @@ const formatFancy = (date: Date) => {
             <a href={`/blog/${post.id}`}>
                 <div class="item">
                     <div class="header">
-                        <div class="title f-stamp">{post.data.title}</div>
-                        <div class="date f-dotmatrix">
+                        <div class="title">{post.data.title}</div>
+                        <div class="date">
                             {formatFancy(new Date(post.data.pubDate))}
                         </div>
                     </div>
-                    {post.data.description}
+                    <div class="description">{post.data.description}</div>
                 </div>
             </a>
         ))
@@ -44,10 +44,36 @@ a {
 }
 
 .item {
+    position: relative;
     display: flex;
     flex-direction: column;
     color: var(--col-text);
     padding-bottom: 1rem;
+
+    & > * {
+        padding-left: 0;
+        transition: padding-left 0.3s;
+    }
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: var(--col-text-2);
+
+        width: 0;
+        transition: width 0.3s;
+    }
+
+    &:hover {
+        & > * {
+            padding-left: 1.618rem;
+        }
+
+        &::before {
+            width: 1rem;
+        }
+    }
 
     & > .header {
         display: flex;
@@ -55,7 +81,8 @@ a {
         justify-content: space-between;
 
         & > .title {
-            color: var(--col-text-reading);
+            color: var(--col-element);
+            font-family: "Roboto Slab", serif;
             margin-bottom: -0.5rem;
             display: flex;
             width: 100%;
@@ -73,6 +100,10 @@ a {
         & > .date {
             text-wrap: nowrap;
         }
+    }
+
+    & > .description {
+        margin-right: 2rem;
     }
 }
 </style>

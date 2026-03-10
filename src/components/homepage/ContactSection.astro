@@ -1,0 +1,35 @@
+---
+
+import BusinessCard from "../test/BusinessCard.astro";---
+
+<div class="section" id="weblog">
+    <div class="text">
+        <div class="title">Get in Touch</div>
+        I'm currently available for new projects and collaborations. Let's build cool things together!
+    </div>
+    <BusinessCard />
+</div>
+
+<style>
+    .section {
+
+        @media (max-width: 1000px) {
+            display: grid;
+        }
+
+        display: flex;
+        flex-direction: row;
+        align-content: space-between;
+
+        margin-inline: auto;
+        max-width: 1500px;
+        margin-block: 2rem;
+
+        gap: 1rem;
+    }
+
+    .text {
+        padding-block: 2rem;
+        flex: 1;
+    }
+</style>

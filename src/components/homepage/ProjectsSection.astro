@@ -4,58 +4,107 @@ const projects = [
     {
         name: "PortalMod",
         description: "Portal-inspired technical mod for Minecraft",
-        information: "Written in Java\n\nPortalMod is a big fan project for Minecraft that brings components from the Portal franchise by Valve Software into Minecraft and incorporates them into Minecraft's gameplay loop, artstyle, sound design etc.\n\nThe project has sparked a very active community on its Discord server, growing to more than 5000 members.",
-        buttons: [{ label: "PortalMod Website", url: "https://portalmod.net/" }, { label: "Discord Community", url: "https://discord.gg/portalmod" }],
+        information:
+                "2020 - current \n Written in <strong>Java</strong>"
+
+                + "\n\n PortalMod is a big fan project for Minecraft that brings components from the Portal franchise by Valve Software into Minecraft and incorporates them into Minecraft's gameplay loop, artstyle, sound design etc."
+
+                + "\n\n The project has sparked a very active community on its Discord server, growing to more than 5000 members.",
+        buttons: [
+            { label: "PortalMod Website", url: "https://portalmod.net/" },
+            { label: "Discord Community", url: "https://discord.gg/portalmod" }
+        ],
     }, {
         name: "GLaDOS Discord Bot",
         description: "Overengineered general-utility and 'fun' Discord bot",
-        information: "",
+        information:
+                "2023 - current \n Stack: <strong>NodeJS, TypeScript</strong>" +
+
+                "\n\n Self-hosted Discord bot framework with functionality for database management, user data storage, user forms, image editing and much more. Has been rewritten a couple of times for a cleaner codebase, using the latest ECMAScript standards and precise typescript patterns." +
+
+                "\n\n To manage the ever-growing Discord community sparked from our PortalMod project, I had to create a Discord bot as a layer to connect our active active userbase with a secure database connection. Since then a lot of new functionality has been added, and it's being updated often.",
+        buttons: [
+            { label: "Discord Community", url: "https://discord.gg/portalmod" },
+            { label: "PortalMod Website", url: "https://github.com/snowy-shack/GLaDOS-Discord-Bot" }
+        ],
     }, {
-        name: "Static Chess engine",
+        name: "Efficient chess validation",
         description: "Chess algorithm to evaluate validity of moves statically",
-        information: ""
+        information:
+            "2024 - current \n <strong>Algorithm</strong> & implementation" +
+
+            "\n\n For a passion project, I wanted to implement the game of Chess in Minecraft. However, due to <strong>technical limitations</strong> of Minecraft's scripting language (mcfunction), I had to create <strong>my own efficient strategy to algorithmically determine the state of the board</strong>: which moves are valid, when one of the players has won, and special moves." +
+
+            "\n\n The resulting algorithm can <strong>completely determine which moves are valid</strong> in any given chess position, based on the current state of the board, <strong>without looking ahead in the future</strong>." +
+
+            "\n\n Since I ended up <strong>inventing quite some new (to my research) methods to solve specific problems</strong>, I wrote a blog.",
+        buttons: [
+            {label: "Read blog", url: "/blog/static-chess-engine"}
+        ],
     }, {
         name: "Tic Tac Tesseract",
         description: "Playable tic-tac-toe in 4 dimensions",
-        url: "/pages/tic-tac-tesseract",
-        information: "",
-        buttons: [{ label: "Play in browser", url: "/pages/tic-tac-tesseract" }, { label: "View source code", url: "" }],
+        information: "2024 \n Stack: <strong>JavaScript, HTML5 Canvas</strong>" +
+            "\n\n Another passion project, with which you can play the timeless classic game of Tic-tac-toe in 4 dimensions! In this surprisingly balanced game, two players can compete on a hyperdimensional game board to get 4 in a row first.",
+        buttons: [
+            { label: "Play in browser", url: "/pages/tic-tac-tesseract" },
+            { label: "Source code", url: "https://github.com/SerialSniper/TicTacTesseract" }
+        ],
     }, {
         name: "APF Image format converter",
         description: "Command line utility to convert images to APF",
-        url: "#",
-        information: ""
+        information: "2023 \n Written in <strong>Python</strong>" +
+            "\n\n A CLI tool to convert to and from the fictional 1-bit Aperture Picture Format image standard, with compression optimized 1980s computers.",
+        buttons: [
+            { label: "Check out on GitHub", url: "https://github.com/phantomeye1931/APFConverter" }
+        ]
     }, {
-        name: "Untitled game",
-        description: "Untitled 2D platformer game being developed in Java",
-        url: "#",
-        information: ""
+        name: "Untitled platformer",
+        description: "Untitled metroidvania-platformer being developed in Java",
+        information: "In development \n Written in <strong>Java</strong>" +
+            "\n\n An experimental 2D platformer and metroidvania game with a custom engine built from the ground up with Java, with custom rendering pipelines, input controllers art workflow." +
+
+            "\n\n More info to come.",
+        buttons: [
+        ]
     }
 ]
 
-    const websites = [
-        {
-            name: "PortalMod Website",
-            description: "Homepage for PortalMod, including payment functionality",
-            url: "https://portalmod.net/",
-            information: ""
-        }, {
-            name: "ECL Website",
-            description: "Website for Energiecooperatie ECL",
-            url: "https://eclenergie.nl/",
-            information: ""
-        }, {
-            name: "Personal Website",
-            description: "Simple homepage for my weblogs and links. You're looking at it right now!",
-            url: "/",
-            information: ""
-        }, {
-            name: "██████⠀ ██████",
-            description: "█████████⠀ ███⠀ ██████████⠀ ███⠀ ██⠀ ███",
-            url: "#", extra: "censored",
-            information: ""
-        }
-    ]
+const websites = [
+    {
+        name: "PortalMod Website",
+        description: "Homepage and info for PortalMod, with PayPal integration",
+        information: "2021 - current \n Stack: <strong>Nuxt, TypeScript, Paypal API, Supabase</strong>" +
+            "\n\n The central hub for the PortalMod project. Features info, a news feed, Google forms integration, PayPal integration for donations and more",
+        buttons: [
+            { label: "Visit Site", url: "https://portalmod.net/" }
+        ]
+    }, {
+        name: "ECL Website",
+        description: "Homepage and website for Energiecooperatie ECL",
+        information: "2022 \n Stack: <strong>Nuxt, NodeJS, SQLite</strong>" +
+            "\n\n Professional web presence for the Energiecoöperatie Leur (ECL), providing information on sustainable energy initiatives, member registration, Google calendar integration and more." +
+
+            "\n\n Also contains an admin panel including functionality to upload downloadable items, and edit articles using a 'What you see is what you get' editor.",
+        buttons: [
+            { label: "Visit Site", url: "https://eclenergie.nl/" }
+        ]
+    }, {
+        name: "Personal Website",
+        description: "Simple homepage for my weblogs and links. You're looking at it right now!",
+        information: "2025 - current \n Stack: <strong>Astro, TypeScript, WebAssembly</strong>" +
+            "\n\n A lightweight, no-framework personal portfolio designed for speed and clarity. Serves as a central repository for my technical blogs and project history.",
+        buttons: [
+            { label: "Source Code", url: "https://github.com/snowy-shack/portfolio" }
+        ]
+    }, {
+        name: "██████⠀█████",
+        description: "█████████⠀ ███⠀ ███⠀ ██⠀ ████████",
+        extra: "censored",
+        information: "████ \n <strong>█████████</strong>" +
+            "\n\n ████⠀ ██⠀ ██████⠀ ██████⠀ ████⠀ ████████⠀ ██████⠀ █⠀ █████⠀ ██████⠀ ████⠀ ██████⠀ ███████████⠀ █████⠀ █████⠀ █████████⠀ ████⠀ ██⠀ ███████████████⠀ ██⠀ █████⠀ █████████⠀ ████⠀ █⠀ ████⠀ ███⠀ █████⠀ ███⠀ ███████.",
+    }
+]
 
     const art_cards = [
         {
@@ -97,7 +146,7 @@ const projects = [
             <div class="grid cols2">
                 {
                     websites.map((w) => (
-                        <ModalCard title={w.name} description={w.description} information={w.information} classes={w.extra} />
+                        <ModalCard title={w.name} description={w.description} information={w.information} buttons={w.buttons} /> <!-- classes={w.extra} -->
                     ))
                 }
             </div>

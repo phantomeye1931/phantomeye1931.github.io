@@ -7,6 +7,8 @@ import WeblogSection from "../components/homepage/WeblogSection.astro";
 import Spacing from "../components/simple/Spacing.astro";
 
 import {SITE_DESCRIPTION, SITE_TITLE} from "../consts.ts";
+import ContactSection from "../components/homepage/ContactSection.astro";
+import GitSection from "../components/homepage/GitSection.astro";
 const background = { wearOff: true, onlyLanding: true };
 ---
 <Page title={SITE_TITLE} description={SITE_DESCRIPTION} background={background} >
@@ -14,11 +16,13 @@ const background = { wearOff: true, onlyLanding: true };
 
 	<div class="parts">
 		<IntroSection />
+		<Spacing x="6em" />
+		<GitSection />
 		<Spacing x="4em" />
 		<ProjectsSection />
 		<Spacing x="4em" />
 		<WeblogSection />
-		<!--<ContactSection />-->
+		<ContactSection />
 	</div>
 </Page>
 

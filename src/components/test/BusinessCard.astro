@@ -1,0 +1,225 @@
+<div id="container">
+    <div id="flip-wrapper">
+        <div id="tilt-card">
+            <div class="face front">
+                <div class="_website">armand.dev</div>
+                <div class="_name">Armand de Vries</div>
+            </div>
+            <div class="face back">
+                <div class="_name">Armand de Vries</div>
+                <div class="_website">armand.dev</div>
+                <div class="_details_top">
+                    <div>armand.devries</div>
+                    <div>@outlook.com</div>
+                </div>
+                <div class="_details_bottom">
+                    <div><span>+31 </span><span>6 </span><span>45154949</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    html {
+        --background-color: #f4f1ea;
+        --background-color2: #655147;
+        --item_color: #1a1512;
+        --item_color2: #8c7a70;
+
+        &[color-scheme='dark'] {
+            --background-color: #847364;
+            --background-color2: #392f28;
+            --item_color: #1d1814;
+            --item_color2: #3d3530;
+        }
+    }
+
+    #container {
+        perspective: 1000px;
+        width: 455px;
+        height: 260px;
+
+        @media (max-width: 1000px) {
+            scale: .7;
+        }
+    }
+
+    #flip-wrapper {
+        width: 100%;
+        height: 100%;
+        transition: transform 0.3s;
+        transform-style: preserve-3d;
+        cursor: pointer;
+    }
+
+    #tilt-card {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+
+        transition: transform 0.3s;
+        transition-property: transform, scale;
+
+        /* Fine, I'll make my own drop shadow */
+        &::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            background: rgba(0, 0, 0, 0.2);
+            filter: blur(15px);
+
+            z-index: -1;
+
+            opacity: 0.5;
+            transition: opacity 0.3s;
+            pointer-events: none;
+
+            translate: 0 20px;
+        }
+
+        #container:hover &::before {
+            opacity: 1;
+        }
+    }
+
+    .face {
+        --padding: 1.6rem;
+
+        position: absolute;
+        transform-style: preserve-3d;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: var(--background-color);
+        background-size: cover;
+        background-repeat: no-repeat;
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-color: var(--background-color2);
+
+            padding: .6rem;
+            mask: var(--mask-url) no-repeat center / cover border-box content-box;
+            mask-mode: luminance;
+
+            pointer-events: none;
+            z-index: 1;
+        }
+    }
+
+    /* Card contents */
+    .face {
+        & > * {
+            position: absolute;
+            transform: translateZ(1px);
+
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+        }
+
+        & ._name {
+            left: var(--padding);
+            text-align: left;
+            width: 200px;
+
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+            font-size: 50px;
+            line-height: 50px;
+
+            color: var(--item_color);
+        }
+
+        & ._website {
+            left: calc(var(--padding) + .2rem);
+            top: calc(var(--padding) + 2rem);
+
+            font-weight: 600;
+            color: var(--item_color2);
+
+            font-size: 20px;
+        }
+    }
+
+    .front {
+        --mask-url: url("/business_card/mask_front.png");
+    }
+
+    .back {
+        transform: rotateY(180deg);
+        --mask-url: url("/business_card/mask_back.png");
+
+        & ._name {
+            inset: var(--padding);
+            font-size: 40px;
+            line-height: 40px;
+        }
+
+        & ._website {
+            inset: auto auto var(--padding) var(--padding);
+        }
+
+        & ._details_top {
+            text-align: right;
+            color: var(--background-color);
+            inset: var(--padding) var(--padding) auto auto;
+        }
+
+        & ._details_bottom {
+            text-align: right;
+            color: var(--background-color);
+            inset: auto var(--padding) var(--padding) auto;
+        }
+    }
+</style>
+
+<script is:inline>
+    const container = document.getElementById('container');
+    const flipWrapper = document.getElementById('flip-wrapper');
+    const tiltCard = document.getElementById('tilt-card');
+
+    let isFlipped = false;
+    let hovering = false;
+
+    const updateTilt = (e) => {
+        if (!hovering) return;
+
+        const { left, top, width, height } = container.getBoundingClientRect();
+        const x = ((e.clientX - left) / width - 0.5) * 20;
+        const y = ((e.clientY - top) / height - 0.5) * -20 * (isFlipped ? -1 : 1);
+
+        tiltCard.style.transitionProperty = 'scale';
+        // tiltCard.style.transform = `scale(1.05) rotateX(${y}deg) rotateY(${x}deg)`;
+        tiltCard.style.scale = `1.05`;
+        tiltCard.style.transform = `rotateX(${y}deg) rotateY(${x}deg)`;
+    };
+
+    container.onmousemove = updateTilt;
+
+    container.onmouseenter = () => {
+        hovering = true;
+    }
+
+    container.onmouseleave = (e) => {
+        hovering = false;
+        tiltCard.style.transitionProperty = 'transform, scale';
+        tiltCard.style.scale = '';
+        tiltCard.style.transform = '';
+    };
+
+    flipWrapper.onclick = (e) => {
+        isFlipped = !isFlipped;
+        flipWrapper.style.transform = isFlipped ? 'rotateY(180deg)' : '';
+
+        updateTilt(e);
+        tiltCard.style.transitionProperty = 'transform, scale';
+    };
+</script>

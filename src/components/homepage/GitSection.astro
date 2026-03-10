@@ -1,0 +1,57 @@
+---
+
+---
+
+<link rel="stylesheet" href="https://githubgraph.jigyansurout.com/assets/css/gh.css">
+
+<div class="center">
+    <div id="gh" data-login="phantomeye1931" data-show-thumbnail="false" />
+</div>
+
+<style>
+    :global(#gh) {
+        margin-inline: auto;
+        --cell-size: 16px; /* Adjust this to your preferred size */
+
+        & :global(.ghCalendarHeader) {
+            padding-inline: 60px 25px;
+            font-weight: bold;
+        }
+
+        & :global(.ghCalendarDayCell) {
+            width: var(--cell-size) !important;
+            height: var(--cell-size) !important;
+            border-radius: 4px;
+        }
+    }
+
+    #gh {
+        /* Glacier Theme */
+        --gh-bg-color: var(--col-background);
+        --gh-text-default-color: var(--col-text-2);
+        --gh-text-inactive-color: var(--col-text-2);
+        --gh-link-hover-color: #2f81f7;
+
+        --gh-cell-level0-color: #efe4dd;
+        --gh-cell-level1-color: #ddc9bd;
+        --gh-cell-level2-color: #ac8e7d;
+        --gh-cell-level3-color: #937a5f;
+        --gh-cell-level4-color: #78573d;
+        --gh-border-card-color: rgba(0, 0, 0, 0);
+
+        --gh-base-size-4: 0.25rem;
+        --gh-base-size-8: 0.5rem;
+        --gh-base-size-12: 0.75rem;
+        --gh-base-size-16: 1rem;
+        --gh-base-size-32: 2rem;
+
+        --gh-cell-info-bg-color: var(--col-background-2);
+        --gh-cell-outline-color: rgba(0, 0, 0, 0);
+        --gh-cell-border-color: rgba(0, 0, 0, 0);
+        --gh-border-card-width: max(1px, 0.0625rem);
+        --gh-font-default-family: "Roboto Slab", serif;
+    }
+</style>
+
+<!-- 3. Include the script -->
+<script src="https://githubgraph.jigyansurout.com/assets/js/gh.js"></script>

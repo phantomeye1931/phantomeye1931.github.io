@@ -19,10 +19,10 @@ const props = Astro.props;
         <p>{props.description}</p>
         <div class="extra-info">
             <span class="link absolute-pos close-trigger">[x] Close</span>
-            <p class="information">{props.information}</p>
+            <p class="information" set:html={props.information} />
             {
                 props.buttons?.map((button) => (
-                        <a href={button.url} class="link">[{button.label}]</a>
+                        <a href={button.url} class="link">[{button.label}]</a> <span>{"\u00A0\u00A0"}</span>
                 ))
             }
         </div>
