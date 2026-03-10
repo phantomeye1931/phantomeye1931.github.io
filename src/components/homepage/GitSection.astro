@@ -1,21 +1,32 @@
 ---
 
----
+import Spacing from "../simple/Spacing.astro";---
 
 <link rel="stylesheet" href="https://githubgraph.jigyansurout.com/assets/css/gh.css">
 
 <div class="center">
-    <div id="gh" data-login="phantomeye1931" data-show-thumbnail="false" />
+    <Spacing x="6em" />
+    <div id="gh" data-login="phantomeye1931" data-show-thumbnail="false">
+        <div class="loader"></div>
+    </div>
 </div>
 
 <style>
     :global(#gh) {
         margin-inline: auto;
-        --cell-size: 16px; /* Adjust this to your preferred size */
+        --cell-size: 16px;
 
         & :global(.ghCalendarHeader) {
             padding-inline: 60px 25px;
             font-weight: bold;
+
+            & :global(img) {
+                display: none;
+            }
+
+            & :global(a::before) {
+                content: "@"
+            }
         }
 
         & :global(.ghCalendarDayCell) {
@@ -25,6 +36,43 @@
         }
     }
 
+    @media (max-width: 800px) {
+        :global(.center) {
+            display: none;
+        }
+    }
+
+    :global(#gh) {
+        /* Light Mode Palette */
+        --gh-cell-level0-color: #efe4dd;
+        --gh-cell-level1-color: #ddc9bd;
+        --gh-cell-level2-color: #ac8e7d;
+        --gh-cell-level3-color: #937a5f;
+        --gh-cell-level4-color: #78573d;
+    }
+
+    :global([color-scheme='dark'] #gh) {
+        --gh-cell-level0-color: #2c2620;
+        --gh-cell-level1-color: #493b32;
+        --gh-cell-level2-color: #735b4d;
+        --gh-cell-level3-color: #7a624a;
+        --gh-cell-level4-color: #b18c67;
+    }
+
+    .loader {
+        width: 40px;
+        height: 40px;
+        border: 5px solid var(--gh-cell-level2-color);
+        border-bottom-color: transparent;
+        border-radius: 100vh;
+        animation: rotation 1s linear infinite;
+    }
+
+    @keyframes rotation {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
     #gh {
         /* Glacier Theme */
         --gh-bg-color: var(--col-background);
@@ -32,11 +80,6 @@
         --gh-text-inactive-color: var(--col-text-2);
         --gh-link-hover-color: #2f81f7;
 
-        --gh-cell-level0-color: #efe4dd;
-        --gh-cell-level1-color: #ddc9bd;
-        --gh-cell-level2-color: #ac8e7d;
-        --gh-cell-level3-color: #937a5f;
-        --gh-cell-level4-color: #78573d;
         --gh-border-card-color: rgba(0, 0, 0, 0);
 
         --gh-base-size-4: 0.25rem;
@@ -45,7 +88,7 @@
         --gh-base-size-16: 1rem;
         --gh-base-size-32: 2rem;
 
-        --gh-cell-info-bg-color: var(--col-background-2);
+        --gh-cell-info-bg-color: var(--gh-cell-level0-color);
         --gh-cell-outline-color: rgba(0, 0, 0, 0);
         --gh-cell-border-color: rgba(0, 0, 0, 0);
         --gh-border-card-width: max(1px, 0.0625rem);
@@ -53,5 +96,4 @@
     }
 </style>
 
-<!-- 3. Include the script -->
 <script src="https://githubgraph.jigyansurout.com/assets/js/gh.js"></script>

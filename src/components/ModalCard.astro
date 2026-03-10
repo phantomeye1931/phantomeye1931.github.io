@@ -6,6 +6,7 @@ interface Props {
     title: string
     description: string
     information: string
+    url?: string
     buttons?: Button[]
     classes?: string
 }
@@ -13,7 +14,7 @@ interface Props {
 const props = Astro.props;
 ---
 
-<div class=`card card-original ${props.classes}`>
+<div class=`card card-original ${props.classes ?? ''}` data-url={props.url}>
     <div class="card-inner">
         <strong>{props.title}</strong>
         <p>{props.description}</p>
@@ -28,6 +29,98 @@ const props = Astro.props;
         </div>
     </div>
 </div>
+
+<script>
+    $(function() {
+        const $overlay = $('.overlay');
+
+        $('.card').on('click', function() {
+            const $activeCard = $(this);
+
+            const url = $activeCard.attr('data-url');
+
+            // If a URL exists, redirect and exit
+            if (url && url !== "undefined" && url.trim() !== "") {
+                if (url.startsWith('http')) {
+                    window.open(url, '_blank');
+                } else {
+                    window.location.href = url;
+                }
+                return;
+            }
+
+            if ($activeCard.data('is-open')) return;
+            $activeCard.data('is-open', true);
+
+            const rect = this.getBoundingClientRect();
+            const $currentClone = $activeCard.clone()
+                    .removeClass('card-original')
+                    .addClass('morph-clone');
+
+            $currentClone.css({
+                top: rect.top + 'px',
+                left: rect.left + 'px',
+                width: rect.width + 'px',
+                height: rect.height + 'px'
+            });
+
+            $('body').append($currentClone).addClass('lock-scroll');
+
+            $activeCard.attr('opened', 'true');
+            $overlay.attr('active', 'true');
+
+            setTimeout(() => $currentClone.addClass('is-expanded'), 20);
+
+            const closeHandler = function() {
+                if (!$currentClone.hasClass('is-expanded')) return;
+
+                $currentClone.removeClass('is-expanded');
+
+                const initialRect = $activeCard[0].getBoundingClientRect();
+                $currentClone.css({
+                    top: initialRect.top + 'px',
+                    left: initialRect.left + 'px',
+                });
+
+                // TRACKING LOOP: Keeps clone pinned to the card during transition
+                const sync = () => {
+                    if (!$currentClone.parent().length || $currentClone.hasClass('is-expanded')) return;
+
+                    const currentRect = $activeCard[0].getBoundingClientRect();
+
+                    const deltaY = currentRect.top - initialRect.top;
+
+                    $currentClone.css({
+                        transform: `translate(0, ${deltaY}px)`,
+                        width: currentRect.width + 'px',
+                        height: currentRect.height + 'px'
+                    });
+
+                    requestAnimationFrame(sync);
+                };
+                requestAnimationFrame(sync);
+
+                if ($('.morph-clone.is-expanded').length === 0) {
+                    $overlay.removeAttr('active');
+                    $('body').removeClass('lock-scroll');
+                }
+
+                $currentClone.on('transitionend', function(e: any) {
+                    const prop = e?.originalEvent?.propertyName;
+                    if ((prop === 'top' || prop === 'inset' || prop === 'width') && !$currentClone.hasClass('is-expanded')) {
+                        $activeCard.removeAttr('opened').data('is-open', false);
+                        $currentClone.remove();
+                    }
+                });
+            };
+
+            $currentClone.find('.close-trigger').on('click', closeHandler);
+            $overlay.off('click').on('click', () => $('.morph-clone.is-expanded').each(function() {
+                $(this).find('.close-trigger').trigger('click');
+            }));
+        });
+    });
+</script>
 
 <style>
     .absolute-pos {
@@ -145,82 +238,3 @@ const props = Astro.props;
         overflow: hidden !important;
     }
 </style>
-
-<script>
-    $(function() {
-        const $overlay = $('.overlay');
-
-        $('.card').on('click', function() {
-            const $activeCard = $(this);
-            if ($activeCard.data('is-open')) return;
-            $activeCard.data('is-open', true);
-
-            const rect = this.getBoundingClientRect();
-            const $currentClone = $activeCard.clone()
-                    .removeClass('card-original')
-                    .addClass('morph-clone');
-
-            $currentClone.css({
-                top: rect.top + 'px',
-                left: rect.left + 'px',
-                width: rect.width + 'px',
-                height: rect.height + 'px'
-            });
-
-            $('body').append($currentClone).addClass('lock-scroll');
-
-            $activeCard.attr('opened', 'true');
-            $overlay.attr('active', 'true');
-
-            setTimeout(() => $currentClone.addClass('is-expanded'), 20);
-
-            const closeHandler = function() {
-                if (!$currentClone.hasClass('is-expanded')) return;
-
-                $currentClone.removeClass('is-expanded');
-
-                const initialRect = $activeCard[0].getBoundingClientRect();
-                $currentClone.css({
-                    top: initialRect.top + 'px',
-                    left: initialRect.left + 'px',
-                });
-
-                // TRACKING LOOP: Keeps clone pinned to the card during transition
-                const sync = () => {
-                    if (!$currentClone.parent().length || $currentClone.hasClass('is-expanded')) return;
-
-                    const currentRect = $activeCard[0].getBoundingClientRect();
-
-                    const deltaY = currentRect.top - initialRect.top;
-
-                    $currentClone.css({
-                        transform: `translate(0, ${deltaY}px)`,
-                        width: currentRect.width + 'px',
-                        height: currentRect.height + 'px'
-                    });
-
-                    requestAnimationFrame(sync);
-                };
-                requestAnimationFrame(sync);
-
-                if ($('.morph-clone.is-expanded').length === 0) {
-                    $overlay.removeAttr('active');
-                    $('body').removeClass('lock-scroll');
-                }
-
-                $currentClone.on('transitionend', function(e: any) {
-                    const prop = e?.originalEvent?.propertyName;
-                    if ((prop === 'top' || prop === 'inset' || prop === 'width') && !$currentClone.hasClass('is-expanded')) {
-                        $activeCard.removeAttr('opened').data('is-open', false);
-                        $currentClone.remove();
-                    }
-                });
-            };
-
-            $currentClone.find('.close-trigger').on('click', closeHandler);
-            $overlay.off('click').on('click', () => $('.morph-clone.is-expanded').each(function() {
-                $(this).find('.close-trigger').trigger('click');
-            }));
-        });
-    });
-</script>

@@ -157,7 +157,7 @@ const websites = [
         <div class="grid art-cards">
             {
                 art_cards.map((w) => (
-                    <ModalCard title={w.name} description={w.description} information={w.information} />
+                    <ModalCard title={w.name} description={w.description} information={w.information} url={w.url} />
                 ))
             }
         </div>
@@ -221,7 +221,7 @@ const websites = [
     }
 
     .grid {
-        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)) !important;
     }
 }
 </style>

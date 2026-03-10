@@ -105,5 +105,25 @@ a {
     & > .description {
         margin-right: 2rem;
     }
+
+    @media (max-width: 600px) {
+        .header {
+            flex-direction: column;
+            align-items: flex-start !important;
+
+            & .title {
+                line-height: 2.3rem;
+                padding-block: 2rem;
+
+                &::after {
+                    display: none !important;
+                }
+            }
+
+            & .date::before {
+                content: "☞";
+            }
+        }
+    }
 }
 </style>
