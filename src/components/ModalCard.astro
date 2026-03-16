@@ -229,6 +229,12 @@ const props = Astro.props;
         height: calc(100% - 2 * var(--inset)) !important;
     }
 
+    @media (max-width: 768px) {
+        :global(.morph-clone.is-expanded) {
+            --inset: 2rem;
+        }
+    }
+
     :global(.morph-clone.is-expanded .extra-info) {
         opacity: 1;
         pointer-events: auto;
