@@ -4,6 +4,7 @@ description: 'A small dive into chess programming to create a chess engine that 
 pubDate: 'Jan 22 2026'
 ---
 import Wrapper from '../../components/simple/Wrapper.astro';
+import BusinessCard from '../../components/BusinessCard.astro';
 
 <Wrapper classes="float right">
     ![](/weblog/chess/example-pin-moves.png)
@@ -428,23 +429,26 @@ We can fix this, and greatly improve performance, by **only running this mate de
 > If we choose to mark all possible positions instead of just counting them, we can also re-use this to do a quicker look-up for the possible moves for any valid move. In that case, when selecting a piece to move, we already have all valid moves for it marked, so we can simply show them.
 
 ## Concluded game flow
+# ⚠️ This section is still a WIP
 So with all of these puzzle pieces together, let's stitch together a game flow.
-
-# TODO: reset flags
 
 - At the start of the game, we don't have to do anything.
 - When a piece is selected, we run its validation logic to present the possible moves.
 - When a valid move square is selected, we do the following:
-1. Move the piece over, capture the piece that was at that location.
-2. Perform special move logic:
-- En Passant
-- Castling
-- Promotion
+
+    1. Move the piece over, capture the piece that was at that location.
+    2. Perform special move logic:
+        - En Passant
+        - Castling
+        - Promotion
+
+
 - After a move is made, we do the following:
-1. Compute what squares the last moved player is attacking.
-2. Count how many valid moves the enemy of last moved player can make.
-3. Determine if one of the players is in Checkmate or Stalemate.
-4. Switch whose turn it is
+    1. Make sure to forget how we marked squares/pieces last round.
+    2. Compute what squares the last moved player is attacking.
+    3. Count how many valid moves the enemy of last moved player can make.
+    4. Determine if one of the players is in Checkmate or Stalemate.
+    5. Switch whose turn it is.
 
 To keep track of what phase we're in, it's useful to keep track of a global 'gameState' variable.
 
@@ -455,7 +459,6 @@ function select(piece) {
 }
 ```
 ###### Pseudocode for piece selection stage
-# TODO: this section is still WIP
 ```ts
 function move(piece, location) {
   gameState = PIECE_MOVING
@@ -503,9 +506,12 @@ function postMove() {
 ```
 ###### Pseudocode for post-move stage
 
-## Happy chessing
+## Conclusion
 Thanks for reading!
 
-TODO: uh write some actual good conclusion here
+If this blog was any use to you, or you have any thoughts, please contact me! I would love to hear about your projects.
 
-If this blog was any use to you, I'd love to hear about your project, so contact me!
+
+<Wrapper classes="right" style="display:flex;justify-content: center;margin-top:4rem">
+    <BusinessCard />
+</Wrapper>
