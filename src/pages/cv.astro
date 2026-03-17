@@ -307,14 +307,27 @@ const content = {
 
     function setLanguage(lang, animate = true) {
         const isEn = lang === 'en';
+
+        // Update URL without reloading page
+        const url = new URL(window.location);
+        url.searchParams.set('lang', lang);
+        window.history.replaceState({}, '', url);
+
         pill.style.transition = animate ? 'transform 0.25s cubic-bezier(0.15, 0, 0.15, 1)' : 'none';
         pill.style.transform = `translateX(${isEn ? 100 : 0}%)`;
+
         buttons.forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === lang));
-        layers.forEach(el => el.classList.toggle('active', el.getAttribute('data-layer') === lang));
+        layers.forEach(el => {
+            el.style.transition = animate ? 'opacity 0.3s ease, filter 0.3s ease' : 'none';
+            el.classList.toggle('active', el.getAttribute('data-layer') === lang);
+        });
     }
 
     buttons.forEach(btn => btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang'))));
-    setLanguage(new URLSearchParams(window.location.search).get('lang') || 'nl', false);
+
+    // Initial load: parse URL or default to 'nl'
+    const initialLang = new URLSearchParams(window.location.search).get('lang') || 'nl';
+    setLanguage(initialLang, false);
 </script>
 
 <style>
