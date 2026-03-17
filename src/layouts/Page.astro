@@ -6,7 +6,12 @@ import Background from "../components/Background.astro";
 import HeaderButtons from "../components/HeaderButtons.astro";
 
 interface Props {
-    background: { onlyLanding: boolean, wearOff: boolean },
+    opts: {
+        background: boolean,
+        buttons: boolean,
+        bgWearOff?: boolean,
+        blogButtons?: boolean,
+    },
     title: string,
     description: string,
 }
@@ -23,9 +28,9 @@ const props = Astro.props;
     <body>
         <main>
             <div class="page-wrapper">
-                <Background wearOff={ props.background.wearOff } onlyLanding={ props.background.onlyLanding } />
+                { props.opts.background ? <Background wearOff={props.opts.bgWearOff ?? false} onlyLanding={true}/> : '' }
                 <div class="page-contents">
-                    <HeaderButtons all={ props.background.wearOff } />
+                    { props.opts.buttons ? <HeaderButtons all={props.opts.blogButtons ?? false}/> : '' }
                     <slot />
                 </div>
             </div>
