@@ -1,0 +1,634 @@
+---
+// CV.astro
+import Page from "../layouts/Page.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../consts.ts";
+
+const personal = {
+    name: "Armand de Vries",
+    contact: [
+        { label: "Website", value: "armand.dev", url: "https://armand.dev" },
+        { label: "Email", value: "armand.devries", domain: "@outlook.com" },
+        { label: "Telefoon", value: "+31 6 45 15 49 49" },
+    ],
+    skills: [
+        "Java (Expert)",
+        "OOP & Design Patterns",
+        "TypeScript / NodeJS",
+        "WebAssembly",
+        "Astro / Vue / Nuxt / React",
+        "Rust / Python / Lua",
+    ]
+};
+
+const content = {
+    nl: {
+        title: "Computing Science Student & Full-Stack Ontwikkelaar",
+        exp: "Ervaring",
+        edu: "Educatie",
+        skills_label: "Vaardigheden",
+        present: "Heden",
+        location_label: "Locatie",
+        location_val: "Arnhem, Nederland",
+        availability: "Beschikbaar voor werk op afstand en op locatie wereldwijd.",
+        ta_bullets: ["Begeleiden van studenten bij Object Oriented Programming.", "Uitvoeren van technische code-reviews en beoordelingen."],
+        java_bullets: ["Integratie met Minecraft Forge & Fabric APIs.", "Onderhouden en optimaliseren van grote codebases gebruikt door duizenden spelers."],
+        freelance_bullets: ["Full-stack web development (Front/Back-end, databases).", "Project- & teammanagement en directe communicatie."],
+        bronscode_bullets: ["Ontwikkeling van grote web applicaties."],
+        bsc: "BSc Computing Science",
+        vwo: "VWO (Natuur & Techniek)",
+        qhigh: "Computer Science (Extra-curriculair)"
+    },
+    en: {
+        title: "Computing Science Student & Full-Stack Developer",
+        exp: "Experience",
+        edu: "Education",
+        skills_label: "Skills",
+        present: "Current",
+        location_label: "Location",
+        location_val: "Arnhem, The Netherlands",
+        availability: "Available for remote and on-location work worldwide.",
+        ta_bullets: ["Assisting students with Object Oriented Programming.", "Performing technical code reviews and grading."],
+        java_bullets: ["Integration with Minecraft Forge & Fabric APIs.", "Maintaining and optimizing big codebases used by thousands of players."],
+        freelance_bullets: ["Full-stack web development (Front/Back-end, databases).", "Project & team management and direct client communication."],
+        bronscode_bullets: ["Development of large-scale web applications."],
+        bsc: "BSc Computing Science",
+        vwo: "VWO (Nature & Technology)",
+        qhigh: "Computer Science (Extra-curricular)"
+    }
+};
+---
+
+<Page title={SITE_TITLE} description={SITE_DESCRIPTION + " CV"} opts={{ background: false, buttons: false }}>
+    <div class="lang-switch-wrapper no-print">
+        <button class="print-btn" onclick="window.print()" title="Print to PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+        </button>
+        <div class="lang-switch">
+            <div id="pill" class="switch-pill"></div>
+            <button class="lang-btn" data-lang="nl">NL</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+    </div>
+
+    <div class="resume-container">
+        <div class="resume-layout">
+            <aside class="sidebar">
+                <div class="profile-img-container no-translate">
+                    <img src="/photo.jpg" alt="Armand de Vries" class="profile-img" />
+                </div>
+                <h1 class="no-translate">{personal.name}</h1>
+
+                <div class="morph-container">
+                    {Object.keys(content).map((lang) => (
+                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                <p class="tagline">{content[lang].title}</p>
+                            </div>
+                    ))}
+                </div>
+
+                <section class="sidebar-section no-translate contact-info">
+                    <p>
+                        <strong>Website:</strong><br />
+                        <a href="https://armand.dev" target="_blank" rel="noopener noreferrer" class="inherited-link">armand.dev</a>
+                    </p>
+                    <p>
+                        <strong>Email:</strong><br />
+                        <span class="email-wrap">{personal.contact[1].value}<wbr />{personal.contact[1].domain}</span>
+                    </p>
+                    <p>
+                        <strong>{personal.contact[2].label}:</strong><br />
+                        {personal.contact[2].value}
+                    </p>
+
+                    <div class="morph-container">
+                        {Object.keys(content).map((lang) => (
+                                <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                    <p><strong>{content[lang].location_label}:</strong><br />{content[lang].location_val}</p>
+                                </div>
+                        ))}
+                    </div>
+                </section>
+
+                <section class="sidebar-section availability-box">
+                    <div class="morph-container">
+                        {Object.keys(content).map((lang) => (
+                                <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                    <p class="availability-text">{content[lang].availability}</p>
+                                </div>
+                        ))}
+                    </div>
+                </section>
+
+                <section class="sidebar-section">
+                    <div class="morph-container">
+                        {Object.keys(content).map((lang) => (
+                                <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                    <p class="sidebar-label"><strong>{content[lang].skills_label}:</strong></p>
+                                </div>
+                        ))}
+                    </div>
+                    <ul class="skill-tags no-translate">
+                        {personal.skills.map(s => <li>{s}</li>)}
+                    </ul>
+                </section>
+            </aside>
+
+            <main class="content">
+                <section>
+                    <div class="morph-container">
+                        {Object.keys(content).map((lang) => (
+                                <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                    <h2 class="section-title">{content[lang].exp}</h2>
+                                </div>
+                        ))}
+                    </div>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="morph-container">
+                                {Object.keys(content).map((lang) => (
+                                        <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                            <div class="time">2023 — {content[lang].present}</div>
+                                        </div>
+                                ))}
+                            </div>
+                            <div class="details">
+                                <h3 class="no-translate">Freelance Full-Stack Developer</h3>
+                                <p class="org no-translate">Self-Employed</p>
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <ul>{content[lang].freelance_bullets.map(b => <li>{b}</li>)}</ul>
+                                            </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="morph-container">
+                                {Object.keys(content).map((lang) => (
+                                        <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                            <div class="time">2025 — {content[lang].present}</div>
+                                        </div>
+                                ))}
+                            </div>
+                            <div class="details">
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <h3>Teaching Assistant (Java & OOP)</h3>
+                                            </div>
+                                    ))}
+                                </div>
+                                <p class="org no-translate">Radboud Universiteit Nijmegen</p>
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <ul>{content[lang].ta_bullets.map(b => <li>{b}</li>)}</ul>
+                                            </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="time">2024</div>
+                            <div class="details">
+                                <h3 class="no-translate">Web Development Intern</h3>
+                                <p class="org no-translate">BronsCode, Nijmegen</p>
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <ul>{content[lang].bronscode_bullets.map(b => <li>{b}</li>)}</ul>
+                                            </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="morph-container">
+                                {Object.keys(content).map((lang) => (
+                                        <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                            <div class="time">2020 — {content[lang].present}</div>
+                                        </div>
+                                ))}
+                            </div>
+                            <div class="details">
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <h3>High-Performance Java Engineering</h3>
+                                            </div>
+                                    ))}
+                                </div>
+                                <p class="org no-translate">Open Source / Modding</p>
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <ul>{content[lang].java_bullets.map(b => <li>{b}</li>)}</ul>
+                                            </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="morph-container">
+                        {Object.keys(content).map((lang) => (
+                                <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                    <h2 class="section-title">{content[lang].edu}</h2>
+                                </div>
+                        ))}
+                    </div>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="morph-container">
+                                {Object.keys(content).map((lang) => (
+                                        <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                            <div class="time">2024 — {content[lang].present}</div>
+                                        </div>
+                                ))}
+                            </div>
+                            <div class="details">
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <h3>{content[lang].bsc}</h3>
+                                            </div>
+                                    ))}
+                                </div>
+                                <p class="org no-translate">Radboud Universiteit Nijmegen</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="time">2024</div>
+                            <div class="details">
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <h3>{content[lang].qhigh}</h3>
+                                            </div>
+                                    ))}
+                                </div>
+                                <p class="org no-translate">Q-Highschool, Gelderland</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="time">2018 — 2024</div>
+                            <div class="details">
+                                <div class="morph-container">
+                                    {Object.keys(content).map((lang) => (
+                                            <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                                                <h3>{content[lang].vwo}</h3>
+                                            </div>
+                                    ))}
+                                </div>
+                                <p class="org no-translate">Beekdal Lyceum Arnhem</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</Page>
+
+<script is:inline>
+    const buttons = document.querySelectorAll('.lang-btn');
+    const pill = document.getElementById('pill');
+    const layers = document.querySelectorAll('.morph-layer');
+
+    function setLanguage(lang, animate = true) {
+        const isEn = lang === 'en';
+        pill.style.transition = animate ? 'transform 0.25s cubic-bezier(0.15, 0, 0.15, 1)' : 'none';
+        pill.style.transform = `translateX(${isEn ? 100 : 0}%)`;
+        buttons.forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === lang));
+        layers.forEach(el => el.classList.toggle('active', el.getAttribute('data-layer') === lang));
+    }
+
+    buttons.forEach(btn => btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang'))));
+    setLanguage(new URLSearchParams(window.location.search).get('lang') || 'nl', false);
+</script>
+
+<style>
+    :root {
+        --accent: var(--col-accent, var(--col-text));
+        --text-main: var(--col-text);
+        --text-muted: var(--col-text-2);
+        --bg-main: var(--col-background);
+        --bg-alt: var(--col-background-2);
+        --border-ui: var(--col-background-2);
+        --border-switch: var(--col-element);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .resume-container {
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .resume-layout {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        background: var(--bg-main);
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .morph-container {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .morph-layer {
+        grid-area: 1 / 1;
+        opacity: 0;
+        filter: blur(2px);
+        transition: opacity 0.3s ease, filter 0.3s ease;
+        pointer-events: none;
+    }
+
+    .morph-layer.active {
+        opacity: 1;
+        filter: blur(0px);
+        pointer-events: auto;
+    }
+
+    .sidebar {
+        background: var(--bg-alt);
+        padding: 1.8rem;
+        border-right: 1px solid var(--border-ui);
+    }
+
+    .profile-img-container {
+        width: 115px;
+        height: 115px;
+        border: 1px solid var(--border-switch);
+        border-radius: 8px;
+        margin: 0 auto 1.4rem;
+        overflow: hidden;
+    }
+
+    .profile-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    h1 {
+        font-size: 1.7rem;
+        margin: 0.4rem 0;
+        line-height: 1.2;
+    }
+
+    .tagline {
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 0.88rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .sidebar-section {
+        margin-bottom: 1rem;
+    }
+
+    .contact-info p {
+        margin-bottom: 0.5rem;
+        font-size: 0.93rem;
+        line-height: 1.35;
+    }
+
+    .content {
+        padding: 2rem 2.5rem;
+        background: var(--bg-main);
+    }
+
+    .section-title {
+        font-size: 1.05rem;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 1.08rem;
+        border-bottom: 2px solid var(--border-ui);
+        padding-bottom: 0.2rem;
+    }
+
+    .timeline {
+        border-left: 2px solid var(--border-ui);
+        margin-left: 0.5rem;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 1.4rem;
+        margin-bottom: 1.08rem;
+    }
+
+    .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: -7px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent);
+    }
+
+    .time {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-bottom: 0.075rem;
+    }
+
+    h3 {
+        font-size: 1.05rem;
+        margin: 0;
+        line-height: 1.15;
+    }
+
+    .org {
+        font-size: 0.88rem;
+        font-style: italic;
+        color: var(--text-muted);
+        margin-top: 0.075rem;
+    }
+
+    ul {
+        padding-left: 1.1rem;
+        font-size: 0.92rem;
+        margin-top: 0.27rem;
+    }
+
+    li {
+        margin-bottom: 0.18rem;
+    }
+
+    .inherited-link {
+        color: var(--col-text-2);
+        font-weight: bold;
+        text-decoration: none !important;
+    }
+
+    .inherited-link:hover {
+        text-decoration: none !important;
+    }
+
+    .skill-tags {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .skill-tags li {
+        background: var(--bg-main);
+        border: 1px solid var(--border-ui);
+        padding: 0.18rem 0.55rem;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+
+    .lang-switch-wrapper {
+        position: fixed;
+        top: 1.5rem;
+        right: 2rem;
+        z-index: 9999;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .lang-switch {
+        display: flex;
+        background: var(--bg-alt);
+        padding: 0.2rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-switch);
+        width: 90px;
+        position: relative;
+    }
+
+    .switch-pill {
+        position: absolute;
+        top: 0.2rem;
+        left: 0.2rem;
+        width: calc(50% - 0.2rem);
+        height: calc(100% - 0.4rem);
+        background: var(--bg-main);
+        border-radius: 6px;
+        z-index: 1;
+    }
+
+    .lang-btn {
+        flex: 1;
+        border: none;
+        background: none;
+        padding: 0.3rem 0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: var(--text-muted);
+        position: relative;
+        z-index: 2;
+    }
+
+    .lang-btn.active {
+        color: var(--text-main);
+    }
+
+    .print-btn {
+        background: var(--bg-alt);
+        border: 1px solid var(--border-switch);
+        color: var(--text-main);
+        padding: 0.4rem;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+        .resume-container,
+        .resume-layout {
+            height: auto;
+            overflow: visible;
+        }
+
+        .resume-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            border-right: none;
+            border-bottom: 1px solid var(--border-ui);
+        }
+
+        .profile-img-container {
+            margin: 0 0 1.4rem 0;
+        }
+    }
+
+    @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        html,
+        body {
+            height: 297mm;
+            overflow: visible;
+            margin: 0;
+            padding: 0;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .resume-container,
+        .resume-layout {
+            height: 297mm;
+            overflow: visible;
+        }
+
+        .resume-layout {
+            grid-template-columns: 215px 1fr;
+            width: 210mm;
+            display: grid !important;
+        }
+
+        .sidebar,
+        .content {
+            height: 297mm;
+            overflow: hidden;
+        }
+
+        .morph-layer {
+            display: none !important;
+        }
+
+        .morph-layer.active {
+            display: block !important;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+        @page {
+            margin: 0;
+            size: A4;
+        }
+    }
+</style>
