@@ -5,11 +5,6 @@ import { SITE_DESCRIPTION, SITE_TITLE } from "../consts.ts";
 
 const personal = {
     name: "Armand de Vries",
-    contact: [
-        { label: "Website", value: "armand.dev", url: "https://armand.dev" },
-        { label: "Email", value: "armand.devries", domain: "@outlook.com" },
-        { label: "Telefoon", value: "+31 6 45 15 49 49" },
-    ],
     skills: [
         "Java (Expert)",
         "OOP & Design Patterns",
@@ -23,6 +18,7 @@ const personal = {
 
 const content = {
     nl: {
+        phone: "Telefoon",
         title: "Computing Science Student & Full-Stack Ontwikkelaar",
         exp: "Ervaring",
         edu: "Educatie",
@@ -40,6 +36,7 @@ const content = {
         qhigh: "Computer Science (Extra-curriculair)"
     },
     en: {
+        phone: "Phone",
         title: "Computing Science Student & Full-Stack Developer",
         exp: "Experience",
         edu: "Education",
@@ -91,27 +88,27 @@ const content = {
                     ))}
                 </div>
 
-                <section class="sidebar-section no-translate contact-info">
-                    <p>
-                        <strong>Website:</strong><br />
-                        <a href="https://armand.dev" target="_blank" rel="noopener noreferrer" class="inherited-link">armand.dev</a>
-                    </p>
-                    <p>
-                        <strong>Email:</strong><br />
-                        <span class="email-wrap">{personal.contact[1].value}<wbr />{personal.contact[1].domain}</span>
-                    </p>
-                    <p>
-                        <strong>{personal.contact[2].label}:</strong><br />
-                        {personal.contact[2].value}
-                    </p>
-
-                    <div class="morph-container">
-                        {Object.keys(content).map((lang) => (
-                                <div class={`morph-layer layer-${lang}`} data-layer={lang}>
-                                    <p><strong>{content[lang].location_label}:</strong><br />{content[lang].location_val}</p>
-                                </div>
-                        ))}
-                    </div>
+                <section class="sidebar-section no-translate contact-info morph-container">
+                    {Object.keys(content).map((lang) => (
+                        <div class={`morph-layer layer-${lang}`} data-layer={lang}>
+                            <p>
+                                <strong>Website:</strong><br />
+                                <a href="https://armand.dev" target="_blank" rel="noopener noreferrer" class="inherited-link">armand.dev</a>
+                            </p>
+                            <p>
+                                <strong>Email:</strong><br />
+                                <span class="inherited-link email-wrap">armand.devries<wbr />@outlook.com</span>
+                            </p>
+                            <p>
+                                <strong>{content[lang].phone}:</strong><br />
+                                <span class="inherited-link">+31 6 45 15 49 49</span>
+                            </p>
+                            <p>
+                                <strong>{content[lang].location_label}:</strong><br />
+                                <span class="inherited-link">{content[lang].location_val}</span>
+                            </p>
+                        </div>
+                    ))}
                 </section>
 
                 <section class="sidebar-section availability-box">
@@ -128,7 +125,7 @@ const content = {
                     <div class="morph-container">
                         {Object.keys(content).map((lang) => (
                                 <div class={`morph-layer layer-${lang}`} data-layer={lang}>
-                                    <p class="sidebar-label"><strong>{content[lang].skills_label}:</strong></p>
+                                    <p><strong>{content[lang].skills_label}:</strong></p>
                                 </div>
                         ))}
                     </div>
@@ -333,7 +330,7 @@ const content = {
 
 <style>
     :root {
-        --accent: var(--col-accent, var(--col-text));
+        --accent: var(--col-text);
         --text-main: var(--col-text);
         --text-muted: var(--col-text-2);
         --bg-main: var(--col-background);
