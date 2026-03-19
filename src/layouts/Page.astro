@@ -30,7 +30,7 @@ const props = Astro.props;
             <div class="page-wrapper">
                 { props.opts.background ? <Background wearOff={props.opts.bgWearOff ?? false} onlyLanding={true}/> : '' }
                 <div class="page-contents">
-                    { props.opts.buttons ? <HeaderButtons all={props.opts.blogButtons ?? false}/> : '' }
+                    { props.opts.buttons ? <HeaderButtons all={props.opts.blogButtons ? !props.opts.blogButtons : true}/> : '' }
                     <slot />
                 </div>
             </div>
