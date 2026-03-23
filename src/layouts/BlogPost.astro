@@ -10,7 +10,7 @@ type Props = CollectionEntry<'blog'>['data'];
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 ---
 
-<Page title={title} description={description} opts={{ background: true, buttons: true, blogButtons: true }}>
+<Page title={title} description={description} opts={{ background: true, buttons: true, blogButtons: true, sticky: true }}>
 	<article>
 		<div class="paper" style={ getPageStyle(description) }>
 			<ShapePaperClip class="paperclip"/>

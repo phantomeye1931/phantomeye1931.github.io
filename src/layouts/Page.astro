@@ -11,6 +11,7 @@ interface Props {
         buttons: boolean,
         bgWearOff?: boolean,
         blogButtons?: boolean,
+        sticky?: boolean,
     },
     title: string,
     description: string,
@@ -28,7 +29,7 @@ const props = Astro.props;
     <body>
         <main>
             <div class="page-wrapper">
-                { props.opts.background ? <Background wearOff={props.opts.bgWearOff ?? false} onlyLanding={true}/> : '' }
+                { props.opts.background ? <Background wearOff={props.opts.bgWearOff ?? false} sticky={props.opts.sticky ?? false}/> : '' }
                 <div class="page-contents">
                     { props.opts.buttons ? <HeaderButtons all={props.opts.blogButtons ? !props.opts.blogButtons : true}/> : '' }
                     <slot />

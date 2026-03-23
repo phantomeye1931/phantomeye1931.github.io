@@ -1,13 +1,13 @@
 ---
 interface Props {
-    onlyLanding: boolean,
+    sticky: boolean,
     wearOff: boolean,
 }
 
 const props = Astro.props;
 ---
 
-<div class="bg-grid bg-wrapper" aria-hidden="true" only-landing={ props.onlyLanding } wear-off={ props.wearOff }  >
+<div class="bg-grid bg-wrapper" aria-hidden="true" sticky={ props.sticky } wear-off={ props.wearOff }  >
     <pre class="font-trypewriter bg text-grid"></pre>
 </div>
 
@@ -79,7 +79,7 @@ const props = Astro.props;
     overflow: hidden;
     background-color: var(--col-background);
 
-    &[only-landing="true"] {
+    &[sticky="false"] {
         position: absolute;
         height: 100svh;
     }
