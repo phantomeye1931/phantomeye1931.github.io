@@ -30,7 +30,14 @@ if (Astro.props.all) {
     }
 </div>
 
-<script is:inline>
+<script>
+    const $buttonsDiv = $(".buttons");
+
+    window.addEventListener("scroll", () => {
+        $buttonsDiv.toggleClass("is-scrolled", window.scrollY > 0);
+        console.log(window.scrollY)
+    });
+
     $("a.toggle-dark-mode")
         .text(`[${getColorScheme()}]`)
         .on("click", function() {
@@ -46,31 +53,38 @@ if (Astro.props.all) {
         position: fixed;
         box-sizing: border-box;
         z-index: 2000;
+        width: fit-content;
 
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
         align-items: flex-start;
         flex-wrap: wrap;
-        top: 0;
-
-        width: 100%;
 
         color: var(--col-element);
-        font-size: 1.3em;
+        background-color: var(--col-background);
+        border: 1px solid transparent;
+        transition: border 100ms;
 
-        padding: 1rem;
+        font-size: 1.3em;
+        margin: .3rem;
+        padding: .2rem .4rem;
         gap: 1rem;
+        top: 0;
+        right: 0;
 
         a.link {
             all: unset;
             cursor: pointer;
             text-decoration: none;
-            background-color: var(--col-background);
 
             &:hover {
                 text-decoration: underline;
             }
         }
+    }
+
+    .is-scrolled {
+        border: 1px solid var(--col-text-2);
     }
 </style>
