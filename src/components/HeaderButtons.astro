@@ -30,7 +30,7 @@ if (Astro.props.all) {
     }
 </div>
 
-<script>
+<script is:inline>
     $("a.toggle-dark-mode")
         .text(`[${getColorScheme()}]`)
         .on("click", function() {
