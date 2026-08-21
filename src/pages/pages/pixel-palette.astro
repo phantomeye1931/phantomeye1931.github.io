@@ -1,0 +1,1293 @@
+---
+import Page from "../../layouts/Page.astro";
+import { SITE_TITLE } from "../../consts.ts";
+---
+
+<Page
+    title={"Color Space Palette Generator"}
+    description="Generate hue-shifted pixel art shade ramps from a single base color using OKLCH color science."
+    opts={{ background: false, buttons: true }}
+>
+    <div class="forge">
+        <header class="intro">
+            <h1>Color Space Palette Generator</h1>
+            <p>
+                Generate nice color palettes for Pixel Art from a single base color, using color spaces mapped to human color perception. Apply hue shifting & hue jitter with ease.
+            </p>
+        </header>
+
+        <div class="layout-grid">
+            <div class="left-column">
+                <section class="panel base-color-panel">
+                    <div class="panel-title font-dotmatrix">Base Color</div>
+
+                    <div class="base-color-options">
+                        <div class="control color-control">
+                            <label for="base-color-hex">Base color</label>
+                            <input type="text" id="base-color-hex" class="font-dotmatrix color-swatch-input" value="#5e71b9" maxlength="7" spellcheck="false" />
+                        </div>
+
+                        <div class="control">
+                            <label for="okl-l">Lightness <span id="okl-l-val">57%</span></label>
+                            <input type="range" id="okl-l" min="0" max="100" step="1" />
+                        </div>
+
+                        <div class="control">
+                            <label for="okl-c">Chroma (Saturation)<span id="okl-c-val">0.11</span></label>
+                            <input type="range" id="okl-c" min="0" max="0.33" step="0.01" />
+                        </div>
+
+                        <div class="control">
+                            <label for="okl-h">Hue (Color)<span id="okl-h-val">271&deg;</span></label>
+                            <input type="range" id="okl-h" min="0" max="360" step="1" />
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel palette-panel">
+                    <div class="panel-title font-dotmatrix">Palette</div>
+
+                    <div class="palette-options">
+                        <div class="stepper-row">
+                            <div class="stepper">
+                                <label>Lighter</label>
+                                <div class="stepper-controls">
+                                    <button type="button" class="stepper-btn" id="up-dec" aria-label="Fewer lighter shades">&minus;</button>
+                                    <span id="up-count-val" class="font-dotmatrix">2</span>
+                                    <button type="button" class="stepper-btn" id="up-inc" aria-label="More lighter shades">+</button>
+                                </div>
+                            </div>
+
+                            <div class="stepper">
+                                <label>Darker</label>
+                                <div class="stepper-controls">
+                                    <button type="button" class="stepper-btn" id="down-dec" aria-label="Fewer darker shades">&minus;</button>
+                                    <span id="down-count-val" class="font-dotmatrix">4</span>
+                                    <button type="button" class="stepper-btn" id="down-inc" aria-label="More darker shades">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control">
+                            <label for="delta">
+                                <span>Delta <span class="hint font-dotmatrix" tabindex="0" data-tooltip="How much lightness changes between each generated step" aria-label="How much lightness changes between each generated step">[?]</span></span>
+                                <span id="delta-val">0.10</span>
+                            </label>
+                            <input type="range" id="delta" min="0.02" max="0.25" step="0.01" value="0.1" />
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section class="panel colorspace-panel">
+                <div class="panel-title font-dotmatrix">Color Space</div>
+
+                <div class="colorspace-options">
+                    <div class="control-row">
+                        <div class="control">
+                            <label for="hue-shift">
+                                <span>Hue shift <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Rotates shadows and highlights away from the base hue: cooler for shadows, warmer for highlights" aria-label="Rotates shadows and highlights away from the base hue: cooler for shadows, warmer for highlights">[?]</span></span>
+                                <span id="hue-shift-val">30&deg;</span>
+                            </label>
+                            <input type="range" id="hue-shift" min="0" max="60" step="1" value="30" />
+                        </div>
+                        <span class="slider-swatch" id="hue-shift-swatch"></span>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control">
+                            <label for="chroma-taper">
+                                <span>Chroma taper <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Controls how fast saturation fades near black and white: low = vivid across the whole ramp, high = fades quickly" aria-label="Controls how fast saturation fades near black and white: low = vivid across the whole ramp, high = fades quickly">[?]</span></span>
+                                <span id="chroma-taper-val">1.4</span>
+                            </label>
+                            <input type="range" id="chroma-taper" min="0.5" max="4" step="0.1" value="1.4" />
+                        </div>
+                        <span class="slider-swatch" id="chroma-taper-swatch"></span>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control">
+                            <label for="hue-jitter">
+                                <span>Hue jitter <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Randomly nudges each step's hue for natural variation, creates less robotic palettes" aria-label="Randomly nudges each step's hue for natural variation, creates less robotic palettes">[?]</span></span>
+                                <span id="hue-jitter-val">0&deg;</span>
+                            </label>
+                            <input type="range" id="hue-jitter" min="0" max="50" step="1" value="0" />
+                        </div>
+                        <button type="button" id="jitter-shuffle" class="slider-swatch shuffle-btn" aria-label="Shuffle" title="Shuffle">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14M23 10l-4.64-4.36A9 9 0 0 0 3.51 9"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="colorspace-wrapper">
+                        <canvas
+                            id="color-space"
+                            width="450"
+                            height="345"
+                            aria-label="Lightness by chroma chart showing the sRGB gamut boundary at the palette's hue, with the generated swatches plotted as dots"
+                        ></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section class="panel swatches-panel">
+            <div class="ramp" id="ramp" aria-label="Generated shade ramp"></div>
+        </section>
+    </div>
+</Page>
+
+<script>
+    import {
+        DEFAULT_LIGHTNESS_CEIL,
+        DEFAULT_LIGHTNESS_DELTA,
+        DEFAULT_LIGHTNESS_FLOOR,
+        DEFAULT_STEPS_DOWN,
+        DEFAULT_STEPS_UP,
+        chromaTaperRatio,
+        generatePalette,
+        hexToOklch,
+        hexToRgb,
+        normalizeHue,
+        oklchToHex,
+        hueAtLightness,
+        maxInGamutChroma,
+        oklchToSrgb,
+        oklchToSrgbGamutMapped,
+        rgbToHex,
+        shortestHueDelta,
+        type PaletteSwatch,
+    } from "../../utils/color";
+
+    const $colorHex = document.getElementById("base-color-hex") as HTMLInputElement;
+    const $oklL = document.getElementById("okl-l") as HTMLInputElement;
+    const $oklC = document.getElementById("okl-c") as HTMLInputElement;
+    const $oklH = document.getElementById("okl-h") as HTMLInputElement;
+    const $oklLVal = document.getElementById("okl-l-val")!;
+    const $oklCVal = document.getElementById("okl-c-val")!;
+    const $oklHVal = document.getElementById("okl-h-val")!;
+    const $hueShift = document.getElementById("hue-shift") as HTMLInputElement;
+    const $hueShiftSwatch = document.getElementById("hue-shift-swatch")!;
+    const $chromaTaper = document.getElementById("chroma-taper") as HTMLInputElement;
+    const $chromaTaperSwatch = document.getElementById("chroma-taper-swatch")!;
+    const $hueJitter = document.getElementById("hue-jitter") as HTMLInputElement;
+    const $jitterShuffle = document.getElementById("jitter-shuffle") as HTMLButtonElement;
+
+    // Only reset by the shuffle button; randomized (not 0) at load so each visit starts different.
+    let jitterSeed = Math.floor(Math.random() * 1_000_000);
+
+    const $hueShiftVal = document.getElementById("hue-shift-val")!;
+    const $chromaTaperVal = document.getElementById("chroma-taper-val")!;
+    const $hueJitterVal = document.getElementById("hue-jitter-val")!;
+
+    const $upDec = document.getElementById("up-dec") as HTMLButtonElement;
+    const $upInc = document.getElementById("up-inc") as HTMLButtonElement;
+    const $upCountVal = document.getElementById("up-count-val")!;
+    const $downDec = document.getElementById("down-dec") as HTMLButtonElement;
+    const $downInc = document.getElementById("down-inc") as HTMLButtonElement;
+    const $downCountVal = document.getElementById("down-count-val")!;
+    const $delta = document.getElementById("delta") as HTMLInputElement;
+    const $deltaVal = document.getElementById("delta-val")!;
+
+    // Fixed grid size for the swatch row (real swatches or filler squares) so its width never changes.
+    const SWATCH_SIDE_CAPACITY = 7;
+    const STEP_COUNT_MIN = 0;
+    const STEP_COUNT_MAX = SWATCH_SIDE_CAPACITY;
+    let stepsUp = DEFAULT_STEPS_UP;
+    let stepsDown = DEFAULT_STEPS_DOWN;
+
+    const $ramp = document.getElementById("ramp")!;
+
+    const $space = document.getElementById("color-space") as HTMLCanvasElement;
+    const spaceCtx = $space.getContext("2d")!;
+
+    // Backing store rendered at CHART_RESOLUTION_SCALE times the logical size (capped at 3x), so the chart stays crisp when CSS stretches it or on high-DPI screens
+    const CHART_LOGICAL_WIDTH = $space.width;
+    const CHART_LOGICAL_HEIGHT = $space.height;
+    const CHART_RESOLUTION_SCALE = Math.min(3, Math.max(1, Math.round(window.devicePixelRatio || 1)));
+    $space.width = CHART_LOGICAL_WIDTH * CHART_RESOLUTION_SCALE;
+    $space.height = CHART_LOGICAL_HEIGHT * CHART_RESOLUTION_SCALE;
+    spaceCtx.scale(CHART_RESOLUTION_SCALE, CHART_RESOLUTION_SCALE);
+
+    const HEX_RE = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+    function isValidHex(value: string): boolean {
+        return HEX_RE.test(value.trim());
+    }
+
+    // Accepts a hex string with or without "#", returns the canonical lowercase "#rrggbb"
+    function normalizeHex(value: string): `#${string}` {
+        const trimmed = value.trim();
+        const withHash = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+        return withHash.toLowerCase() as `#${string}`;
+    }
+
+    // WCAG relative luminance, used for contrast-ratio checks below
+    function relativeLuminance(hex: string): number {
+        const { r, g, b } = hexToRgb(hex);
+        const linear = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+        return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+    }
+
+    function readableTextColor(hex: string): string {
+        const l = relativeLuminance(hex);
+        const contrastWithBlack = (l + 0.05) / 0.05;
+        const contrastWithWhite = 1.05 / (l + 0.05);
+        return contrastWithBlack >= contrastWithWhite ? "#000000" : "#ffffff";
+    }
+
+    function applyColorSwatchStyle(hex: string) {
+        $colorHex.style.backgroundColor = hex;
+        $colorHex.style.color = readableTextColor(hex);
+    }
+
+    // Fallback base color for whenever the hex field itself is invalid/mid-edit.
+    let currentHex = normalizeHex($colorHex.value);
+
+    // Only called from the hex field or an OKLCH-derived set, not the sliders themselves (avoids rounding jitter while dragging).
+    function syncOklchSlidersFromHex(hex: string) {
+        const okl = hexToOklch(hex);
+        $oklL.value = String(Math.round(okl.l * 100));
+        $oklC.value = okl.c.toFixed(2);
+        $oklH.value = String(Math.round(okl.h));
+        $oklLVal.textContent = `${$oklL.value}%`;
+        $oklCVal.textContent = Number($oklC.value).toFixed(2);
+        $oklHVal.textContent = `${$oklH.value}°`;
+    }
+
+    // Valid hex from the field itself, otherwise the last known-good color.
+    function currentBaseHex(): string {
+        return isValidHex($colorHex.value) ? normalizeHex($colorHex.value) : currentHex;
+    }
+
+    function currentPalette(): PaletteSwatch[] {
+        return generatePalette(currentBaseHex(), {
+            stepsUp,
+            stepsDown,
+            lightnessDelta: Number($delta.value),
+            hueShiftDeg: Number($hueShift.value),
+            hueJitterDeg: Number($hueJitter.value),
+            hueJitterSeed: jitterSeed,
+            chromaTaper: Number($chromaTaper.value),
+        });
+    }
+
+    // Live preview for the Hue shift slider: base hue in the middle, rotated ±hueShiftDeg at the edges.
+    const HUE_SHIFT_SWATCH_STOPS = 16;
+
+    function updateHueShiftSwatch() {
+        const { l, c, h } = hexToOklch(currentBaseHex());
+        const hueShiftDeg = Number($hueShift.value);
+
+        const stops: string[] = [];
+        for (let i = 0; i <= HUE_SHIFT_SWATCH_STOPS; i++) {
+            const t = (i / HUE_SHIFT_SWATCH_STOPS) * 2 - 1; // -1..1
+            const hue = normalizeHue(h + t * hueShiftDeg);
+            stops.push(rgbToHex(oklchToSrgbGamutMapped(l, c, hue)));
+        }
+
+        $hueShiftSwatch.style.background = `linear-gradient(to right, ${stops.join(", ")})`;
+    }
+
+    // Live preview for Chroma taper: base color in the middle, tapering over a small lightness radius.
+    const CHROMA_TAPER_SWATCH_STOPS = 16;
+    const CHROMA_TAPER_SWATCH_LIGHTNESS_RADIUS = 2 * DEFAULT_LIGHTNESS_DELTA;
+
+    function updateChromaTaperSwatch() {
+        const { l: l0, c: c0, h } = hexToOklch(currentBaseHex());
+        const chromaTaper = Number($chromaTaper.value);
+
+        const stops: string[] = [];
+        for (let i = 0; i <= CHROMA_TAPER_SWATCH_STOPS; i++) {
+            const t = (i / CHROMA_TAPER_SWATCH_STOPS) * 2 - 1; // -1..1
+            const l = Math.min(1, Math.max(0, l0 + t * CHROMA_TAPER_SWATCH_LIGHTNESS_RADIUS));
+            const desiredC = Math.max(0, c0 * chromaTaperRatio(l, l0, chromaTaper));
+            const c = Math.min(desiredC, maxInGamutChroma(l, h));
+            stops.push(rgbToHex(oklchToSrgb(l, c, h)));
+        }
+
+        $chromaTaperSwatch.style.background = `linear-gradient(to right, ${stops.join(", ")})`;
+    }
+
+    // Inert filler square for a step beyond the current stepsUp/stepsDown
+    function createRampFiller(): HTMLElement {
+        const filler = document.createElement("span");
+        filler.className = "swatch-square swatch-filler";
+        filler.setAttribute("aria-hidden", "true");
+        return filler;
+    }
+
+    function renderRamp(palette: PaletteSwatch[]) {
+        $ramp.innerHTML = "";
+        const byStep = new Map(palette.map((s) => [s.step, s]));
+
+        for (let step = -SWATCH_SIDE_CAPACITY; step <= SWATCH_SIDE_CAPACITY; step++) {
+            const swatch = byStep.get(step);
+            if (!swatch) {
+                $ramp.appendChild(createRampFiller());
+                continue;
+            }
+
+            const hex = swatch.hex.toLowerCase();
+
+            const square = document.createElement("button");
+            square.type = "button";
+            square.className = "swatch-square" + (step === 0 ? " swatch-square-base" : "");
+            square.title = hex;
+            square.setAttribute("aria-label", `Copy ${hex}`);
+
+            // Color + hover pop live on this inner element, not .swatch-square itself (see CSS)
+            const fill = document.createElement("span");
+            fill.className = "swatch-fill";
+            fill.style.backgroundColor = hex;
+            square.appendChild(fill);
+
+            const hexLabel = document.createElement("span");
+            hexLabel.className = "swatch-hex-label font-dotmatrix";
+            hexLabel.textContent = hex;
+            hexLabel.style.color = readableTextColor(hex);
+            fill.appendChild(hexLabel);
+
+            square.addEventListener("click", async () => {
+                try {
+                    await navigator.clipboard.writeText(hex);
+                    hexLabel.textContent = "copied";
+                } catch {
+                    // Clipboard access can be denied - fall back to a visible failure
+                    hexLabel.textContent = "failed";
+                }
+                setTimeout(() => {
+                    hexLabel.textContent = hex;
+                }, 1000);
+            });
+
+            $ramp.appendChild(square);
+        }
+    }
+
+    // Fixed chroma scale so the boundary's size stays comparable across hues; 0.33 is just above sRGB's real peak (~0.32)
+    const CHROMA_MAX = 0.33;
+    const PLOT_MARGIN = { top: 6, right: 6, bottom: 6, left: 6 };
+
+    function cssVar(name: string): string {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function plotBounds() {
+        return {
+            left: PLOT_MARGIN.left,
+            right: CHART_LOGICAL_WIDTH - PLOT_MARGIN.right,
+            top: PLOT_MARGIN.top,
+            bottom: CHART_LOGICAL_HEIGHT - PLOT_MARGIN.bottom,
+        };
+    }
+
+    // x = lightness, y = chroma (canvas y-down, so higher chroma = smaller y)
+    function toXY(chroma: number, lightness: number) {
+        const b = plotBounds();
+        const x = b.left + Math.min(Math.max(lightness, 0), 1) * (b.right - b.left);
+        const y = b.bottom - (Math.min(chroma, CHROMA_MAX) / CHROMA_MAX) * (b.bottom - b.top);
+        return { x, y };
+    }
+
+    // Hue at a given lightness for this ramp - shared by the boundary/raster and generatePalette so they always agree
+    function hueAt(l: number, base: PaletteSwatch, hueShiftDeg: number): number {
+        return hueAtLightness(l, base.l, base.h, DEFAULT_LIGHTNESS_FLOOR, DEFAULT_LIGHTNESS_CEIL, { hueShiftDeg });
+    }
+
+    // Samples the sRGB gamut boundary (max chroma) across the lightness range, at this ramp's actual hue curve
+    function gamutBoundary(base: PaletteSwatch, hueShiftDeg: number, samples = 120): { l: number; c: number }[] {
+        const points: { l: number; c: number }[] = [];
+        for (let i = 0; i <= samples; i++) {
+            const l = i / samples;
+            points.push({ l, c: maxInGamutChroma(l, hueAt(l, base, hueShiftDeg)) });
+        }
+        points.push({l: 0, c: 0});
+        return points;
+    }
+
+    function buildGamutRaster(base: PaletteSwatch, hueShiftDeg: number): HTMLCanvasElement {
+        const raster = document.createElement("canvas");
+        raster.width = $space.width;
+        raster.height = $space.height;
+        const rasterCtx = raster.getContext("2d")!;
+        rasterCtx.scale(CHART_RESOLUTION_SCALE, CHART_RESOLUTION_SCALE);
+
+        const b = plotBounds();
+        for (let px = b.left; px <= b.right; px++) {
+            const lightness = (px - b.left) / (b.right - b.left);
+            const hue = hueAt(lightness, base, hueShiftDeg);
+            const maxC = maxInGamutChroma(lightness, hue);
+            const reachablePx = (Math.min(maxC, CHROMA_MAX) / CHROMA_MAX) * (b.bottom - b.top);
+
+            for (let py = b.bottom; py >= b.bottom - reachablePx; py--) {
+                const chroma = ((b.bottom - py) / (b.bottom - b.top)) * CHROMA_MAX;
+                const rgb = oklchToSrgb(lightness, chroma, hue);
+                rasterCtx.fillStyle = rgbToHex(rgb);
+                rasterCtx.fillRect(px, py, 1, 1);
+            }
+        }
+        return raster;
+    }
+
+    let cachedRaster: { key: string; canvas: HTMLCanvasElement } | null = null;
+
+    let lastShownPalette: PaletteSwatch[] = [];
+
+    function drawAxes() {
+        const b = plotBounds();
+        spaceCtx.strokeStyle = cssVar("--col-text-3");
+        spaceCtx.lineWidth = 1;
+
+        spaceCtx.beginPath();
+        spaceCtx.moveTo(b.left, b.top);
+        spaceCtx.lineTo(b.left, b.bottom);
+        spaceCtx.lineTo(b.right, b.bottom);
+        spaceCtx.stroke();
+
+        for (const l of [0.25, 0.5, 0.75]) {
+            const { x } = toXY(0, l);
+            spaceCtx.beginPath();
+            spaceCtx.moveTo(x, b.bottom);
+            spaceCtx.lineTo(x, b.bottom + 4);
+            spaceCtx.stroke();
+        }
+
+        for (const c of [0.1, 0.2, 0.3]) {
+            if (c >= CHROMA_MAX) continue;
+            const { y } = toXY(c, 0);
+            spaceCtx.beginPath();
+            spaceCtx.moveTo(b.left - 4, y);
+            spaceCtx.lineTo(b.left, y);
+            spaceCtx.stroke();
+        }
+    }
+
+    function drawBoundaryOutline(boundary: { l: number; c: number }[]) {
+        spaceCtx.beginPath();
+        boundary.forEach((p, i) => {
+            const { x, y } = toXY(p.c, p.l);
+            if (i === 0) spaceCtx.moveTo(x, y);
+            else spaceCtx.lineTo(x, y);
+        });
+        spaceCtx.closePath();
+
+        spaceCtx.strokeStyle = cssVar("--col-text-3");
+        spaceCtx.lineWidth = 1.25;
+        spaceCtx.stroke();
+    }
+
+    // Background-colored halo stroke so the path stays legible over the raster's real colors
+    function drawRampPath(palette: PaletteSwatch[]) {
+        spaceCtx.beginPath();
+        palette.forEach((swatch, i) => {
+            const { x, y } = toXY(swatch.c, swatch.l);
+            if (i === 0) spaceCtx.moveTo(x, y);
+            else spaceCtx.lineTo(x, y);
+        });
+
+        spaceCtx.strokeStyle = cssVar("--col-background") + "cc";
+        spaceCtx.lineWidth = 3.5;
+        spaceCtx.stroke();
+    }
+
+    // Shared by drawDots and hit-testing, so a dot's clickable footprint matches what's drawn.
+    function swatchDotGeometry(swatch: PaletteSwatch): { radius: number; border: number } {
+        const maxJitterDeg = Number($hueJitter.max) || 1;
+        const jitterFactor = swatch.hueJitter / maxJitterDeg;
+
+        return {
+            radius: 7 + jitterFactor * 2,
+            border: swatch.step === 0 ? 5 : 3,
+        };
+    }
+
+    function drawDots(palette: PaletteSwatch[]) {
+        for (const swatch of palette) {
+            const { x, y } = toXY(swatch.c, swatch.l);
+            const { radius, border } = swatchDotGeometry(swatch);
+
+            spaceCtx.beginPath();
+            spaceCtx.rect(x - radius - border, y - radius - border, (radius + border) * 2, (radius + border) * 2);
+            spaceCtx.fillStyle = cssVar("--col-background");
+            spaceCtx.fill();
+
+            spaceCtx.beginPath();
+            spaceCtx.rect(x - radius, y - radius, radius * 2, radius * 2);
+            spaceCtx.fillStyle = swatch.hex;
+            spaceCtx.fill();
+        }
+    }
+
+    // Exponential easing factor per animation frame - the only smoothing knob for the chart's dots/line.
+    const CHART_EASE = 0.25;
+    const CHART_EASE_EPSILON = 0.0005;
+
+    interface DisplayedPoint {
+        l: number;
+        c: number;
+        h: number;
+        hueJitter: number;
+    }
+
+    // Keyed by step (not array index), so a swatch keeps its identity across re-renders.
+    const displayedByStep = new Map<number, DisplayedPoint>();
+    let chartAnimationHandle: number | null = null;
+
+    // Eases every displayed point toward its target; reports whether anything's still moving.
+    function advanceDisplayed(palette: PaletteSwatch[]): boolean {
+        let animating = false;
+        const liveSteps = new Set(palette.map((s) => s.step));
+        for (const step of displayedByStep.keys()) {
+            if (!liveSteps.has(step)) displayedByStep.delete(step);
+        }
+
+        for (const swatch of palette) {
+            const current = displayedByStep.get(swatch.step);
+            if (!current) {
+                displayedByStep.set(swatch.step, { l: swatch.l, c: swatch.c, h: swatch.h, hueJitter: swatch.hueJitter });
+                continue;
+            }
+
+            // While dragging, track the target exactly - no easing lag.
+            if (chartDrag) {
+                current.l = swatch.l;
+                current.c = swatch.c;
+                current.h = swatch.h;
+                current.hueJitter = swatch.hueJitter;
+                continue;
+            }
+
+            const dl = swatch.l - current.l;
+            const dc = swatch.c - current.c;
+            const dh = shortestHueDelta(current.h, swatch.h);
+            const dj = swatch.hueJitter - current.hueJitter;
+
+            if (
+                Math.abs(dl) < CHART_EASE_EPSILON &&
+                Math.abs(dc) < CHART_EASE_EPSILON &&
+                Math.abs(dh) < 0.05 &&
+                Math.abs(dj) < 0.05
+            ) {
+                current.l = swatch.l;
+                current.c = swatch.c;
+                current.h = swatch.h;
+                current.hueJitter = swatch.hueJitter;
+                continue;
+            }
+
+            current.l += dl * CHART_EASE;
+            current.c += dc * CHART_EASE;
+            current.h = normalizeHue(current.h + dh * CHART_EASE);
+            current.hueJitter += dj * CHART_EASE;
+            animating = true;
+        }
+
+        return animating;
+    }
+
+    // Recomputes hex from each point's current eased l/c/h.
+    function displayedPalette(palette: PaletteSwatch[]): PaletteSwatch[] {
+        return palette.map((swatch) => {
+            const d = displayedByStep.get(swatch.step)!;
+            const rgb = oklchToSrgbGamutMapped(d.l, d.c, d.h);
+            return { ...swatch, l: d.l, c: d.c, h: d.h, hueJitter: d.hueJitter, hex: rgbToHex(rgb) };
+        });
+    }
+
+    function renderColorSpace(palette: PaletteSwatch[]) {
+        const base = palette.find((s) => s.step === 0)!;
+        const hueShiftDeg = Number($hueShift.value);
+
+        spaceCtx.clearRect(0, 0, CHART_LOGICAL_WIDTH, CHART_LOGICAL_HEIGHT);
+
+        // Raster isn't animated - driven by the true base, cached by key.
+        const cacheKey = `${base.h}|${base.l}|${hueShiftDeg}`;
+        if (!cachedRaster || cachedRaster.key !== cacheKey) {
+            cachedRaster = { key: cacheKey, canvas: buildGamutRaster(base, hueShiftDeg) };
+        }
+        // 1:1 physical-pixel blit, bypassing this context's own scale.
+        spaceCtx.save();
+        spaceCtx.setTransform(1, 0, 0, 1, 0, 0);
+        spaceCtx.drawImage(cachedRaster.canvas, 0, 0);
+        spaceCtx.restore();
+
+        const shown = displayedPalette(palette);
+        lastShownPalette = shown;
+
+        drawAxes();
+        drawBoundaryOutline(gamutBoundary(base, hueShiftDeg));
+        drawRampPath(shown);
+        drawDots(shown);
+    }
+
+    // Re-renders each frame until every displayed point has caught up, then stops
+    function animateColorSpace(palette: PaletteSwatch[]) {
+        const stillAnimating = advanceDisplayed(palette);
+        renderColorSpace(palette);
+        chartAnimationHandle = stillAnimating ? requestAnimationFrame(() => animateColorSpace(palette)) : null;
+    }
+
+    function update() {
+        const palette = currentPalette();
+        renderRamp(palette);
+        updateHueShiftSwatch();
+        updateChromaTaperSwatch();
+
+        if (chartAnimationHandle !== null) cancelAnimationFrame(chartAnimationHandle);
+        animateColorSpace(palette);
+    }
+
+    function selectSwatchAsBase(swatch: PaletteSwatch) {
+        if (swatch.step === 0) return;
+
+        const hex = swatch.hex.toLowerCase() as `#${string}`;
+        currentHex = hex;
+        $colorHex.value = hex;
+        applyColorSwatchStyle(currentHex);
+        syncOklchSlidersFromHex(currentHex);
+        setStepCounts(stepsUp - swatch.step, stepsDown + swatch.step);
+    }
+
+    // Viewport position -> the chart's fixed logical coordinate space
+    function eventToLogicalXY(evt: PointerEvent): { x: number; y: number } {
+        const rect = $space.getBoundingClientRect();
+        return {
+            x: ((evt.clientX - rect.left) / rect.width) * CHART_LOGICAL_WIDTH,
+            y: ((evt.clientY - rect.top) / rect.height) * CHART_LOGICAL_HEIGHT,
+        };
+    }
+
+    // Checks the topmost (last-drawn) dot first
+    function hitTestSwatch(x: number, y: number): PaletteSwatch | null {
+        for (let i = lastShownPalette.length - 1; i >= 0; i--) {
+            const swatch = lastShownPalette[i];
+            const { x: sx, y: sy } = toXY(swatch.c, swatch.l);
+            const { radius, border } = swatchDotGeometry(swatch);
+            const half = radius + border;
+            if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half) {
+                return swatch;
+            }
+        }
+        return null;
+    }
+
+    // Set while a chart dot is being dragged; hue stays fixed for the whole gesture
+    let chartDrag: { hue: number } | null = null;
+
+    function onChartPointerDown(evt: PointerEvent) {
+        const { x, y } = eventToLogicalXY(evt);
+        const swatch = hitTestSwatch(x, y);
+        if (!swatch) return;
+
+        selectSwatchAsBase(swatch);
+        chartDrag = { hue: hexToOklch(currentBaseHex()).h };
+        $space.style.cursor = "grabbing";
+        $space.setPointerCapture(evt.pointerId);
+        evt.preventDefault();
+    }
+
+    // x = lightness, y = chroma (inverse of toXY), gamut-mapped like the OKLCH sliders
+    function applyChartDrag(evt: PointerEvent) {
+        if (!chartDrag) return;
+
+        const { x, y } = eventToLogicalXY(evt);
+        const b = plotBounds();
+        const lightness = Math.min(1, Math.max(0, (x - b.left) / (b.right - b.left)));
+        const chromaFraction = Math.min(1, Math.max(0, (b.bottom - y) / (b.bottom - b.top)));
+
+        const hex = oklchToHex({ l: lightness, c: chromaFraction * CHROMA_MAX, h: chartDrag.hue });
+        currentHex = hex;
+        $colorHex.value = hex.toLowerCase();
+        applyColorSwatchStyle(currentHex);
+        syncOklchSlidersFromHex(currentHex);
+        update();
+    }
+
+    // Coalesces pointermove bursts to at most one update per animation frame
+    let pendingDragEvent: PointerEvent | null = null;
+    let dragUpdateQueued = false;
+
+    function onChartPointerMove(evt: PointerEvent) {
+        if (!chartDrag) {
+            const { x, y } = eventToLogicalXY(evt);
+            $space.style.cursor = hitTestSwatch(x, y) ? "grab" : "default";
+            return;
+        }
+
+        pendingDragEvent = evt;
+        if (dragUpdateQueued) return;
+        dragUpdateQueued = true;
+        requestAnimationFrame(() => {
+            dragUpdateQueued = false;
+            if (pendingDragEvent) applyChartDrag(pendingDragEvent);
+        });
+    }
+
+    function onChartPointerUp(evt: PointerEvent) {
+        if (!chartDrag) return;
+        chartDrag = null;
+        $space.releasePointerCapture(evt.pointerId);
+        const { x, y } = eventToLogicalXY(evt);
+        $space.style.cursor = hitTestSwatch(x, y) ? "grab" : "default";
+    }
+
+    $space.addEventListener("pointerdown", onChartPointerDown);
+    $space.addEventListener("pointermove", onChartPointerMove);
+    $space.addEventListener("pointerup", onChartPointerUp);
+    $space.addEventListener("pointercancel", onChartPointerUp);
+
+    $colorHex.addEventListener("input", () => {
+        if (isValidHex($colorHex.value)) {
+            currentHex = normalizeHex($colorHex.value);
+            applyColorSwatchStyle(currentHex);
+            syncOklchSlidersFromHex(currentHex);
+            update();
+        }
+    });
+
+    // Gamut-mapped, so an unreachable L/C/H just yields the closest displayable color
+    function onOklchSliderInput() {
+        const hex = oklchToHex({
+            l: Number($oklL.value) / 100,
+            c: Number($oklC.value),
+            h: Number($oklH.value),
+        });
+        $oklLVal.textContent = `${$oklL.value}%`;
+        $oklCVal.textContent = Number($oklC.value).toFixed(2);
+        $oklHVal.textContent = `${$oklH.value}°`;
+        currentHex = hex;
+        $colorHex.value = hex.toLowerCase();
+        applyColorSwatchStyle(currentHex);
+        update();
+    }
+
+    $oklL.addEventListener("input", onOklchSliderInput);
+    $oklC.addEventListener("input", onOklchSliderInput);
+    $oklH.addEventListener("input", onOklchSliderInput);
+
+    function setStepCounts(nextUp: number, nextDown: number) {
+        stepsUp = Math.min(STEP_COUNT_MAX, Math.max(STEP_COUNT_MIN, nextUp));
+        stepsDown = Math.min(STEP_COUNT_MAX, Math.max(STEP_COUNT_MIN, nextDown));
+        $upCountVal.textContent = String(stepsUp);
+        $downCountVal.textContent = String(stepsDown);
+        update();
+    }
+
+    $upDec.addEventListener("click", () => setStepCounts(stepsUp - 1, stepsDown));
+    $upInc.addEventListener("click", () => setStepCounts(stepsUp + 1, stepsDown));
+    $downDec.addEventListener("click", () => setStepCounts(stepsUp, stepsDown - 1));
+    $downInc.addEventListener("click", () => setStepCounts(stepsUp, stepsDown + 1));
+
+    $delta.addEventListener("input", () => {
+        $deltaVal.textContent = Number($delta.value).toFixed(2);
+        update();
+    });
+
+    $hueShift.addEventListener("input", () => {
+        $hueShiftVal.textContent = `${$hueShift.value}°`;
+        update();
+    });
+    $chromaTaper.addEventListener("input", () => {
+        $chromaTaperVal.textContent = $chromaTaper.value;
+        update();
+    });
+    // Nothing to reroll at 0° jitter, so the shuffle button is disabled there.
+    function updateJitterShuffleState() {
+        $jitterShuffle.disabled = Number($hueJitter.value) === 0;
+    }
+
+    $hueJitter.addEventListener("input", () => {
+        $hueJitterVal.textContent = `${$hueJitter.value}°`;
+        updateJitterShuffleState();
+        update();
+    });
+
+    $jitterShuffle.addEventListener("click", () => {
+        jitterSeed += 1;
+        $jitterShuffle.classList.remove("spin");
+        void $jitterShuffle.offsetWidth; // Restart the animation on repeated clicks
+        $jitterShuffle.classList.add("spin");
+        update();
+    });
+
+    $delta.value = String(DEFAULT_LIGHTNESS_DELTA);
+    $deltaVal.textContent = DEFAULT_LIGHTNESS_DELTA.toFixed(2);
+    $upCountVal.textContent = String(stepsUp);
+    $downCountVal.textContent = String(stepsDown);
+
+    applyColorSwatchStyle(currentHex);
+    syncOklchSlidersFromHex(currentHex);
+    updateJitterShuffleState();
+    update();
+</script>
+
+<style is:global>
+    .forge {
+        max-width: 900px;
+        width: 100%;
+        margin-inline: auto;
+        padding: 4rem var(--page-padding);
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+
+        background: var(--col-background);
+    }
+
+    .intro h1 {
+        margin-bottom: 0;
+    }
+
+    .intro p {
+        color: var(--col-text-2);
+        line-height: 1.5;
+        margin-bottom: -20px;
+    }
+
+    .layout-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+
+    .left-column {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        width: 320px;
+        flex-shrink: 0;
+    }
+
+    .panel {
+        border: 1px solid var(--col-divider);
+        padding: 1.5rem;
+        box-sizing: border-box;
+    }
+
+    .base-color-options {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    /* Grows to match the color-space panel's height */
+    .palette-panel {
+        flex: 1;
+    }
+
+    .colorspace-panel {
+        flex: 1;
+        min-width: 320px;
+    }
+
+    .colorspace-options {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .control {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .control label {
+        font-size: 0.85rem;
+        color: var(--col-text-2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* "[?]" hint text; :hover/:focus-visible reveals its tooltip via ::after */
+    .hint {
+        color: var(--col-text-3);
+        cursor: help;
+        position: relative;
+    }
+
+    /* Opens downward so it doesn't overflow a panel's top edge */
+    .hint::after {
+        content: attr(data-tooltip);
+        position: absolute;
+
+        top: calc(100% + 0.4rem);
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content;
+        max-width: 22rem;
+
+        padding: 0.4rem 0.6rem;
+        background: var(--col-background);
+        border: 1px solid var(--col-divider);
+
+        color: var(--col-text-2);
+        font-family: "Roboto Slab", serif;
+
+        font-size: 0.75rem;
+        font-weight: 400;
+        line-height: 1.4;
+        text-align: left;
+        white-space: normal;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 100ms;
+        z-index: 10;
+    }
+
+    .hint:hover::after,
+    .hint:focus-visible::after {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Sits beside the whole label+slider block, not inside the label */
+    .control-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .control-row .control {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Placeholder fill - not wired to anything yet */
+    .slider-swatch {
+        width: 1.5rem;
+        height: 1.5rem;
+        flex-shrink: 0;
+        box-sizing: border-box;
+        background: #e67039;
+        border: 3px solid var(--col-divider);
+    }
+
+    /* Rerolls which random hues jitter picks, without touching the jitter amount */
+    .shuffle-btn {
+        all: unset;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        flex-shrink: 0;
+        box-sizing: border-box;
+        color: var(--col-text);
+        cursor: pointer;
+
+        svg {
+            color: var(--col-text-2);
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    .shuffle-btn:disabled {
+        cursor: default;
+
+        svg {
+            color: var(--col-background-2);
+        }
+    }
+
+    .shuffle-btn.spin svg {
+        animation: shuffle-spin 400ms ease-in-out;
+    }
+
+    @keyframes shuffle-spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(180deg);
+        }
+    }
+
+    /* Background/text color are set inline via JS */
+    .color-swatch-input {
+        width: 100%;
+        //aspect-ratio: 1 / 1;
+        box-sizing: border-box;
+        border: 1px solid var(--col-divider);
+        //text-align: center;
+        padding: 0.1rem 0.5rem;
+
+        font-size: 1.15rem;
+        letter-spacing: 0.05em;
+        cursor: text;
+        transition: background-color 100ms;
+    }
+
+    input[type="range"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 100%;
+        height: 1rem;
+        margin: 0;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+        height: 0.35rem;
+        background: var(--col-background-2);
+        border: 1px solid var(--col-divider);
+        box-sizing: border-box;
+    }
+
+    input[type="range"]::-moz-range-track {
+        height: 0.35rem;
+        background: var(--col-background-2);
+        border: 1px solid var(--col-divider);
+        box-sizing: border-box;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 0.85rem;
+        height: 0.85rem;
+        margin-top: -0.27rem;
+        background: var(--col-element);
+        border: 1px solid var(--col-text);
+        box-sizing: border-box;
+        transition: background 100ms;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        width: 0.85rem;
+        height: 0.85rem;
+        border-radius: 0;
+        background: var(--col-element);
+        border: 1px solid var(--col-text);
+        box-sizing: border-box;
+        transition: background 100ms;
+    }
+
+    input[type="range"]:hover::-webkit-slider-thumb,
+    input[type="range"]:focus-visible::-webkit-slider-thumb {
+        background: var(--col-text);
+    }
+
+    input[type="range"]:hover::-moz-range-thumb,
+    input[type="range"]:focus-visible::-moz-range-thumb {
+        background: var(--col-text);
+    }
+
+    input[type="range"]:focus-visible {
+        outline: none;
+    }
+
+    input[type="range"]:focus-visible::-webkit-slider-runnable-track,
+    input[type="range"]:focus-visible::-moz-range-track {
+        border-color: var(--col-text);
+    }
+
+    .panel-title {
+        font-size: 1.05rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--col-text);
+        margin-bottom: 1rem;
+    }
+
+    .palette-options {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .stepper-row {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .stepper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .stepper label {
+        font-size: 0.85rem;
+        color: var(--col-text-2);
+    }
+
+    .stepper-controls {
+        display: flex;
+        align-items: stretch;
+        border: 1px solid var(--col-divider);
+    }
+
+    .stepper-btn {
+        all: unset;
+        cursor: pointer;
+        flex: 1;
+        text-align: center;
+        padding: 0.35rem 0;
+        font-size: 1rem;
+        color: var(--col-text);
+        box-sizing: border-box;
+
+        &:hover {
+            background: var(--col-background-2);
+        }
+
+        &:active {
+            background: var(--col-element);
+            color: var(--col-background);
+        }
+    }
+
+    .stepper-controls span {
+        flex: 1.4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-left: 1px solid var(--col-divider);
+        border-right: 1px solid var(--col-divider);
+        font-size: 0.9rem;
+        color: var(--col-text);
+    }
+
+    .swatches-panel {
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: -1rem;
+    }
+
+    .ramp {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    /* Fixed size so every slot (real or filler) lines up exactly */
+    .swatch-square {
+        all: unset;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        width: 2.9rem;
+        height: 2.9rem;
+        box-sizing: border-box;
+        border: 1px solid var(--col-background-2);
+
+        &:hover {
+            z-index: 2;
+        }
+    }
+
+    /* Color/hover-pop live here, not on .swatch-square, so its border never distorts under the non-uniform scale */
+    .swatch-fill {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .swatch-square:hover .swatch-fill {
+        transform: scale(2, 1);
+
+        & > * {
+            transform: scale(0.75, 1.5);
+        }
+    }
+
+    /* absolute + inset:0 so growing the label on hover never reflows neighboring swatches */
+    .swatch-hex-label {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.78rem;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+
+    .swatch-square:hover .swatch-hex-label,
+    .swatch-square:focus-visible .swatch-hex-label {
+        display: flex;
+    }
+
+    .swatch-square-base {
+        outline: 2px solid var(--col-text);
+        outline-offset: -3px;
+    }
+
+    /* Ticks exactly as wide as the base swatch itself */
+    .swatch-square-base::before,
+    .swatch-square-base::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--col-text);
+    }
+
+    .swatch-square-base::before {
+        top: -8px;
+    }
+
+    .swatch-square-base::after {
+        bottom: -8px;
+    }
+
+    /* Same box as a real swatch, just inert */
+    .swatch-filler {
+        background: var(--col-background);
+        cursor: default;
+
+        &:hover {
+            transform: none;
+            z-index: auto;
+        }
+    }
+
+    .colorspace-wrapper {
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    #color-space {
+        width: 100%;
+        height: auto;
+        cursor: default;
+        /* Otherwise a touch-drag fights the browser's own scroll gesture */
+        touch-action: none;
+    }
+
+    /* Mobile only - everything above is untouched. */
+    @media (max-width: 768px) {
+        .forge {
+            box-sizing: border-box;
+        }
+
+        .left-column {
+            width: 100%;
+        }
+
+        .colorspace-panel {
+            min-width: 0;
+        }
+
+        .swatch-filler {
+            display: none;
+        }
+    }
+</style>
