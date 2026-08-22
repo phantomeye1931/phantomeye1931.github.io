@@ -6,137 +6,139 @@ import { SITE_TITLE } from "../../consts.ts";
 <Page
     title={"Color Space Palette Generator"}
     description="Generate hue-shifted pixel art shade ramps from a single base color using OKLCH color science."
-    opts={{ background: false, buttons: true }}
+    opts={{ background: true, backgroundVariant: 'halftone', bgFill: true, buttons: true }}
 >
-    <div class="forge">
-        <header class="intro">
-            <h1>Color Space Palette Generator</h1>
-            <p>
-                Generate nice color palettes for Pixel Art from a single base color, using color spaces mapped to human color perception. Apply hue shifting & hue jitter with ease.
-            </p>
-        </header>
+    <div class="forge-wrapper">
+        <div class="forge">
+            <header class="intro">
+                <h1>Color Space Palette Generator</h1>
+                <p>
+                    Generate nice color palettes for Pixel Art from a single base color, using color spaces mapped to human color perception. Apply hue shifting & hue jitter with ease.
+                </p>
+            </header>
 
-        <div class="layout-grid">
-            <div class="left-column">
-                <section class="panel base-color-panel">
-                    <div class="panel-title font-dotmatrix">Base Color</div>
+            <div class="layout-grid">
+                <div class="left-column">
+                    <section class="panel base-color-panel">
+                        <div class="panel-title font-dotmatrix">Base Color</div>
 
-                    <div class="base-color-options">
-                        <div class="control color-control">
-                            <label for="base-color-hex">Base color</label>
-                            <input type="text" id="base-color-hex" class="font-dotmatrix color-swatch-input" value="#5e71b9" maxlength="7" spellcheck="false" />
+                        <div class="base-color-options">
+                            <div class="control color-control">
+                                <label for="base-color-hex">Base color</label>
+                                <input type="text" id="base-color-hex" class="font-dotmatrix color-swatch-input" value="#5e71b9" maxlength="7" spellcheck="false" />
+                            </div>
+
+                            <div class="control">
+                                <label for="okl-l">Lightness <span id="okl-l-val">57%</span></label>
+                                <input type="range" id="okl-l" min="0" max="100" step="1" />
+                            </div>
+
+                            <div class="control">
+                                <label for="okl-c">Chroma (Saturation)<span id="okl-c-val">0.11</span></label>
+                                <input type="range" id="okl-c" min="0" max="0.33" step="0.01" />
+                            </div>
+
+                            <div class="control">
+                                <label for="okl-h">Hue (Color)<span id="okl-h-val">271&deg;</span></label>
+                                <input type="range" id="okl-h" min="0" max="360" step="1" />
+                            </div>
                         </div>
+                    </section>
 
-                        <div class="control">
-                            <label for="okl-l">Lightness <span id="okl-l-val">57%</span></label>
-                            <input type="range" id="okl-l" min="0" max="100" step="1" />
-                        </div>
+                    <section class="panel palette-panel">
+                        <div class="panel-title font-dotmatrix">Palette</div>
 
-                        <div class="control">
-                            <label for="okl-c">Chroma (Saturation)<span id="okl-c-val">0.11</span></label>
-                            <input type="range" id="okl-c" min="0" max="0.33" step="0.01" />
-                        </div>
+                        <div class="palette-options">
+                            <div class="stepper-row">
+                                <div class="stepper">
+                                    <label>Lighter</label>
+                                    <div class="stepper-controls">
+                                        <button type="button" class="stepper-btn" id="up-dec" aria-label="Fewer lighter shades">&minus;</button>
+                                        <span id="up-count-val" class="font-dotmatrix">2</span>
+                                        <button type="button" class="stepper-btn" id="up-inc" aria-label="More lighter shades">+</button>
+                                    </div>
+                                </div>
 
-                        <div class="control">
-                            <label for="okl-h">Hue (Color)<span id="okl-h-val">271&deg;</span></label>
-                            <input type="range" id="okl-h" min="0" max="360" step="1" />
-                        </div>
-                    </div>
-                </section>
-
-                <section class="panel palette-panel">
-                    <div class="panel-title font-dotmatrix">Palette</div>
-
-                    <div class="palette-options">
-                        <div class="stepper-row">
-                            <div class="stepper">
-                                <label>Lighter</label>
-                                <div class="stepper-controls">
-                                    <button type="button" class="stepper-btn" id="up-dec" aria-label="Fewer lighter shades">&minus;</button>
-                                    <span id="up-count-val" class="font-dotmatrix">2</span>
-                                    <button type="button" class="stepper-btn" id="up-inc" aria-label="More lighter shades">+</button>
+                                <div class="stepper">
+                                    <label>Darker</label>
+                                    <div class="stepper-controls">
+                                        <button type="button" class="stepper-btn" id="down-dec" aria-label="Fewer darker shades">&minus;</button>
+                                        <span id="down-count-val" class="font-dotmatrix">4</span>
+                                        <button type="button" class="stepper-btn" id="down-inc" aria-label="More darker shades">+</button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="stepper">
-                                <label>Darker</label>
-                                <div class="stepper-controls">
-                                    <button type="button" class="stepper-btn" id="down-dec" aria-label="Fewer darker shades">&minus;</button>
-                                    <span id="down-count-val" class="font-dotmatrix">4</span>
-                                    <button type="button" class="stepper-btn" id="down-inc" aria-label="More darker shades">+</button>
-                                </div>
+                            <div class="control">
+                                <label for="delta">
+                                    <span>Delta <span class="hint font-dotmatrix" tabindex="0" data-tooltip="How much lightness changes between each generated step" aria-label="How much lightness changes between each generated step">[?]</span></span>
+                                    <span id="delta-val">0.10</span>
+                                </label>
+                                <input type="range" id="delta" min="0.02" max="0.25" step="0.01" value="0.1" />
                             </div>
                         </div>
+                    </section>
+                </div>
 
-                        <div class="control">
-                            <label for="delta">
-                                <span>Delta <span class="hint font-dotmatrix" tabindex="0" data-tooltip="How much lightness changes between each generated step" aria-label="How much lightness changes between each generated step">[?]</span></span>
-                                <span id="delta-val">0.10</span>
-                            </label>
-                            <input type="range" id="delta" min="0.02" max="0.25" step="0.01" value="0.1" />
+                <section class="panel colorspace-panel">
+                    <div class="panel-title font-dotmatrix">Color Space</div>
+
+                    <div class="colorspace-options">
+                        <div class="control-row">
+                            <div class="control">
+                                <label for="hue-shift">
+                                    <span>Hue shift <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Rotates shadows and highlights away from the base hue: cooler for shadows, warmer for highlights" aria-label="Rotates shadows and highlights away from the base hue: cooler for shadows, warmer for highlights">[?]</span></span>
+                                    <span id="hue-shift-val">30&deg;</span>
+                                </label>
+                                <input type="range" id="hue-shift" min="0" max="60" step="1" value="30" />
+                            </div>
+                            <span class="slider-swatch" id="hue-shift-swatch"></span>
+                        </div>
+
+                        <div class="control-row">
+                            <div class="control">
+                                <label for="chroma-taper">
+                                    <span>Chroma taper <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Controls how fast saturation fades near black and white: low = vivid across the whole ramp, high = fades quickly" aria-label="Controls how fast saturation fades near black and white: low = vivid across the whole ramp, high = fades quickly">[?]</span></span>
+                                    <span id="chroma-taper-val">1.4</span>
+                                </label>
+                                <input type="range" id="chroma-taper" min="0.5" max="4" step="0.1" value="1.4" />
+                            </div>
+                            <span class="slider-swatch" id="chroma-taper-swatch"></span>
+                        </div>
+
+                        <div class="control-row">
+                            <div class="control">
+                                <label for="hue-jitter">
+                                    <span>Hue jitter <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Randomly nudges each step's hue for natural variation, creates less robotic palettes" aria-label="Randomly nudges each step's hue for natural variation, creates less robotic palettes">[?]</span></span>
+                                    <span id="hue-jitter-val">0&deg;</span>
+                                </label>
+                                <input type="range" id="hue-jitter" min="0" max="50" step="1" value="0" />
+                            </div>
+                            <button type="button" id="jitter-shuffle" class="slider-swatch shuffle-btn" aria-label="Shuffle" title="Shuffle">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14M23 10l-4.64-4.36A9 9 0 0 0 3.51 9"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="colorspace-wrapper">
+                            <canvas
+                                    id="color-space"
+                                    width="450"
+                                    height="345"
+                                    aria-label="Lightness by chroma chart showing the sRGB gamut boundary at the palette's hue, with the generated swatches plotted as dots"
+                            ></canvas>
                         </div>
                     </div>
                 </section>
             </div>
 
-            <section class="panel colorspace-panel">
-                <div class="panel-title font-dotmatrix">Color Space</div>
-
-                <div class="colorspace-options">
-                    <div class="control-row">
-                        <div class="control">
-                            <label for="hue-shift">
-                                <span>Hue shift <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Rotates shadows and highlights away from the base hue: cooler for shadows, warmer for highlights" aria-label="Rotates shadows and highlights away from the base hue: cooler for shadows, warmer for highlights">[?]</span></span>
-                                <span id="hue-shift-val">30&deg;</span>
-                            </label>
-                            <input type="range" id="hue-shift" min="0" max="60" step="1" value="30" />
-                        </div>
-                        <span class="slider-swatch" id="hue-shift-swatch"></span>
-                    </div>
-
-                    <div class="control-row">
-                        <div class="control">
-                            <label for="chroma-taper">
-                                <span>Chroma taper <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Controls how fast saturation fades near black and white: low = vivid across the whole ramp, high = fades quickly" aria-label="Controls how fast saturation fades near black and white: low = vivid across the whole ramp, high = fades quickly">[?]</span></span>
-                                <span id="chroma-taper-val">1.4</span>
-                            </label>
-                            <input type="range" id="chroma-taper" min="0.5" max="4" step="0.1" value="1.4" />
-                        </div>
-                        <span class="slider-swatch" id="chroma-taper-swatch"></span>
-                    </div>
-
-                    <div class="control-row">
-                        <div class="control">
-                            <label for="hue-jitter">
-                                <span>Hue jitter <span class="hint font-dotmatrix" tabindex="0" data-tooltip="Randomly nudges each step's hue for natural variation, creates less robotic palettes" aria-label="Randomly nudges each step's hue for natural variation, creates less robotic palettes">[?]</span></span>
-                                <span id="hue-jitter-val">0&deg;</span>
-                            </label>
-                            <input type="range" id="hue-jitter" min="0" max="50" step="1" value="0" />
-                        </div>
-                        <button type="button" id="jitter-shuffle" class="slider-swatch shuffle-btn" aria-label="Shuffle" title="Shuffle">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="23 4 23 10 17 10"></polyline>
-                                <polyline points="1 20 1 14 7 14"></polyline>
-                                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14M23 10l-4.64-4.36A9 9 0 0 0 3.51 9"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="colorspace-wrapper">
-                        <canvas
-                            id="color-space"
-                            width="450"
-                            height="345"
-                            aria-label="Lightness by chroma chart showing the sRGB gamut boundary at the palette's hue, with the generated swatches plotted as dots"
-                        ></canvas>
-                    </div>
-                </div>
+            <section class="panel swatches-panel">
+                <div class="ramp" id="ramp" aria-label="Generated shade ramp"></div>
             </section>
         </div>
-
-        <section class="panel swatches-panel">
-            <div class="ramp" id="ramp" aria-label="Generated shade ramp"></div>
-        </section>
     </div>
 </Page>
 
@@ -826,16 +828,25 @@ import { SITE_TITLE } from "../../consts.ts";
 </script>
 
 <style is:global>
+    .forge-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        min-height: 100svh;
+        width: 100%;
+        height: 100%;
+        margin-inline: auto;
+    }
+
     .forge {
         max-width: 900px;
-        width: 100%;
-        margin-inline: auto;
-        padding: 4rem var(--page-padding);
+        padding: 0 2em 2em;
+        background: var(--col-background);
+
+        gap: 2.5rem;
         display: flex;
         flex-direction: column;
-        gap: 2.5rem;
-
-        background: var(--col-background);
     }
 
     .intro h1 {
@@ -1162,6 +1173,7 @@ import { SITE_TITLE } from "../../consts.ts";
         width: 100%;
         box-sizing: border-box;
         margin-top: -1rem;
+        padding: 0.8rem;
     }
 
     .ramp {
