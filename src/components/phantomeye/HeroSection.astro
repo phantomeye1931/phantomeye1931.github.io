@@ -1,0 +1,676 @@
+---
+// PhantomEye brand hero: solid #5e71b9, name left-aligned, guardian-stalker
+// render bled off the right edge with a scroll parallax lag.
+---
+
+<div class="pe-hero" id="pe-hero">
+	<div class="pe-guardian-wrap" aria-hidden="true">
+		<canvas class="pe-guardian-canvas"></canvas>
+	</div>
+
+	<div class="pe-grain"></div>
+
+	<div class="pe-aperture-mark" aria-hidden="true">
+		<svg viewBox="0 0 40 40" fill="none" stroke="currentColor">
+			<circle cx="20" cy="20" r="9" stroke-width="1.2"></circle>
+			<line x1="20" y1="1" x2="20" y2="39" stroke-width="1.2"></line>
+			<line x1="1" y1="20" x2="39" y2="20" stroke-width="1.2"></line>
+		</svg>
+	</div>
+
+	<div class="pe-identity">
+		<h1 class="pe-name">Phantom<br />Eye</h1>
+		<span class="pe-tag-code"
+			><span class="pe-hash">#</span><span class="pe-num">1931</span><span class="pe-cursor"
+			></span></span
+		>
+		<div class="pe-roles">Digital Artist<br />3D Renders &middot; Pixel Work</div>
+		<div class="pe-colophon">
+			<span class="pe-ring"></span>
+			<span class="pe-label">f/1.8 &middot; digital renders</span>
+		</div>
+	</div>
+</div>
+
+<style>
+	.pe-hero {
+		position: relative;
+		width: 100%;
+		min-height: 100vh;
+		overflow: hidden;
+		background: var(--pe-blue);
+		isolation: isolate;
+	}
+
+	.pe-grain {
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		pointer-events: none;
+		mix-blend-mode: overlay;
+		opacity: 0.09;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+		background-size: 180px 180px;
+	}
+
+	.pe-aperture-mark {
+		position: absolute;
+		top: 28px;
+		left: 28px;
+		width: 24px;
+		height: 24px;
+		color: var(--pe-white);
+		opacity: 0.5;
+		z-index: 3;
+	}
+	.pe-aperture-mark svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.pe-guardian-wrap {
+		position: absolute;
+		z-index: 1;
+		right: -16%;
+		bottom: -8%;
+		width: min(88vw, 1750px);
+		pointer-events: none;
+		will-change: transform;
+	}
+	/* Parallax: guardian nets ~45% apparent scroll speed while the hero scrolls past.
+	   Compositor-driven where supported (no JS on the scroll path, immune to WebGL
+	   render jank) — Firefox-family browsers (no animation-timeline support as of
+	   writing, confirmed missing on Zen) fall back to the JS rAF loop below instead,
+	   gated by the matching CSS.supports() check there. */
+	@media (prefers-reduced-motion: no-preference) {
+		@supports (animation-timeline: scroll()) {
+			.pe-guardian-wrap {
+				animation: pe-guardian-parallax linear both;
+				animation-timeline: scroll(root block);
+				animation-range: 0 100vh;
+			}
+		}
+	}
+	@keyframes pe-guardian-parallax {
+		from {
+			transform: translateY(0);
+		}
+		to {
+			transform: translateY(55vh); /* 0.55 speed factor, matches the old PARALLAX_SPEED */
+		}
+	}
+	.pe-guardian-wrap canvas {
+		width: 100%;
+		height: auto;
+		aspect-ratio: 1920 / 1080;
+		display: block;
+		filter: drop-shadow(0 46px 70px rgba(16, 20, 44, 0.5));
+	}
+
+	.pe-identity {
+		position: absolute;
+		left: clamp(24px, 4.4vw, 68px);
+		bottom: clamp(30px, 5.4vw, 58px);
+		max-width: min(640px, 88vw);
+		z-index: 3;
+	}
+
+	h1.pe-name {
+		margin: 0;
+		/* "PE Name Display" is Fraunces under the hood (see phantomeye.astro's
+		   @font-face) — the one deliberate font borrowed from the armand.dev
+		   hero, just for this heading, for the personality a plain geometric
+		   sans wasn't giving it at a calmer weight/size. */
+		font-family: "PE Name Display", "Iowan Old Style", ui-serif, Georgia, serif;
+		font-weight: 900;
+		font-optical-sizing: auto;
+		font-size: clamp(2.8rem, 7.2vw, 5.6rem);
+		line-height: 0.92;
+		letter-spacing: -0.01em;
+		color: var(--pe-white);
+	}
+
+	.pe-tag-code {
+		margin-top: 0.7em;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45em;
+		padding: 0.4em 0.7em;
+		border: 1px solid var(--pe-hairline);
+		background: rgba(0, 0, 0, 0.14);
+		font-family: var(--pe-font-mono);
+		font-size: clamp(0.82rem, 1.3vw, 0.95rem);
+		letter-spacing: 0.02em;
+	}
+	.pe-tag-code .pe-hash {
+		color: var(--pe-white-faint);
+	}
+	.pe-tag-code .pe-num {
+		color: var(--pe-white);
+		font-weight: 600;
+	}
+	.pe-tag-code .pe-cursor {
+		width: 0.5em;
+		height: 1em;
+		background: var(--pe-white);
+		display: inline-block;
+		animation: pe-blink 1.1s steps(1) infinite;
+	}
+	@keyframes pe-blink {
+		50% {
+			opacity: 0;
+		}
+	}
+
+	.pe-roles {
+		margin-top: 1.1em;
+		font-family: var(--pe-font-display);
+		font-weight: 600;
+		font-size: clamp(1rem, 1.7vw, 1.2rem);
+		line-height: 1.5;
+		color: var(--pe-white-soft);
+	}
+
+	.pe-colophon {
+		margin-top: 1.5em;
+		display: flex;
+		align-items: center;
+		gap: 0.6em;
+	}
+	.pe-colophon .pe-ring {
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		border: 1.4px solid var(--pe-white-soft);
+		flex-shrink: 0;
+	}
+	.pe-colophon .pe-ring::after {
+		content: "";
+		display: block;
+		width: 6px;
+		height: 6px;
+		margin: 4px auto 0;
+		border-radius: 50%;
+		background: var(--pe-white-soft);
+	}
+	.pe-colophon .pe-label {
+		font-size: 0.7rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--pe-white-faint);
+	}
+
+	@media (max-width: 640px) {
+		.pe-guardian-wrap {
+			width: 150vw;
+			right: -38%;
+			bottom: -4%;
+			opacity: 0.8;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.pe-tag-code .pe-cursor {
+			animation: none;
+		}
+	}
+</style>
+
+<script>
+	import * as THREE from "three";
+	import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+	// Guardian parallax: lags behind normal scroll speed so it reads as a
+	// background layer. `.pe-hero` is `overflow: hidden` and a normal block
+	// (not fixed/sticky), so once it scrolls out of the viewport the whole
+	// layer goes with it — the creature can never leak into sections below.
+	const hero = document.getElementById("pe-hero");
+	const wrap = document.querySelector<HTMLElement>(".pe-guardian-wrap");
+	const canvas = document.querySelector<HTMLCanvasElement>(".pe-guardian-canvas");
+	// Mirrors the `@supports (animation-timeline: scroll())` gate on
+	// .pe-guardian-wrap — browsers that fail it (Firefox-family, incl. Zen, as
+	// of writing) get the parallax translateY driven from the rAF loop below instead
+	const CSS_PARALLAX_SUPPORTED = typeof CSS !== "undefined" && CSS.supports("animation-timeline", "scroll()");
+	const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+	// Set to a model id below to enable the debug camera rig for that model, empty string ships
+	const DEBUG_MODEL = "";
+	const MODEL_ID = "guardian";
+
+	// --- guardian model: orthographic three.js render standing in for the old
+	// guardian-stalker.png, framed at the same ~16:9 ratio/pose (front-on,
+	// blaster arm pointing left) so nothing else about the hero had to change.
+	const MODEL_URL = "/phantomeye/models/guardian-stalker/Guardian_Stalker.gltf";
+	const GROUND_URL = "/phantomeye/models/guardian-stalker/Guardian_Stalker_Ground.glb";
+	const GROUND_AO_TEXTURE_URL = "/phantomeye/models/guardian-stalker/images/guardian_stalker_ground_ao.png";
+	const FRAME_ASPECT = 1920 / 1080;
+	// File's authored root rotation leans a few degrees off upright, confirmed in Blender
+	const ROOT_NODE_NAME = "Sketchfab_model";
+	const ROOT_ROTATION_FIX = new THREE.Quaternion(
+		-0.6312388777732849,
+		-0.3186494708061218,
+		-0.3186495006084442,
+		0.6312388777732849,
+	);
+	// Fixed yaw so the model's default export orientation lands on the same
+	// "blaster pointing left" framing as the old PNG.
+	const BASE_YAW = 0;
+	// Radians turned per pixel scrolled, applied on top of BASE_YAW — unlike
+	// the parallax offset below this is *not* clamped to the hero's height,
+	// so the guardian keeps slowly turning for as long as the page scrolls
+	// (it just stops being visible once the hero scrolls out of view).
+	const ROTATE_SPEED = 0.000625;
+
+	let pivot: THREE.Group | null = null;
+	let render: (() => void) | null = null;
+	let handleResize: () => void = () => {};
+	let initOrbit: (() => void) | null = null; // set below when DEBUG_ACTIVE
+
+	// Rotation is eased toward a scroll-derived target rather than snapped to
+	// it directly. Binding `pivot.rotation.y` straight to `window.scrollY`
+	// looked jittery because scroll events (especially from a trackpad/wheel)
+	// arrive in bursty, uneven-sized steps — each one was visibly snapping
+	// the model to a new angle instead of gliding. Running a short lerp
+	// toward the target every animation frame smooths that out regardless of
+	// how choppy the underlying scroll events are.
+	//
+	// This lerp step lives inside the same scroll-driven animation loop as
+	// the CSS parallax update below (see `apply()`), rather than its own
+	// separately-scheduled `requestAnimationFrame` chain. An earlier version
+	// ran them as two independent chains — one kicked off per scroll event
+	// for the parallax var, one self-perpetuating for the rotation+render —
+	// and while each was individually throttled to one call per frame,
+	// nothing guaranteed those two chains executed in the same order relative
+	// to each other from one frame to the next, since the browser queues
+	// `requestAnimationFrame` callbacks in registration order and these were
+	// registered from two different call sites. That's enough to make a
+	// frame occasionally land "late" relative to the other, which reads as
+	// jitter even though each half was individually smooth. One loop removes
+	// the ambiguity entirely.
+	let targetRotationY = BASE_YAW;
+	let currentRotationY = BASE_YAW;
+
+	// Camera framing tuned live via the DEBUG_MODEL rig, pasted from its
+	// [phantomeye-debug] console log once the angle looked right
+	const CAMERA_YAW_DEG = -2.5439326103808417;
+	const CAMERA_PITCH_DEG = 3.4336303624505216;
+	const CAMERA_ZOOM = 0.7863999999999999;
+	const CAMERA_PAN_X = -0.4211413105545223;
+	const CAMERA_PAN_Y = 0.11942813284381976;
+
+	// Fits an orthographic camera's frustum tightly around `box`, working in
+	// the camera's own (possibly tilted) view space rather than assuming a
+	// level camera. A naive world-space Y-extent fit clips whatever sticks
+	// out furthest toward the camera once the camera is elevated/tilted
+	// (as ours is, for a slightly more dramatic angle) — the near corners
+	// swing higher in view space than the far corners by the tilt amount,
+	// so fitting in world space alone was quietly cutting off the antenna
+	// tips at the top of the frame.
+	function fitOrthoToBox(camera: THREE.OrthographicCamera, box: THREE.Box3, aspect: number, margin: number) {
+		camera.updateMatrixWorld(true);
+		const m = camera.matrixWorldInverse;
+		const corners = [
+			[box.min.x, box.min.y, box.min.z],
+			[box.min.x, box.min.y, box.max.z],
+			[box.min.x, box.max.y, box.min.z],
+			[box.min.x, box.max.y, box.max.z],
+			[box.max.x, box.min.y, box.min.z],
+			[box.max.x, box.min.y, box.max.z],
+			[box.max.x, box.max.y, box.min.z],
+			[box.max.x, box.max.y, box.max.z],
+		].map(([x, y, z]) => new THREE.Vector3(x, y, z).applyMatrix4(m));
+
+		let minX = Infinity,
+			maxX = -Infinity,
+			minY = Infinity,
+			maxY = -Infinity,
+			minZ = Infinity,
+			maxZ = -Infinity;
+		for (const c of corners) {
+			minX = Math.min(minX, c.x);
+			maxX = Math.max(maxX, c.x);
+			minY = Math.min(minY, c.y);
+			maxY = Math.max(maxY, c.y);
+			minZ = Math.min(minZ, c.z);
+			maxZ = Math.max(maxZ, c.z);
+		}
+
+		const cx = (minX + maxX) / 2;
+		const cy = (minY + maxY) / 2;
+		const half = Math.max(((maxY - minY) / 2) * margin, ((maxX - minX) / 2 / aspect) * margin, 0.01);
+		camera.left = cx - half * aspect;
+		camera.right = cx + half * aspect;
+		camera.top = cy + half;
+		camera.bottom = cy - half;
+		// Camera space looks down -Z, so the closest point (smallest distance)
+		// has the largest (least negative) z, and distance = -z.
+		const zPad = (maxZ - minZ) * 0.2 + 0.05;
+		camera.near = Math.max(0.01, -maxZ - zPad);
+		camera.far = -minZ + zPad;
+		camera.updateProjectionMatrix();
+	}
+
+	// Re-applies a yaw/pitch/zoom/pan on top of an auto-fit frustum, using the
+	// same orbit math as debugLoop() below, so a pasted [phantomeye-debug] log
+	// reproduces exactly the framing it was logged from. Fits *after* rotating
+	// to the tuned yaw/pitch rather than reusing the front-on fit — fitting
+	// first and rotating after leaves the "tight" bounds matched to a
+	// silhouette the shipped view doesn't actually show, which is what was
+	// clipping the leg out of frame on the left.
+	function applyCameraFraming(camera: THREE.OrthographicCamera, viewBox: THREE.Box3) {
+		const distance = camera.position.length();
+		const yaw = (CAMERA_YAW_DEG * Math.PI) / 180;
+		const pitch = (CAMERA_PITCH_DEG * Math.PI) / 180;
+
+		camera.position.set(
+			distance * Math.cos(pitch) * Math.sin(yaw),
+			distance * Math.sin(pitch),
+			distance * Math.cos(pitch) * Math.cos(yaw),
+		);
+		camera.lookAt(0, 0, 0);
+
+		// Extra margin (vs. the 1.06 used elsewhere) to leave headroom for the
+		// zoom-in below without shaving the silhouette down to the pixel
+		fitOrthoToBox(camera, viewBox, FRAME_ASPECT, 1.18);
+		const baseLeft = camera.left,
+			baseRight = camera.right,
+			baseTop = camera.top,
+			baseBottom = camera.bottom;
+
+		camera.updateMatrixWorld();
+		// Pan shifts the frustum window along the camera's own axes without
+		// re-aiming (no second lookAt) — a truck, not a re-center
+		const right = new THREE.Vector3();
+		const up = new THREE.Vector3();
+		const fwd = new THREE.Vector3();
+		camera.matrixWorld.extractBasis(right, up, fwd);
+		camera.position.addScaledVector(right, CAMERA_PAN_X);
+		camera.position.addScaledVector(up, CAMERA_PAN_Y);
+
+		const cx = (baseLeft + baseRight) / 2;
+		const cy = (baseTop + baseBottom) / 2;
+		const halfW = ((baseRight - baseLeft) / 2) * CAMERA_ZOOM;
+		const halfH = ((baseTop - baseBottom) / 2) * CAMERA_ZOOM;
+		camera.left = cx - halfW;
+		camera.right = cx + halfW;
+		camera.top = cy + halfH;
+		camera.bottom = cy - halfH;
+		camera.updateProjectionMatrix();
+	}
+
+	if (canvas) {
+		const scene = new THREE.Scene();
+		const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+		renderer.setClearColor(0x000000, 0);
+		renderer.outputColorSpace = THREE.SRGBColorSpace;
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+		// Placeholder frustum, sized for real once the model's bounding box is known.
+		const camera = new THREE.OrthographicCamera(-FRAME_ASPECT, FRAME_ASPECT, 1, -1, 0.1, 100);
+
+		scene.add(new THREE.HemisphereLight(0xeef2ff, 0x11142b, 2.2));
+		const key = new THREE.DirectionalLight(0xffffff, 2.6);
+		key.position.set(-2, 2.4, 3);
+		scene.add(key);
+		const rim = new THREE.DirectionalLight(0x9fb4ff, 1.0);
+		rim.position.set(2, 1, -2);
+		scene.add(rim);
+
+		// Resizing the renderer is only needed when the canvas's actual laid-out
+		// size changes (on load, and on window resize) — NOT on every scroll
+		// frame. It was previously bundled into the same function the scroll
+		// handler called every frame, which fed `renderer.setSize` a freshly
+		// re-measured `clientWidth` each time; any sub-pixel/rounding jitter in
+		// that read (layout is never perfectly stable during a scroll) made the
+		// canvas subtly resize on top of the scroll motion, reading as jarred
+		// rather than smooth. Scrolling now only ever calls `render()`, which
+		// just re-renders the already-correctly-sized canvas.
+		render = () => {
+			renderer.render(scene, camera);
+		};
+
+		handleResize = () => {
+			const width = canvas.clientWidth || canvas.parentElement?.clientWidth || 1;
+			const height = width / FRAME_ASPECT;
+			renderer.setSize(width, height, false);
+			render?.();
+		};
+
+		// DEBUG camera rig: WASD orbits, Q/E zooms, arrow keys pan. Only active when
+		// DEBUG_MODEL matches this component's MODEL_ID, so it ships dark by default
+		const DEBUG_ACTIVE = DEBUG_MODEL === MODEL_ID;
+		if (DEBUG_ACTIVE) {
+			const keys = {
+				w: false, a: false, s: false, d: false,
+				q: false, e: false,
+				arrowup: false, arrowdown: false, arrowleft: false, arrowright: false,
+			};
+			let anyKeyDown = false;
+			window.addEventListener("keydown", (e) => {
+				const k = e.key.toLowerCase();
+				if (k in keys) {
+					keys[k as keyof typeof keys] = true;
+					if (k.startsWith("arrow")) e.preventDefault(); // stop the page from scrolling
+				}
+			});
+			window.addEventListener("keyup", (e) => {
+				const k = e.key.toLowerCase();
+				if (k in keys) keys[k as keyof typeof keys] = false;
+			});
+
+			let lastPanTime = performance.now();
+			let orbitYaw = 0;
+			let orbitPitch = 0;
+			let orbitDistance = 1;
+			let orbitReady = false;
+			let baseLeft = 0, baseRight = 0, baseTop = 0, baseBottom = 0;
+			let zoomScale = 1;
+			let panX = 0;
+			let panY = 0;
+			const ORBIT_SPEED = 1.2; // radians/sec
+			const ZOOM_SPEED = 0.8; // multiplier change/sec
+			const PAN_SPEED = 0.6; // fraction of frustum width/sec
+			const PITCH_LIMIT = Math.PI / 2 - 0.05;
+
+			initOrbit = () => {
+				orbitDistance = camera.position.length();
+				orbitPitch = Math.asin(camera.position.y / orbitDistance);
+				orbitYaw = Math.atan2(camera.position.x, camera.position.z);
+				baseLeft = camera.left;
+				baseRight = camera.right;
+				baseTop = camera.top;
+				baseBottom = camera.bottom;
+				camera.near = 0.01; // fitOrthoToBox's near/far assumed the fixed 3/4 angle, widen for free orbiting
+				camera.far = orbitDistance * 10;
+				orbitReady = true;
+			};
+
+			function logState() {
+				console.log("[phantomeye-debug]", {
+					model: MODEL_ID,
+					yawDeg: (orbitYaw * 180) / Math.PI,
+					pitchDeg: (orbitPitch * 180) / Math.PI,
+					zoomScale,
+					panX,
+					panY,
+				});
+			}
+
+			function debugLoop() {
+				const now = performance.now();
+				const dt = (now - lastPanTime) / 1000;
+				lastPanTime = now;
+				const keyHeld = Object.values(keys).some(Boolean);
+
+				if (orbitReady && keyHeld) {
+					if (keys.a) orbitYaw -= ORBIT_SPEED * dt;
+					if (keys.d) orbitYaw += ORBIT_SPEED * dt;
+					if (keys.w) orbitPitch = Math.min(orbitPitch + ORBIT_SPEED * dt, PITCH_LIMIT);
+					if (keys.s) orbitPitch = Math.max(orbitPitch - ORBIT_SPEED * dt, -PITCH_LIMIT);
+					if (keys.q) zoomScale = Math.min(zoomScale + ZOOM_SPEED * dt, 5);
+					if (keys.e) zoomScale = Math.max(zoomScale - ZOOM_SPEED * dt, 0.2);
+
+					const frustumWidth = baseRight - baseLeft;
+					const panStep = frustumWidth * PAN_SPEED * dt;
+					if (keys.arrowright) panX += panStep;
+					if (keys.arrowleft) panX -= panStep;
+					if (keys.arrowup) panY += panStep;
+					if (keys.arrowdown) panY -= panStep;
+
+					camera.position.set(
+						orbitDistance * Math.cos(orbitPitch) * Math.sin(orbitYaw),
+						orbitDistance * Math.sin(orbitPitch),
+						orbitDistance * Math.cos(orbitPitch) * Math.cos(orbitYaw),
+					);
+					camera.lookAt(0, 0, 0);
+					camera.updateMatrixWorld();
+					const right = new THREE.Vector3();
+					const up = new THREE.Vector3();
+					const fwd = new THREE.Vector3();
+					camera.matrixWorld.extractBasis(right, up, fwd);
+					camera.position.addScaledVector(right, panX);
+					camera.position.addScaledVector(up, panY);
+
+					const cx = (baseLeft + baseRight) / 2;
+					const cy = (baseTop + baseBottom) / 2;
+					const halfW = ((baseRight - baseLeft) / 2) * zoomScale;
+					const halfH = ((baseTop - baseBottom) / 2) * zoomScale;
+					camera.left = cx - halfW;
+					camera.right = cx + halfW;
+					camera.top = cy + halfH;
+					camera.bottom = cy - halfH;
+					camera.updateProjectionMatrix();
+
+					render?.();
+				}
+
+				if (anyKeyDown && !keyHeld) logState(); // just released, print the settled state
+				anyKeyDown = keyHeld;
+
+				requestAnimationFrame(debugLoop);
+			}
+			requestAnimationFrame(debugLoop);
+		}
+
+		const groundTexture = new THREE.TextureLoader().load(GROUND_AO_TEXTURE_URL);
+
+		new GLTFLoader().load(MODEL_URL, (gltf) => {
+			const root = gltf.scene.getObjectByName(ROOT_NODE_NAME);
+			root?.quaternion.copy(ROOT_ROTATION_FIX);
+
+			const box = new THREE.Box3().setFromObject(gltf.scene);
+			const size = box.getSize(new THREE.Vector3());
+			const radius = Math.max(size.length() * 0.5, 0.01);
+
+			// The blaster beam (`GeometryNode_94`) is a ~4.4-unit-long spike
+			// jutting far out to one side — including it in the centering box
+			// drags the pivot toward the beam instead of the body, so it's
+			// centered on everything else and temporarily excluded here.
+			const beam = gltf.scene.getObjectByName("GeometryNode_94") as THREE.Mesh | undefined;
+			const beamParent = beam?.parent ?? null;
+			beamParent?.remove(beam!);
+			const footprintBox = new THREE.Box3().setFromObject(gltf.scene);
+			const center = footprintBox.getCenter(new THREE.Vector3());
+			if (beam && beamParent) beamParent.add(beam);
+
+			gltf.scene.position.sub(center);
+
+			// Ground AO decal, parented under gltf.scene so it inherits the -center offset for free
+			// Black RGB + alpha=occlusion fakes multiply against the CSS blue behind the transparent canvas
+			new GLTFLoader().load(GROUND_URL, (groundGltf) => {
+				groundGltf.scene.traverse((child) => {
+					if ((child as THREE.Mesh).isMesh) {
+						(child as THREE.Mesh).material = new THREE.MeshBasicMaterial({
+							map: groundTexture,
+							color: 0x000000,
+							transparent: true,
+							depthWrite: false,
+						});
+					}
+				});
+				gltf.scene.add(groundGltf.scene);
+				render?.();
+			});
+
+			pivot = new THREE.Group();
+			// Not BASE_YAW — the model loads async, and if the user scrolls at
+			// all before it finishes (or the browser restores a scrolled-down
+			// position on refresh), `currentRotationY` has already been ticking
+			// forward with nothing to apply itself to. Starting the pivot there
+			// instead of hard-resetting to BASE_YAW is what avoids a visible
+			// snap on the very next tick once the model appears.
+			pivot.rotation.y = currentRotationY;
+			pivot.add(gltf.scene);
+			scene.add(pivot);
+
+			if (beam) {
+				// material_0 (shared with most of the body/legs) uses a hard
+				// alpha MASK cutout; clone it for just the beam and switch to a
+				// real alpha blend so the beam gets its soft glow edges back
+				// instead of a hard-edged cutout. Cloning avoids touching the
+				// shared material used by the opaque body/leg meshes.
+				const beamMaterial = (beam.material as THREE.MeshStandardMaterial).clone();
+				beamMaterial.transparent = true;
+				beamMaterial.alphaTest = 0;
+				beamMaterial.depthWrite = false;
+				beam.material = beamMaterial;
+			}
+
+			// Elevated 3/4 camera for a slightly more dramatic angle than a
+			// flat front-on shot.
+			camera.position.set(0, radius * 0.18, radius * 3);
+			camera.lookAt(0, 0, 0);
+
+			// Fit the frustum to the model's actual silhouette (post-rotation,
+			// in the camera's own tilted view space) rather than a generic
+			// bounding sphere, so it bleeds close to the frame edge the way the
+			// old PNG did instead of floating with a lot of empty margin.
+			const viewBox = new THREE.Box3().setFromObject(pivot);
+			applyCameraFraming(camera, viewBox);
+			initOrbit?.();
+
+			handleResize();
+		});
+
+		window.addEventListener("resize", handleResize);
+	}
+
+	if (!reduceMotion && hero) {
+		const PARALLAX_SPEED = 0.55; // mirrors the `to { translateY(55vh) }` CSS keyframe above
+
+		// Polls scrollY every animation frame rather than reacting to `scroll`
+		// events. Event-driven updates always land one frame behind whatever
+		// already scrolled/painted (worse under any main-thread load, e.g. the
+		// WebGL render below), which reads as stutter — a free-running rAF loop
+		// stays in lockstep with paint instead of chasing it. (On browsers where
+		// CSS_PARALLAX_SUPPORTED is true the wrap's transform is already fully
+		// owned by the CSS animation, so this loop only touches it when it isn't.)
+		const apply = () => {
+			if (wrap && !CSS_PARALLAX_SUPPORTED) {
+				const heroHeight = hero.offsetHeight;
+				const y = Math.min(window.scrollY, heroHeight) * PARALLAX_SPEED;
+				wrap.style.transform = `translateY(${y}px)`;
+			}
+
+			targetRotationY = BASE_YAW + window.scrollY * ROTATE_SPEED;
+			currentRotationY += (targetRotationY - currentRotationY) * 0.28;
+			if (pivot) pivot.rotation.y = currentRotationY;
+			render?.();
+
+			if (looping) requestAnimationFrame(apply);
+		};
+
+		// Only runs while the hero is actually on screen, so it's not burning a
+		// render every frame for the rest of the page's lifetime
+		let looping = false;
+		new IntersectionObserver(([entry]) => {
+			if (entry.isIntersecting && !looping) {
+				looping = true;
+				requestAnimationFrame(apply);
+			} else {
+				looping = false;
+			}
+		}).observe(hero);
+	}
+</script>

@@ -23,3 +23,6 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 /rust/target/
+
+# scratch space for Blender bake scripts/blend files
+.blender-scratch/

@@ -16,10 +16,12 @@
     "fast-xml-builder": "^1.1.0",
     "github-calendar": "^2.3.4",
     "sharp": "^0.34.3",
+    "three": "^0.185.1",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
     "@types/jquery": "^3.5.33",
+    "@types/three": "^0.185.4",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.5.0"
   }

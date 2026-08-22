@@ -1,0 +1,141 @@
+---
+// PhantomEye (Armand's art brand) as an isolated route on armand.dev.
+//
+// Deliberately does NOT use `../layouts/Page.astro` or `../components/BaseHead.astro`
+// and does NOT import `../styles/global.css` — this page owns its full <html> document
+// and every style below is namespaced with a `pe-`/`--pe-` prefix. That's the whole
+// isolation mechanism: no shared layout, no shared stylesheet, so there is nothing to
+// leak in either direction between this page and the rest of the site. See
+// CLAUDE.md ("PhantomEye route") before changing that.
+//
+// Currently hosted at armand.dev/phantomeye; intended to move behind phantomeye.art
+// once that domain is routed here (GitHub Pages hosting is a temporary arrangement).
+import Nav from "../components/phantomeye/Nav.astro";
+import HeroSection from "../components/phantomeye/HeroSection.astro";
+import WallSection from "../components/phantomeye/WallSection.astro";
+
+const title = "PhantomEye";
+const description = "PhantomEye — low-poly 3D renders and pixel work.";
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+
+		<link
+			rel="preload"
+			href="/fonts/Unbounded-Bold.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
+		/>
+		<link
+			rel="preload"
+			href="/fonts/IBMPlexMono-Regular.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
+		/>
+	</head>
+	<body data-pe>
+		<Nav />
+		<HeroSection />
+		<WallSection />
+	</body>
+</html>
+
+<style is:global>
+	/* Self-hosted fonts for this page only. */
+	@font-face {
+		font-family: "Unbounded";
+		font-style: normal;
+		font-weight: 600;
+		font-display: swap;
+		src: url("/fonts/Unbounded-SemiBold.woff2") format("woff2");
+	}
+	@font-face {
+		font-family: "Unbounded";
+		font-style: normal;
+		font-weight: 700;
+		font-display: swap;
+		src: url("/fonts/Unbounded-Bold.woff2") format("woff2");
+	}
+	@font-face {
+		font-family: "IBM Plex Mono";
+		font-style: normal;
+		font-weight: 400;
+		font-display: swap;
+		src: url("/fonts/IBMPlexMono-Regular.woff2") format("woff2");
+	}
+	@font-face {
+		font-family: "IBM Plex Mono";
+		font-style: normal;
+		font-weight: 600;
+		font-display: swap;
+		src: url("/fonts/IBMPlexMono-SemiBold.woff2") format("woff2");
+	}
+
+	/* Same physical font files as the armand.dev hero (shared storage in
+	   public/fonts/, not a shared stylesheet — that page never loads this
+	   declaration and this page never loads its global.css one). Used only
+	   for the "Phantom / Eye" name below; everything else on this page
+	   stays on --pe-font-display (Unbounded). */
+	@font-face {
+		font-family: "PE Name Display";
+		src: url("/fonts/Fraunces-Variable.woff2") format("woff2");
+		font-weight: 300 900;
+		font-style: normal;
+	}
+
+	/* Brand tokens, `--pe-` prefixed. No relation to the site's --col-* tokens
+	   in styles/global.css — this page doesn't import that file, and Astro
+	   ships each page as its own static document, so nothing here reaches
+	   any other route and nothing from global.css reaches this one. */
+	body[data-pe] {
+		--pe-blue: #5e71b9;
+		--pe-blue-deep: #48588f;
+		--pe-blue-deeper: #384570;
+		--pe-blue-tint: #8f9dd4;
+
+		--pe-white: #ffffff;
+		--pe-white-soft: rgba(255, 255, 255, 0.74);
+		--pe-white-faint: rgba(255, 255, 255, 0.42);
+		--pe-hairline: rgba(255, 255, 255, 0.24);
+
+		--pe-void: #12131f;
+		--pe-void-raised: #1b1d30;
+		--pe-void-hair: rgba(255, 255, 255, 0.09);
+		--pe-muted: #9791a8;
+		--pe-muted-dim: #6d6980;
+
+		--pe-font-display: "Unbounded", "Arial Black", ui-sans-serif, sans-serif;
+		--pe-font-mono: "IBM Plex Mono", "Space Mono", ui-monospace, "Courier New", monospace;
+
+		margin: 0;
+		padding: 0;
+		background: var(--pe-void);
+		font-family: var(--pe-font-mono);
+		color: var(--pe-white);
+		-webkit-font-smoothing: antialiased;
+	}
+	html:has(body[data-pe]) {
+		margin: 0;
+	}
+	body[data-pe] *,
+	body[data-pe] *::before,
+	body[data-pe] *::after {
+		box-sizing: border-box;
+	}
+	body[data-pe] img {
+		max-width: 100%;
+		display: block;
+	}
+	body[data-pe] a {
+		color: inherit;
+		text-decoration: none;
+	}
+</style>
