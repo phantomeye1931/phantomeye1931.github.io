@@ -1,0 +1,46 @@
+---
+// Top bracket-style nav. instagram/sketchfab hrefs are placeholders until
+// Armand sends the real profile URLs.
+---
+
+<nav class="pe-nav" aria-label="Primary">
+	<a href="#wall"><span class="bk">[</span>gallery<span class="bk">]</span></a>
+	<a href="#" rel="noopener"><span class="bk">[</span>instagram<span class="bk">]</span></a>
+	<a href="#" rel="noopener"><span class="bk">[</span>sketchfab<span class="bk">]</span></a>
+	<a href="/"><span class="bk">[</span>armand.dev<span class="bk">]</span></a>
+</nav>
+
+<style>
+	.pe-nav {
+		position: fixed;
+		top: clamp(22px, 3.2vw, 42px);
+		right: clamp(22px, 3.6vw, 52px);
+		display: flex;
+		gap: 1.4em;
+		font-size: 0.8rem;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		z-index: 3;
+	}
+	.pe-nav a {
+		color: var(--pe-white);
+		text-decoration: none;
+		white-space: nowrap;
+	}
+	.pe-nav a .bk {
+		color: var(--pe-white-faint);
+	}
+	.pe-nav a:hover {
+		color: var(--pe-blue-deeper);
+	}
+	.pe-nav a:hover .bk {
+		color: var(--pe-white);
+	}
+
+	@media (max-width: 640px) {
+		.pe-nav {
+			gap: 0.9em;
+			font-size: 0.68rem;
+		}
+	}
+</style>

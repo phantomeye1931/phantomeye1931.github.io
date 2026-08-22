@@ -46,3 +46,41 @@ The redesign brief started homepage-only, was briefly extended to a full site-wi
 **Known pre-existing quirk**: `HeroSection.astro`'s `.name` style block has a `//font-size: clamp(...)` line using `//` instead of `/* */` — invalid CSS, and esbuild's minifier flags it during `astro build`, but it's a single dropped declaration, not a broken stylesheet (verified: the sibling `font-size: 19cqw` rule on `.char` spans still applies correctly). Harmless; not something to "fix" as a side effect of unrelated changes.
 
 **Content**: blog posts are an Astro content collection (`src/content.config.ts`, glob-loaded MDX from `src/content/blog/`, schema requires `title`/`description`/`pubDate`, optional `updatedDate`/`heroImage`).
+
+## PhantomEye route (`/phantomeye`)
+
+`src/pages/phantomeye.astro` is Armand's art brand — a separate person-facing identity from the
+developer content on the rest of this site (he explicitly rejected an earlier concept that forked
+one shared hero into a "developer path" / "art path", because it read as "one person with a split
+life"). It's isolated on purpose:
+
+- It does **not** use `../layouts/Page.astro` or `../components/BaseHead.astro`, and does **not**
+  import `../styles/global.css`. It owns its own `<html>`/`<head>`/`<body>`.
+- Every class and custom property it defines is `pe-`/`--pe-`-prefixed (`src/components/phantomeye/`),
+  so there's no name collision with `--col-*` and no risk of it inheriting or leaking site-wide
+  styles either direction — the isolation comes from not sharing a layout/stylesheet at all, not
+  from clever selector scoping.
+- Its own fonts (Unbounded 600/700, IBM Plex Mono 400/600) live in the same `public/fonts/` folder
+  as the rest of the site's self-hosted fonts, just under different filenames — no conflict, just
+  shared storage.
+- Its images live under `public/phantomeye/` (renders + the `guardian-stalker.png` hero art),
+  namespaced separately from anything else in `public/`.
+
+Brand is white text on solid `#5e71b9` — no CMYK/halftone motifs, nothing shared with the rest of
+the site's visual language, by explicit request. **One deliberate exception**: the "Phantom / Eye"
+heading uses Fraunces (declared locally as `"PE Name Display"`, same physical
+`Fraunces-Variable.woff2` file as the hero, weight 900, not italic, no chromatic misregistration
+shadow) — Armand asked for the hero's font on his name specifically after Unbounded read as bland
+at a calmer weight. Everything else on the page (roles, tags, nav, gallery captions) stays on
+Unbounded/IBM Plex Mono. This is a one-off font borrow, not a reopening of the "no shared visual
+language" rule — don't extend Fraunces to other elements on this page unasked, and don't reintroduce
+the CMYK shadow effect here. Full design rationale
+(why the wordmark is two stacked lines and not one bold uppercase line, why there's a `#1931` chip
+instead of a phonetic-pronunciation pill, why the guardian render faces left, how its scroll
+parallax is contained to just the hero) isn't duplicated here — read the comments in
+`src/pages/phantomeye.astro` and `src/components/phantomeye/HeroSection.astro` directly.
+
+This route is currently reachable at `armand.dev/phantomeye` via this same GitHub Pages deploy —
+that hosting is a temporary arrangement. The intent is for `phantomeye.art` (already purchased) to
+route here later; there's deliberately no separate `package.json`, build, or deploy workflow for
+it, since it's meant to stay a page in this project, not a second project.

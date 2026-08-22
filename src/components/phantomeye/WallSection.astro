@@ -1,0 +1,212 @@
+---
+// First pass at the gallery block-out. Dark ground (`--pe-void`) distinct
+// from the hero's `--pe-blue`, so the two sections read as separate
+// registers on the same page rather than one continuous surface.
+interface Piece {
+	image: string;
+	alt: string;
+	num: string;
+	title: string;
+	medium: string;
+	frameClass: string;
+}
+
+const pieces: Piece[] = [
+	{
+		image: "/phantomeye/renders/nomai-mask.png",
+		alt: "Symmetrical low-poly mask render in navy, gold and charcoal",
+		num: "No. 03",
+		title: "nomai mask",
+		medium: "3D render",
+		frameClass: "f-nomai",
+	},
+	{
+		image: "/phantomeye/renders/radiance.png",
+		alt: "Faceted creature bust surrounded by a radiant starburst, cream and gold",
+		num: "No. 11",
+		title: "radiance",
+		medium: "3D render",
+		frameClass: "f-radiance",
+	},
+	{
+		image: "/phantomeye/renders/hornet.jpg",
+		alt: "Faceted low-poly bust in magenta and white, encircled by a broken ring",
+		num: "No. 14",
+		title: "hornet study",
+		medium: "3D render",
+		frameClass: "f-hornet",
+	},
+	{
+		image: "/phantomeye/renders/skull-kid.jpg",
+		alt: "Top-down low-poly render of a masked figure clutching a glowing heart piece",
+		num: "#1431",
+		title: "heart piece",
+		medium: "3D render",
+		frameClass: "f-skullkid",
+	},
+	{
+		image: "/phantomeye/renders/cosmetic-set.png",
+		alt: "Four cosmetic crate skins in a game asset set, each a different colorway",
+		num: "No. 22",
+		title: "cosmetic set, four colorways",
+		medium: "game asset · pixel",
+		frameClass: "f-skins",
+	},
+];
+---
+
+<section class="pe-wall" id="wall">
+	<div class="pe-wall-wrap">
+		<div class="pe-wall-head">
+			<span class="pe-eyebrow">the wall &mdash; block-out</span>
+			<span class="pe-rule"></span>
+		</div>
+
+		<div class="pe-wall-grid">
+			{
+				pieces.map((piece) => (
+					<figure class={`pe-frame ${piece.frameClass}`}>
+						<div class="pe-shot">
+							<img src={piece.image} alt={piece.alt} loading="lazy" />
+						</div>
+						<figcaption>
+							<div>
+								<span class="pe-cap-num">{piece.num}</span>
+								<span class="pe-cap-title">{piece.title}</span>
+							</div>
+							<span class="pe-cap-medium">{piece.medium}</span>
+						</figcaption>
+					</figure>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	.pe-wall {
+		background: var(--pe-void);
+		padding: clamp(48px, 7vw, 84px) 0 clamp(56px, 8vw, 96px);
+	}
+	.pe-wall-wrap {
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 0 clamp(18px, 3.5vw, 48px);
+	}
+	.pe-wall-head {
+		display: flex;
+		align-items: baseline;
+		gap: 1em;
+		margin-bottom: clamp(24px, 3.5vw, 36px);
+	}
+	.pe-wall-head .pe-eyebrow {
+		font-family: var(--pe-font-mono);
+		font-size: 0.68rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--pe-muted-dim);
+		white-space: nowrap;
+	}
+	.pe-wall-head .pe-rule {
+		flex: 1;
+		height: 1px;
+		background: var(--pe-void-hair);
+	}
+
+	.pe-wall-grid {
+		display: grid;
+		grid-template-columns: repeat(12, 1fr);
+		gap: clamp(14px, 2.2vw, 26px);
+		align-items: end;
+	}
+	.pe-frame {
+		grid-column: span 12;
+		border: 1px solid var(--pe-void-hair);
+		background: var(--pe-void-raised);
+		padding: 8px 8px 0;
+		margin: 0;
+	}
+	.pe-frame .pe-shot {
+		overflow: hidden;
+		background: #000;
+	}
+	.pe-frame img {
+		width: 100%;
+		height: auto;
+		display: block;
+		transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+	.pe-frame:hover img {
+		transform: scale(1.035);
+	}
+	.pe-frame figcaption {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 1em;
+		padding: 0.75em 0.2em 1em;
+	}
+	.pe-cap-num {
+		font-family: var(--pe-font-mono);
+		font-size: 0.62rem;
+		color: var(--pe-muted);
+		display: block;
+		margin-bottom: 0.5em;
+		letter-spacing: 0.03em;
+	}
+	.pe-cap-title {
+		font-family: var(--pe-font-display);
+		font-weight: 600;
+		font-size: 1.02rem;
+		color: var(--pe-white);
+	}
+	.pe-cap-medium {
+		font-family: var(--pe-font-mono);
+		font-size: 0.68rem;
+		color: var(--pe-muted-dim);
+		text-align: right;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	.f-nomai {
+		grid-column: span 4;
+	}
+	.f-radiance {
+		grid-column: span 4;
+	}
+	.f-hornet {
+		grid-column: span 4;
+	}
+	.f-skullkid {
+		grid-column: span 5;
+	}
+	.f-skins {
+		grid-column: span 7;
+	}
+
+	@media (max-width: 820px) {
+		.f-nomai,
+		.f-radiance,
+		.f-hornet {
+			grid-column: span 6;
+		}
+		.f-skullkid,
+		.f-skins {
+			grid-column: span 12;
+		}
+	}
+	@media (max-width: 520px) {
+		.f-nomai,
+		.f-radiance,
+		.f-hornet {
+			grid-column: span 12;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.pe-frame img {
+			transition: none;
+		}
+	}
+</style>
