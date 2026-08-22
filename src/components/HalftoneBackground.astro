@@ -1,12 +1,14 @@
 ---
 interface Props {
     sticky: boolean,
+    fill?: boolean,
+    flip?: boolean,
 }
 
 const props = Astro.props;
 ---
 
-<div class="bg-grid halftone-wrapper" aria-hidden="true" sticky={ props.sticky }>
+<div class="bg-grid halftone-wrapper" aria-hidden="true" sticky={ props.sticky } fill={ props.fill ?? false } flip={ props.flip ?? false }>
     <canvas class="halftone-canvas"></canvas>
 </div>
 
@@ -18,6 +20,11 @@ const props = Astro.props;
         if (!$wrapper || !$canvas) return;
         const ctx = $canvas.getContext('2d');
         if (!ctx) return;
+
+        // when true, skip the right-edge fade entirely and let the halftone
+        // cover the full width — for pages with no right-aligned hero text
+        // to keep clear of (e.g. blog posts), rather than the hero's default
+        const FILL = $wrapper.getAttribute('fill') === 'true';
 
         // ---- tunables -------------------------------------------------
         const CONFIG = {
@@ -81,7 +88,7 @@ const props = Astro.props;
         function staticFactorAt(x: number, y: number) {
             const grain = (1 - CONFIG.GRAIN_AMOUNT) + CONFIG.GRAIN_AMOUNT * noise2(x * CONFIG.GRAIN_FREQ, y * CONFIG.GRAIN_FREQ);
             const soft = (1 - CONFIG.SOFT_AMOUNT) + CONFIG.SOFT_AMOUNT * fbm2(x * CONFIG.SOFT_FREQ, y * CONFIG.SOFT_FREQ, 3);
-            const rightFade = 1 - smoothstep(W * CONFIG.RIGHT_FADE_START, W * CONFIG.RIGHT_FADE_END, x);
+            const rightFade = FILL ? 1 : 1 - smoothstep(W * CONFIG.RIGHT_FADE_START, W * CONFIG.RIGHT_FADE_END, x);
             return grain * soft * rightFade;
         }
 
@@ -152,6 +159,11 @@ const props = Astro.props;
 
             const diag = Math.sqrt(W * W + H * H);
             const sp = CONFIG.DOT_SPACING * scale;
+            // the lattice only bothers generating points up to ~90% of the
+            // width, since the hero's fade zeroes out anything past 80%
+            // anyway — but in FILL mode there's no fade, so the sweep has to
+            // cover the full canvas or the right edge is just never painted
+            const rxLimit = (FILL ? W : W * 0.9) + diag * 0.15;
 
             channels.forEach(ch => {
                 const rad = ch.angle * Math.PI / 180;
@@ -159,7 +171,7 @@ const props = Astro.props;
                 const gx: number[] = [], gy: number[] = [], gwx: number[] = [], gwy: number[] = [], gsf: number[] = [];
 
                 for (let ry = -diag; ry < diag; ry += sp) {
-                    for (let rx = -diag * 0.15; rx < W * 0.9 + diag * 0.15; rx += sp) {
+                    for (let rx = -diag * 0.15; rx < rxLimit; rx += sp) {
                         const x = rx * cos - ry * sin;
                         const y = rx * sin + ry * cos;
                         if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
@@ -177,13 +189,20 @@ const props = Astro.props;
             });
         }
 
+        // every blob's authored cx sits in [0.04, 0.49] — the left half —
+        // since they were placed assuming the right-edge fade would hide
+        // anything further out anyway. In FILL mode there's no such fade, so
+        // stretch blob centers horizontally to actually spread ink across
+        // the full width instead of leaving the right side genuinely blank.
+        const X_SPREAD = FILL ? 1.9 : 1;
+
         // a blob's center only depends on t, never on the sample point — computed once
         // per channel per frame, outside the (much hotter) per-dot loop below
         function currentCenters(blobs: Blob[], t: number) {
             const span = Math.min(W, H);
             const sp = CONFIG.DRIFT_SPEED, am = CONFIG.DRIFT_AMOUNT;
             return blobs.map(b => ({
-                cx: (b.cx + b.dx * am * Math.sin(t * b.wx * sp + b.px)) * W,
+                cx: (b.cx * X_SPREAD + b.dx * am * Math.sin(t * b.wx * sp + b.px)) * W,
                 cy: (b.cy + b.dy * am * Math.sin(t * b.wy * sp + b.py)) * H,
                 r: b.r * span
             }));
@@ -268,6 +287,22 @@ const props = Astro.props;
             }, 150);
         });
 
+        // pause the redraw loop entirely while scrolled out of view (e.g. a
+        // blog post's canvas, once the reader has scrolled past it) rather
+        // than burning CPU/GPU on frames nobody sees
+        if (!reduceMotion) {
+            new IntersectionObserver((entries) => {
+                const visible = entries[entries.length - 1].isIntersecting;
+                if (visible && rafId === null) {
+                    lastDraw = 0;
+                    rafId = requestAnimationFrame(loop);
+                } else if (!visible && rafId !== null) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
+            }, { threshold: 0 }).observe($wrapper);
+        }
+
         // the [sync] header button flips document.documentElement's color-scheme
         // attribute live — re-resolve ink colors (var(--col-text) changes) and
         // repaint immediately rather than waiting for the next animation tick
@@ -291,6 +326,10 @@ const props = Astro.props;
         position: absolute;
         height: 100svh;
     }
+
+    @media print {
+        display: none !important;
+    }
 }
 
 canvas.halftone-canvas {
@@ -299,5 +338,12 @@ canvas.halftone-canvas {
     inset: 0;
     width: 100%;
     height: 100%;
+}
+
+/* the drift/warp/fade math has no inherent handedness — mirroring the
+   canvas is a cheap way to reuse the exact same "concentrated + fading"
+   look on the opposite side, rather than re-tuning blob positions again */
+.bg-grid[flip="true"] canvas.halftone-canvas {
+    transform: scaleX(-1);
 }
 </style>

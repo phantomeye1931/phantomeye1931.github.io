@@ -48,7 +48,7 @@ const titleChars = titleText.split('');
             <span class="dot y"></span>
             <span class="dot k"></span>
         </span>
-        <span class="label font-dotmatrix">Proof 01 &middot; 175 lpi</span>
+        <span class="label font-mono">Proof 01 &middot; 175 lpi</span>
     </div>
 </div>
 
@@ -81,8 +81,8 @@ const titleChars = titleText.split('');
 
         //background-color: var(--col-background);
 
-        color: #211a14;
-        font-family: 'Playfair Display', serif;
+        color: var(--col-text);
+        font-family: 'Fraunces', serif;
         position: relative;
 
         font-weight: 900;
@@ -98,13 +98,7 @@ const titleChars = titleText.split('');
         & > span {
             position: relative;
             font-size: 19cqw;
-
-            /* a touch of print misregistration: each letter's CMY separations
-               peeking out from behind the black key plate, slightly offset */
-            text-shadow:
-                1.8px 0 0 color-mix(in srgb, var(--col-cmyk-cyan) 55%, transparent),
-                -1.2px 1px 0 color-mix(in srgb, var(--col-cmyk-magenta) 50%, transparent),
-                0.6px -1.4px 0 color-mix(in srgb, var(--col-cmyk-yellow) 45%, transparent);
+            text-shadow: var(--text-shadow-cmyk);
         }
     }
 
@@ -114,7 +108,7 @@ const titleChars = titleText.split('');
         background-color: var(--col-background);
 
         color: var(--col-cmyk-magenta);
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Space Mono', monospace;
         font-size: 1.7rem;
     }
 
@@ -123,8 +117,10 @@ const titleChars = titleText.split('');
 
         background-color: var(--col-background);
 
-        color: #5c5044;
-        font-family: "Roboto Slab", serif;
+        color: var(--col-text-2);
+        font-family: 'Fraunces', serif;
+        font-style: italic;
+        font-weight: 500;
         font-size: 1.5rem;
     }
 
@@ -136,6 +132,9 @@ const titleChars = titleText.split('');
         display: flex;
         align-items: center;
         gap: 0.6em;
+
+        background-color: var(--col-background);
+        padding: 0.3rem 0.6rem;
 
         &, & * {
             text-align: left;

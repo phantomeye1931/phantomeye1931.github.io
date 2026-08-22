@@ -1,10 +1,14 @@
 :root {
-	--col-background:   #faf6f0;
-	--col-background-2: #e7dad2;
-	--col-element:      #6b523e;
-	--col-text:         #3d2914;
-	--col-text-2:       #947d61;
-	--col-text-3:       #b29c7f;
+	/* paper/ink, matching the homepage halftone hero's CMYK-proof palette.
+	   Only the paper itself and the ink text are allowed to be warm — the
+	   mid-tones are kept close to neutral gray (not brown), and the one
+	   accent color is a process-ink cyan instead of a brown "wood" accent. */
+	--col-background:   #ece4d4;
+	--col-background-2: #ddd8ca;
+	--col-element:      #0d7fa3;
+	--col-text:         #211a14;
+	--col-text-2:       #595650;
+	--col-text-3:       #8d8a80;
 
 	--col-selection: var(--col-background-2);
 
@@ -14,6 +18,16 @@
 	--col-cmyk-cyan:    #009fd4;
 	--col-cmyk-magenta: #d81e73;
 	--col-cmyk-yellow:  #f0bd1f;
+	/* subtractive C+Y = green, rather than reaching for a generic web green */
+	--col-cmyk-green:   color-mix(in srgb, var(--col-cmyk-cyan), var(--col-cmyk-yellow));
+
+	/* print-misregistration text-shadow applied to headers site-wide: each
+	   ink separation offset a fixed pixel amount, like a press slightly out
+	   of registration — constant in px regardless of type size, on purpose */
+	--text-shadow-cmyk:
+		1.8px 0 0 color-mix(in srgb, var(--col-cmyk-cyan) 55%, transparent),
+		-1.2px 1px 0 color-mix(in srgb, var(--col-cmyk-magenta) 50%, transparent),
+		0.6px -1.4px 0 color-mix(in srgb, var(--col-cmyk-yellow) 45%, transparent);
 
 	--col-drop-shadow:  #00000030;
 	--drop-shadow: drop-shadow(0 10px 5px var(--col-drop-shadow));
@@ -22,12 +36,14 @@
 }
 
 [color-scheme='dark'] {
-	--col-background:   #1e1a16;
-	--col-background-2: #3b332d;
-	--col-element:      #9b7d67;
-	--col-text:         #d7c4aa;
-	--col-text-2:       #b2a291;
-	--col-text-3:       #8f7b68;
+	/* dark stock: paper/ink roles swap rather than just dimming, same as the
+	   halftone canvas's multiply/screen switch */
+	--col-background:   #1c1712;
+	--col-background-2: #332f28;
+	--col-element:      #4fc3e8;
+	--col-text:         #ece4d4;
+	--col-text-2:       #c2bfb2;
+	--col-text-3:       #9d9a8f;
 }
 
 html, body {
@@ -48,6 +64,14 @@ html, body {
 
 .font-stamp {
 	font-family: "Type right!", monospace !important;
+}
+
+.font-fraunces {
+	font-family: "Fraunces", serif !important;
+}
+
+.font-mono {
+	font-family: "Space Mono", monospace !important;
 }
 
 @font-face {
@@ -74,6 +98,32 @@ html, body {
 @font-face {
 	font-family: "Roboto Slab";
 	src: url("/fonts/RobotoSlab-VariableFont_wght.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Fraunces";
+	src: url("/fonts/Fraunces-Variable.woff2") format("woff2");
+	font-weight: 300 900;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: "Fraunces";
+	src: url("/fonts/Fraunces-Italic-Variable.woff2") format("woff2");
+	font-weight: 300 900;
+	font-style: italic;
+}
+
+@font-face {
+	font-family: "Space Mono";
+	src: url("/fonts/SpaceMono-Regular.woff2") format("woff2");
+	font-weight: 400;
+}
+
+@font-face {
+	font-family: "Space Mono";
+	src: url("/fonts/SpaceMono-Bold.woff2") format("woff2");
+	font-weight: 700;
 }
 
 

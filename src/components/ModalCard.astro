@@ -131,7 +131,7 @@ const props = Astro.props;
     }
 
     .link {
-        font-family: "Doto", monospace;
+        font-family: "Space Mono", monospace;
         color: var(--col-text);
         text-decoration: none;
         font-size: 1.6rem;
@@ -175,6 +175,10 @@ const props = Astro.props;
         line-height: 1.6;
 
         box-sizing: border-box;
+
+        & > strong {
+            text-shadow: var(--text-shadow-cmyk);
+        }
     }
 
     .censored {

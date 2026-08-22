@@ -11,6 +11,8 @@ interface Props {
         background: boolean,
         buttons: boolean,
         bgWearOff?: boolean,
+        bgFill?: boolean,
+        bgFlip?: boolean,
         backgroundVariant?: 'ascii' | 'halftone',
         blogButtons?: boolean,
         sticky?: boolean,
@@ -34,7 +36,7 @@ const props = Astro.props;
             <div class="page-wrapper">
                 { props.opts.background
                     ? (props.opts.backgroundVariant === 'halftone'
-                        ? <HalftoneBackground sticky={props.opts.sticky ?? false}/>
+                        ? <HalftoneBackground fill={props.opts.bgFill ?? false} flip={props.opts.bgFlip ?? false} sticky={props.opts.sticky ?? false}/>
                         : <Background wearOff={props.opts.bgWearOff ?? false} sticky={props.opts.sticky ?? false}/>)
                     : '' }
                 <div class="page-contents">

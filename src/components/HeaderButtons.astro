@@ -25,7 +25,7 @@ if (Astro.props.all) {
 <div class="buttons">
     {
         buttons.map((button) => (
-            <a href={button.url} class=`link font-dotmatrix ${button.behavior}` >[{button.label}]</a>
+            <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
         ))
     }
 </div>
@@ -38,14 +38,20 @@ if (Astro.props.all) {
         console.log(window.scrollY)
     });
 
-    $("a.toggle-dark-mode")
-        .text(`[${getColorScheme()}]`)
-        .on("click", function() {
-            console.log("Currently:", localStorage.getItem("color-scheme"));
+    // .text() would wipe out the <span class="bk"> brackets rendered by the
+    // template (and with them, their pink coloring) — rebuild the same
+    // bracketed markup instead of just swapping in a plain string
+    function setModeLabel($el, mode) {
+        $el.html(`<span class="bk">[</span>${mode}<span class="bk">]</span>`);
+    }
 
-            $(this).text(`[${window.cycleColorScheme()}]`);
-        }
-    );
+    setModeLabel($("a.toggle-dark-mode"), getColorScheme());
+
+    $("a.toggle-dark-mode").on("click", function() {
+        console.log("Currently:", localStorage.getItem("color-scheme"));
+
+        setModeLabel($(this), window.cycleColorScheme());
+    });
 </script>
 
 <style scoped>
@@ -61,12 +67,14 @@ if (Astro.props.all) {
         align-items: flex-start;
         flex-wrap: wrap;
 
-        color: var(--col-element);
+        color: var(--col-text);
         background-color: var(--col-background);
         border: 1px solid transparent;
-        transition: border 100ms;
+        transition: border 150ms, color 150ms;
 
         font-size: 1.3em;
+        letter-spacing: .03em;
+        text-transform: uppercase;
         margin: .3rem;
         padding: .2rem .4rem;
         gap: 1rem;
@@ -77,14 +85,25 @@ if (Astro.props.all) {
             all: unset;
             cursor: pointer;
             text-decoration: none;
+            transition: color 150ms;
+
+            .bk {
+                color: var(--col-cmyk-magenta);
+                transition: color 150ms;
+            }
 
             &:hover {
+                color: var(--col-text);
                 text-decoration: underline;
+
+                .bk {
+                    color: var(--col-cmyk-yellow);
+                }
             }
         }
     }
 
     .is-scrolled {
-        border: 1px solid var(--col-text-2);
+        border: 1px solid var(--col-text-3);
     }
 </style>
