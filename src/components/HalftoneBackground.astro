@@ -1,0 +1,303 @@
+---
+interface Props {
+    sticky: boolean,
+}
+
+const props = Astro.props;
+---
+
+<div class="bg-grid halftone-wrapper" aria-hidden="true" sticky={ props.sticky }>
+    <canvas class="halftone-canvas"></canvas>
+</div>
+
+<script>
+    const $wrapper = document.querySelector<HTMLDivElement>(".halftone-wrapper");
+    const $canvas = document.querySelector<HTMLCanvasElement>(".halftone-canvas");
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!$wrapper || !$canvas) return;
+        const ctx = $canvas.getContext('2d');
+        if (!ctx) return;
+
+        // ---- tunables -------------------------------------------------
+        const CONFIG = {
+            DOT_SPACING: 6.2,          // px between halftone grid points (dot pitch) — the grid itself never moves
+            DOT_RADIUS_SCALE: 0.55,    // max dot radius, as a fraction of DOT_SPACING
+            DOT_MIN_RADIUS: 0.35,      // px; smaller dots are skipped entirely
+            DOT_ALPHA_SKIP: 0.02,      // density below this is treated as blank paper
+
+            WARP_FREQ: 0.0016,         // domain-warp noise frequency (lower = broader flow)
+            WARP_AMOUNT: 0.06,         // domain-warp amplitude, as a fraction of canvas span
+            GRAIN_FREQ: 0.05,          // fine per-dot dither frequency
+            GRAIN_AMOUNT: 0.08,        // fine per-dot dither strength
+            SOFT_FREQ: 0.005,          // broad tonal-variation frequency
+            SOFT_AMOUNT: 0.14,         // broad tonal-variation strength
+
+            RIGHT_FADE_START: 0.46,    // fraction of width where the art starts fading out (keeps the name legible)
+            RIGHT_FADE_END: 0.80,      // fraction of width where the art is fully faded
+
+            DRIFT_FPS: 20,             // redraw rate cap for the color drift (motion itself is time-based, not frame-based)
+            DRIFT_SPEED: 26,            // global multiplier on every blob's angular speed
+            DRIFT_AMOUNT: 2,         // global multiplier on every blob's travel distance
+
+            MAX_SCALE: 1,              // render-resolution cap; a continuously-redrawn canvas doesn't need retina density
+            MAX_WIDTH: 1700            // internal render width cap, in css px equivalent
+        };
+
+        function hash2(x: number, y: number) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
+        function noise2(x: number, y: number) {
+            const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+            const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+            const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+            const top = a + (b - a) * u, bot = c + (d - c) * u;
+            return top + (bot - top) * v;
+        }
+        function fbm2(x: number, y: number, octaves: number) {
+            let total = 0, amp = 0.5, freq = 1, sum = 0;
+            for (let o = 0; o < octaves; o++) {
+                total += amp * noise2(x * freq, y * freq);
+                sum += amp;
+                amp *= 0.5;
+                freq *= 2.1;
+            }
+            return total / sum;
+        }
+        function clamp(v: number, a: number, b: number) { return Math.max(a, Math.min(b, v)); }
+        function smoothstep(a: number, b: number, x: number) { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
+
+        let W = 0, H = 0, baseW = 0, baseH = 0, scale = 1;
+
+        // low-frequency domain warp so blob edges flow rather than sitting as perfect circles.
+        // purely a function of position (no time term) — it's baked into the static grid below.
+        function warp(x: number, y: number) {
+            const f = CONFIG.WARP_FREQ;
+            const wx = fbm2(x * f + 12, y * f + 12, 3) - 0.5;
+            const wy = fbm2(x * f + 77, y * f + 77, 3) - 0.5;
+            const amp = W * CONFIG.WARP_AMOUNT;
+            return { x: x + wx * amp, y: y + wy * amp };
+        }
+
+        // per-point factor that never changes frame to frame (grain/tone/edge fade)
+        function staticFactorAt(x: number, y: number) {
+            const grain = (1 - CONFIG.GRAIN_AMOUNT) + CONFIG.GRAIN_AMOUNT * noise2(x * CONFIG.GRAIN_FREQ, y * CONFIG.GRAIN_FREQ);
+            const soft = (1 - CONFIG.SOFT_AMOUNT) + CONFIG.SOFT_AMOUNT * fbm2(x * CONFIG.SOFT_FREQ, y * CONFIG.SOFT_FREQ, 3);
+            const rightFade = 1 - smoothstep(W * CONFIG.RIGHT_FADE_START, W * CONFIG.RIGHT_FADE_END, x);
+            return grain * soft * rightFade;
+        }
+
+        interface Blob { cx: number; cy: number; r: number; dx: number; dy: number; wx: number; wy: number; px: number; py: number; }
+        // a blob is a soft color puddle that drifts slowly and independently: two summed
+        // sine terms per axis (own speed + phase) so no two blobs ever move in lockstep
+        function blob(cx: number, cy: number, r: number, dx: number, dy: number, wx: number, wy: number, px: number, py: number): Blob {
+            return { cx, cy, r, dx, dy, wx, wy, px, py };
+        }
+
+        // three overlapping color fields (cyan / magenta / yellow) flowing diagonally
+        // across the paper, plus a faint key plate that only grounds the deepest overlaps
+        const cyanBlobs: Blob[] = [
+            blob(0.10, 0.26, 0.30, 0.060, 0.048, 0.031, 0.024, 0.4, 2.1),
+            blob(0.30, 0.12, 0.19, 0.044, 0.062, 0.045, 0.033, 1.7, 0.6),
+            blob(0.04, 0.56, 0.23, 0.052, 0.040, 0.026, 0.041, 3.3, 4.4)
+        ];
+        const magentaBlobs: Blob[] = [
+            blob(0.25, 0.48, 0.28, 0.050, 0.054, 0.038, 0.028, 2.6, 1.1),
+            blob(0.44, 0.66, 0.21, 0.058, 0.042, 0.024, 0.047, 0.9, 3.8),
+            blob(0.10, 0.80, 0.20, 0.044, 0.060, 0.052, 0.030, 4.1, 2.4)
+        ];
+        const yellowBlobs: Blob[] = [
+            blob(0.19, 0.78, 0.32, 0.052, 0.046, 0.028, 0.036, 1.2, 4.9),
+            blob(0.39, 0.38, 0.23, 0.048, 0.052, 0.041, 0.022, 3.7, 0.3),
+            blob(0.49, 0.86, 0.17, 0.040, 0.050, 0.035, 0.049, 5.0, 1.8)
+        ];
+        // the key plate only reads on light paper (multiply); on dark paper the canvas
+        // switches to a 'screen' blend, under which this near-black plate is a no-op —
+        // the bare dark substrate already reads as the shadow, exactly as on real dark stock
+        const keyBlobs: Blob[] = [
+            blob(0.23, 0.50, 0.15, 0.032, 0.032, 0.020, 0.026, 0.7, 3.1)
+        ];
+
+        interface Channel { color: string; blobs: Blob[]; angle: number; ox: number; oy: number; gamma: number; gain: number; alpha: number; gx: number[]; gy: number[]; gwx: number[]; gwy: number[]; gsf: number[]; }
+        const channels: Channel[] = [
+            { color: 'var(--col-cmyk-cyan)',    blobs: cyanBlobs,    angle: 15, ox: -1.3, oy: 0.6,  gamma: 0.95, gain: 1.0,  alpha: 0.82, gx: [], gy: [], gwx: [], gwy: [], gsf: [] },
+            { color: 'var(--col-cmyk-magenta)', blobs: magentaBlobs, angle: 75, ox: 1.1,  oy: -0.9, gamma: 0.95, gain: 1.0,  alpha: 0.82, gx: [], gy: [], gwx: [], gwy: [], gsf: [] },
+            { color: 'var(--col-cmyk-yellow)',  blobs: yellowBlobs,  angle: 0,  ox: 0.3,  oy: 1.4,  gamma: 0.9,  gain: 0.95, alpha: 0.78, gx: [], gy: [], gwx: [], gwy: [], gsf: [] },
+            { color: 'var(--col-text)',         blobs: keyBlobs,     angle: 45, ox: 0,    oy: 0,    gamma: 2.1,  gain: 0.55, alpha: 0.75, gx: [], gy: [], gwx: [], gwy: [], gsf: [] }
+        ];
+
+        // resolve CSS custom properties (theme-aware) to concrete colors the canvas can fill with
+        function resolveChannelColors() {
+            const style = getComputedStyle(document.documentElement);
+            channels.forEach(ch => {
+                const varName = ch.color.match(/var\((--[\w-]+)\)/)?.[1];
+                if (varName) (ch as any).resolved = style.getPropertyValue(varName).trim() || ch.color;
+                else (ch as any).resolved = ch.color;
+            });
+        }
+
+        // caches, per channel, every dot's fixed (x,y) grid position plus its
+        // warped sample point and static factor — the lattice itself never moves,
+        // only the blob field sampled at those fixed points changes over time
+        function buildGrids() {
+            const rect = $wrapper!.getBoundingClientRect();
+            const cssW = rect.width, cssH = rect.height;
+            if (cssW <= 0 || cssH <= 0) return;
+
+            scale = Math.min(window.devicePixelRatio || 1, CONFIG.MAX_SCALE);
+            baseW = Math.round(Math.min(cssW, CONFIG.MAX_WIDTH) * scale);
+            baseH = Math.round(cssH * (baseW / cssW));
+            W = baseW; H = baseH;
+
+            $canvas!.width = baseW;
+            $canvas!.height = baseH;
+
+            const diag = Math.sqrt(W * W + H * H);
+            const sp = CONFIG.DOT_SPACING * scale;
+
+            channels.forEach(ch => {
+                const rad = ch.angle * Math.PI / 180;
+                const cos = Math.cos(rad), sin = Math.sin(rad);
+                const gx: number[] = [], gy: number[] = [], gwx: number[] = [], gwy: number[] = [], gsf: number[] = [];
+
+                for (let ry = -diag; ry < diag; ry += sp) {
+                    for (let rx = -diag * 0.15; rx < W * 0.9 + diag * 0.15; rx += sp) {
+                        const x = rx * cos - ry * sin;
+                        const y = rx * sin + ry * cos;
+                        if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
+                        const sx = x + ch.ox * scale, sy = y + ch.oy * scale;
+                        const sf = staticFactorAt(sx, sy);
+                        if (sf <= CONFIG.DOT_ALPHA_SKIP) continue;
+                        const wp = warp(sx, sy);
+                        gx.push(x); gy.push(y);
+                        gwx.push(wp.x); gwy.push(wp.y);
+                        gsf.push(sf);
+                    }
+                }
+
+                ch.gx = gx; ch.gy = gy; ch.gwx = gwx; ch.gwy = gwy; ch.gsf = gsf;
+            });
+        }
+
+        // a blob's center only depends on t, never on the sample point — computed once
+        // per channel per frame, outside the (much hotter) per-dot loop below
+        function currentCenters(blobs: Blob[], t: number) {
+            const span = Math.min(W, H);
+            const sp = CONFIG.DRIFT_SPEED, am = CONFIG.DRIFT_AMOUNT;
+            return blobs.map(b => ({
+                cx: (b.cx + b.dx * am * Math.sin(t * b.wx * sp + b.px)) * W,
+                cy: (b.cy + b.dy * am * Math.sin(t * b.wy * sp + b.py)) * H,
+                r: b.r * span
+            }));
+        }
+
+        // soft metaball union of a channel's (already time-evaluated) blob centers,
+        // sampled at a cached warped point
+        function fieldAt(wx: number, wy: number, centers: { cx: number, cy: number, r: number }[]) {
+            let total = 0;
+            for (let i = 0; i < centers.length; i++) {
+                const c = centers[i];
+                const dx = wx - c.cx, dy = wy - c.cy;
+                const g = Math.exp(-(dx * dx + dy * dy) / (2 * c.r * c.r));
+                total = Math.max(total, g) + Math.min(total, g) * 0.35;
+            }
+            return clamp(total, 0, 1);
+        }
+
+        function drawFrame(t: number) {
+            const isDark = document.documentElement.getAttribute('color-scheme') === 'dark';
+
+            ctx!.clearRect(0, 0, baseW, baseH);
+            ctx!.globalCompositeOperation = isDark ? 'screen' : 'multiply';
+
+            const maxR = CONFIG.DOT_SPACING * scale * CONFIG.DOT_RADIUS_SCALE;
+            const minR = CONFIG.DOT_MIN_RADIUS * scale;
+
+            channels.forEach(ch => {
+                const centers = currentCenters(ch.blobs, t);
+                ctx!.fillStyle = (ch as any).resolved;
+                ctx!.globalAlpha = ch.alpha;
+                const { gx, gy, gwx, gwy, gsf } = ch;
+                for (let i = 0; i < gx.length; i++) {
+                    let d = fieldAt(gwx[i], gwy[i], centers) * gsf[i];
+                    if (d <= CONFIG.DOT_ALPHA_SKIP) continue;
+                    d = Math.pow(d, ch.gamma) * ch.gain;
+                    const r = d * maxR;
+                    if (r < minR) continue;
+                    // filled square rather than an arc: cheap enough to redraw every
+                    // frame, and square dots are a real halftone screen shape — at
+                    // high density they interlock into diamonds just like on press
+                    ctx!.fillRect(gx[i] - r, gy[i] - r, r * 2, r * 2);
+                }
+            });
+
+            ctx!.globalAlpha = 1;
+            ctx!.globalCompositeOperation = 'source-over';
+        }
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let rafId: number | null = null, startTime: number | null = null, lastDraw = 0;
+
+        function loop(now: number) {
+            rafId = requestAnimationFrame(loop);
+            if (startTime === null) startTime = now;
+            const interval = 1000 / CONFIG.DRIFT_FPS;
+            if (now - lastDraw < interval) return;
+            lastDraw = now;
+            drawFrame((now - startTime) / 1000);
+        }
+
+        function start() {
+            resolveChannelColors();
+            buildGrids();
+            if (reduceMotion) {
+                drawFrame(0);
+            } else {
+                startTime = null; lastDraw = 0;
+                if (rafId) cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(loop);
+            }
+        }
+
+        start();
+
+        let resizeTimer: ReturnType<typeof setTimeout>;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                buildGrids();
+                if (reduceMotion) drawFrame(0);
+            }, 150);
+        });
+
+        // the [sync] header button flips document.documentElement's color-scheme
+        // attribute live — re-resolve ink colors (var(--col-text) changes) and
+        // repaint immediately rather than waiting for the next animation tick
+        new MutationObserver(() => {
+            resolveChannelColors();
+            if (reduceMotion) drawFrame(0);
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ['color-scheme'] });
+    });
+</script>
+
+<style>
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    min-height: 100dvh;
+    overflow: hidden;
+    background-color: var(--col-background);
+
+    &[sticky="false"] {
+        position: absolute;
+        height: 100svh;
+    }
+}
+
+canvas.halftone-canvas {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+</style>

@@ -40,6 +40,16 @@ const titleChars = titleText.split('');
         <div class="info-item">Code Enthusiast</div>
         <div class="info-item">Digital Artist</div>
     </div>
+
+    <div class="colophon">
+        <span class="dots">
+            <span class="dot c"></span>
+            <span class="dot m"></span>
+            <span class="dot y"></span>
+            <span class="dot k"></span>
+        </span>
+        <span class="label font-dotmatrix">Proof 01 &middot; 175 lpi</span>
+    </div>
 </div>
 
 <style>
@@ -69,9 +79,9 @@ const titleChars = titleText.split('');
         padding-inline: 1rem;
         margin-right: -1rem;
 
-        background-color: var(--col-background);
+        //background-color: var(--col-background);
 
-        color: var(--col-text);
+        color: #211a14;
         font-family: 'Playfair Display', serif;
         position: relative;
 
@@ -88,6 +98,13 @@ const titleChars = titleText.split('');
         & > span {
             position: relative;
             font-size: 19cqw;
+
+            /* a touch of print misregistration: each letter's CMY separations
+               peeking out from behind the black key plate, slightly offset */
+            text-shadow:
+                1.8px 0 0 color-mix(in srgb, var(--col-cmyk-cyan) 55%, transparent),
+                -1.2px 1px 0 color-mix(in srgb, var(--col-cmyk-magenta) 50%, transparent),
+                0.6px -1.4px 0 color-mix(in srgb, var(--col-cmyk-yellow) 45%, transparent);
         }
     }
 
@@ -96,7 +113,7 @@ const titleChars = titleText.split('');
 
         background-color: var(--col-background);
 
-        color: var(--col-text-3);
+        color: var(--col-cmyk-magenta);
         font-family: 'JetBrains Mono', monospace;
         font-size: 1.7rem;
     }
@@ -106,8 +123,48 @@ const titleChars = titleText.split('');
 
         background-color: var(--col-background);
 
-        color: var(--col-text-2);
+        color: #5c5044;
         font-family: "Roboto Slab", serif;
         font-size: 1.5rem;
+    }
+
+    .colophon {
+        position: absolute;
+        left: 1rem;
+        bottom: 1rem;
+
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+
+        &, & * {
+            text-align: left;
+        }
+
+        @media (max-width: 640px) {
+            display: none;
+        }
+    }
+
+    .colophon .dots {
+        display: flex;
+        gap: 4px;
+    }
+
+    .colophon .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+    .colophon .dot.c { background: var(--col-cmyk-cyan); }
+    .colophon .dot.m { background: var(--col-cmyk-magenta); }
+    .colophon .dot.y { background: var(--col-cmyk-yellow); }
+    .colophon .dot.k { background: var(--col-text); }
+
+    .colophon .label {
+        font-size: 0.85rem;
+        letter-spacing: 0.06em;
+        color: var(--col-text-3);
+        text-transform: uppercase;
     }
 </style>

@@ -10,6 +10,11 @@
 
 	--col-divider: var(--col-text-3);
 
+	/* CMYK process-ink accents, used by the homepage's halftone hero art */
+	--col-cmyk-cyan:    #009fd4;
+	--col-cmyk-magenta: #d81e73;
+	--col-cmyk-yellow:  #f0bd1f;
+
 	--col-drop-shadow:  #00000030;
 	--drop-shadow: drop-shadow(0 10px 5px var(--col-drop-shadow));
 	--page-padding: 2.5rem;
