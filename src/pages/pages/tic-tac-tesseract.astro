@@ -509,10 +509,10 @@ const version = 2.1;
 <style is:global>
     :root {
         --highlight-grayscale: #929aa3;
-        --highlight-hover:     color-mix(in srgb, var(--col-cmyk-magenta) 50%, white);
-        --highlight-connected: color-mix(in srgb, var(--col-cmyk-cyan) 50%, white);
-        --highlight-win:       color-mix(in srgb, var(--col-cmyk-green) 50%, white);
-        --highlight-recent:    color-mix(in srgb, var(--col-cmyk-yellow) 70%, white);
+        --highlight-hover:     color-mix(in srgb, var(--col-cmyk-magenta) 50%, var(--col-background));
+        --highlight-connected: color-mix(in srgb, var(--col-cmyk-cyan) 50%, var(--col-background));
+        --highlight-win:       color-mix(in srgb, var(--col-cmyk-green) 50%, var(--col-background));
+        --highlight-recent:    color-mix(in srgb, var(--col-cmyk-yellow) 70%, var(--col-background));
 
         /* Combined colors */
         --hl-hp: color-mix(in oklch, var(--highlight-hover), var(--highlight-recent));
@@ -764,7 +764,7 @@ const version = 2.1;
     #playField {
         --cell-size: clamp(14px, calc(6.25cqw - 3.375px), 30px);
 
-        border: solid 3px var(--col-text);
+        border: solid 2px var(--col-text);
         border-spacing: 0;
         user-select: none;
 
@@ -774,12 +774,11 @@ const version = 2.1;
     }
 
     #playField > tr > td {
-        border: solid 1px var(--col-text);
         position: relative;
     }
 
     #playField > tr > td {
-        background-color: var(--col-text-2);
+        background-color: var(--col-divider);
     }
 
     /* Cell */
