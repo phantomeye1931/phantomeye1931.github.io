@@ -14,11 +14,7 @@ import Spacing from "../simple/Spacing.astro";---
 <style>
     :global(#gh) {
         margin-inline: auto;
-        /* the widget sizes cells, row height, *and* spacing off its own
-           --gh-cell-* vars (see gh.css: `.ghCalendarTable tr { height: var(--gh-cell-size) }`,
-           `border-spacing: var(--gh-cell-gap)`) — setting these instead of
-           forcing width/height on the cells directly keeps rows/columns in
-           sync with the bigger cell size instead of corrupting the grid */
+
         --gh-cell-size: 16px;
         --gh-cell-gap: 4px;
         --gh-cell-radius: 4px;
@@ -44,15 +40,11 @@ import Spacing from "../simple/Spacing.astro";---
     }
 
     :global(#gh) {
-        /* an actual color ramp (GitHub's own graph is green) instead of the
-           ink-density grayscale — using --col-cmyk-green (cyan+yellow, a
-           subtractive mix) rather than a generic web green keeps it tied to
-           the site's own process-ink palette instead of a borrowed one */
         --gh-cell-level0-color: var(--col-background-2);
         --gh-cell-level1-color: color-mix(in srgb, var(--col-cmyk-green) 35%, var(--col-background));
         --gh-cell-level2-color: color-mix(in srgb, var(--col-cmyk-green) 65%, var(--col-background));
         --gh-cell-level3-color: var(--col-cmyk-green);
-        --gh-cell-level4-color: color-mix(in srgb, var(--col-cmyk-green) 70%, var(--col-text));
+        --gh-cell-level4-color: color-mix(in srgb, var(--col-cmyk-green) 80%, var(--col-text));
     }
 
     .loader {
@@ -84,11 +76,6 @@ import Spacing from "../simple/Spacing.astro";---
         --gh-base-size-16: 1rem;
         --gh-base-size-32: 2rem;
 
-        /* the tooltip previously reused --gh-cell-level0-color (the pale
-           "no contribution" tone) as its own background — a pale chip
-           floating over a pale page is exactly why the text read as barely
-           legible. A proper high-contrast chip: full ink in light mode,
-           full paper in dark mode, with the text color inverted to match. */
         --gh-cell-info-bg-color: var(--col-text);
         --gh-tooltip-text-color: var(--col-background);
         --gh-cell-outline-color: rgba(0, 0, 0, 0);
