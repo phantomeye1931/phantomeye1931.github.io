@@ -12,12 +12,15 @@ const props = Astro.props;
 buttons.push( ...props.extraButtons );
 ---
 
-<div class="buttons">
-    {
-        buttons.map((button) => (
+<div class="buttons left">
+    { buttons.filter(button => !button.alignRight).map((button) => (
+                <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
+    ))}
+</div>
+<div class="buttons right">
+    { buttons.filter(button => button.alignRight).map((button) => (
             <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
-        ))
-    }
+    ))}
 </div>
 
 <script>
@@ -41,6 +44,14 @@ buttons.push( ...props.extraButtons );
 </script>
 
 <style scoped>
+    .left {
+        left: 0;
+    }
+
+    .right {
+        right: 0;
+    }
+
     .buttons {
         position: fixed;
         box-sizing: border-box;
@@ -65,7 +76,6 @@ buttons.push( ...props.extraButtons );
         padding: .2rem .4rem;
         gap: 1rem;
         top: 0;
-        right: 0;
 
         a.link {
             all: unset;
@@ -83,7 +93,7 @@ buttons.push( ...props.extraButtons );
                 text-decoration: underline;
 
                 .bk {
-                    color: var(--col-cmyk-yellow);
+                    color: var(--col-cmyk-cyan);
                 }
             }
         }

@@ -1,0 +1,28 @@
+---
+import Page, {type PageProps} from "./Page.astro";
+
+let props = Astro.props as PageProps;
+
+props.opts.extraButtons = [
+    { alignRight: false, url: "/", label: "HOME" }
+];
+---
+
+<Page opts={ props.opts } description={ props.description } title={ props.title }>
+    <div class="wrapper">
+        <slot/>
+    </div>
+</Page>
+
+<style>
+.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 100svh;
+    width: 100%;
+    height: 100%;
+    margin-inline: auto;
+}
+</style>

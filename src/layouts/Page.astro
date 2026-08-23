@@ -6,7 +6,7 @@ import HalftoneBackground from "../components/HalftoneBackground.astro";
 import HeaderButtons from "../components/HeaderButtons.astro";
 import type {Button} from "../utils/types.ts";
 
-interface Props {
+export interface PageProps {
     opts: {
         background: boolean,
         bgFill?: boolean,
@@ -20,7 +20,7 @@ interface Props {
     description: string,
 }
 
-const props = Astro.props;
+const props = Astro.props as PageProps;
 ---
 
 <!doctype html>
