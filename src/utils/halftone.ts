@@ -31,6 +31,9 @@ const CONFIG = {
     RIGHT_FADE_START: 0.46,    // fraction of width where the art starts fading out (keeps the name legible)
     RIGHT_FADE_END: 0.80,      // fraction of width where the art is fully faded
 
+    BOTTOM_FADE_START: 0.40,   // fraction of height where a bottom-fade render starts dissolving
+    BOTTOM_FADE_END: 0.88,     // fraction of height where a bottom-fade render is fully faded
+
     DRIFT_SPEED: 26,           // global multiplier on every blob's angular speed
     DRIFT_AMOUNT: 2,           // global multiplier on every blob's travel distance
 };
@@ -194,6 +197,8 @@ export interface HalftoneOptions {
     // the full width — for pages with no right-aligned hero text to keep clear
     // of, rather than the hero's default fade-to-nothing look
     fill?: boolean;
+    // full-width blob spread like `fill`, but fades out near the bottom instead of the right
+    bottomFade?: boolean;
 }
 
 export interface HalftoneEffect {
@@ -204,6 +209,9 @@ export interface HalftoneEffect {
     /** Switches the right-edge fade on/off and rebuilds the lattice. Unlike `resize`,
      *  does not touch channel colors or blobs, so live edits survive the toggle. */
     setFill(fill: boolean): void;
+    /** Switches the bottom-edge fade (mobile hero band render) on/off and rebuilds
+     *  the lattice, same caveats as `setFill`. */
+    setBottomFade(bottomFade: boolean): void;
     /** Re-reads the CMYK ink CSS custom properties off `document.documentElement` for
      *  every channel that doesn't have an explicit colorOverride. Call once up front,
      *  and again any time the [color-scheme] attribute changes. */
@@ -224,6 +232,8 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
     if (!ctx) throw new Error('2d canvas context unavailable');
 
     let FILL = options.fill ?? false;
+    let BOTTOM_FADE = options.bottomFade ?? false;
+    function fullWidthMode() { return FILL || BOTTOM_FADE; }
     const channels = makeChannels();
 
     let W = 0, H = 0, scale = 1;
@@ -242,8 +252,9 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
     function staticFactorAt(x: number, y: number) {
         const grain = (1 - CONFIG.GRAIN_AMOUNT) + CONFIG.GRAIN_AMOUNT * noise2(x * CONFIG.GRAIN_FREQ, y * CONFIG.GRAIN_FREQ);
         const soft = (1 - CONFIG.SOFT_AMOUNT) + CONFIG.SOFT_AMOUNT * fbm2(x * CONFIG.SOFT_FREQ, y * CONFIG.SOFT_FREQ, 3);
-        const rightFade = FILL ? 1 : 1 - smoothstep(W * CONFIG.RIGHT_FADE_START, W * CONFIG.RIGHT_FADE_END, x);
-        return grain * soft * rightFade;
+        const rightFade = fullWidthMode() ? 1 : 1 - smoothstep(W * CONFIG.RIGHT_FADE_START, W * CONFIG.RIGHT_FADE_END, x);
+        const bottomFade = BOTTOM_FADE ? 1 - smoothstep(H * CONFIG.BOTTOM_FADE_START, H * CONFIG.BOTTOM_FADE_END, y) : 1;
+        return grain * soft * rightFade * bottomFade;
     }
 
     function resolveOne(ch: Channel) {
@@ -274,9 +285,10 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
         const sp = CONFIG.DOT_SPACING * scale;
         // the lattice only bothers generating points up to ~90% of the
         // width, since the hero's fade zeroes out anything past 80%
-        // anyway — but in FILL mode there's no fade, so the sweep has to
-        // cover the full canvas or the right edge is just never painted
-        const rxLimit = (FILL ? W : W * 0.9) + diag * 0.15;
+        // anyway — but in FILL/BOTTOM_FADE modes there's no *right-edge*
+        // fade, so the sweep has to cover the full canvas or the right
+        // side is just never painted
+        const rxLimit = (fullWidthMode() ? W : W * 0.9) + diag * 0.15;
 
         channels.forEach(ch => {
             const rad = ch.angle * Math.PI / 180;
@@ -304,10 +316,10 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
 
     // every blob's authored cx sits in [0.04, 0.49] — the left half —
     // since they were placed assuming the right-edge fade would hide
-    // anything further out anyway. In FILL mode there's no such fade, so
-    // stretch blob centers horizontally to actually spread ink across
-    // the full width instead of leaving the right side genuinely blank.
-    function xSpread() { return FILL ? 1.9 : 1; }
+    // anything further out anyway. In FILL/BOTTOM_FADE modes there's no
+    // such fade, so stretch blob centers horizontally to actually spread
+    // ink across the full width instead of leaving the right side blank.
+    function xSpread() { return fullWidthMode() ? 1.9 : 1; }
 
     // a blob's center only depends on t, never on the sample point — computed once
     // per channel per frame, outside the (much hotter) per-dot loop below
@@ -354,6 +366,11 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
         buildGrids();
     }
 
+    function setBottomFade(bottomFade: boolean) {
+        BOTTOM_FADE = bottomFade;
+        buildGrids();
+    }
+
     function drawFrame(t: number, isDark: boolean) {
         ctx!.clearRect(0, 0, W, H);
         ctx!.globalCompositeOperation = isDark ? 'screen' : 'multiply';
@@ -384,5 +401,5 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
         ctx!.globalCompositeOperation = 'source-over';
     }
 
-    return { resize, setFill, resolveColors, setChannelColor, drawFrame, channels };
+    return { resize, setFill, setBottomFade, resolveColors, setChannelColor, drawFrame, channels };
 }

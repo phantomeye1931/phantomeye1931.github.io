@@ -26,7 +26,7 @@ const titleChars = titleText.split('');
     <div class="name">
         {
             titleChars.map((char: string) => (
-                <span class="char" style="visibility: hidden">{char}</span>
+                <span class={char === ' ' ? 'char word-gap' : 'char'} style="visibility: hidden">{char}</span>
             ))
         }
     </div>
@@ -100,6 +100,10 @@ const titleChars = titleText.split('');
             font-size: 19cqw;
             text-shadow: var(--text-shadow-cmyk);
         }
+
+        & > span.word-gap {
+            margin-inline: 0.06em;
+        }
     }
 
     .pronunciation {
@@ -139,10 +143,6 @@ const titleChars = titleText.split('');
         &, & * {
             text-align: left;
         }
-
-        @media (max-width: 640px) {
-            display: none;
-        }
     }
 
     .colophon .dots {
@@ -165,5 +165,43 @@ const titleChars = titleText.split('');
         letter-spacing: 0.06em;
         color: var(--col-text-3);
         text-transform: uppercase;
+    }
+
+    @media (max-width: 640px) {
+        .hero {
+            height: auto;
+            min-height: 100svh;
+            justify-content: flex-start;
+            padding-top: 60svh;
+            gap: 0.9rem;
+        }
+
+        .name {
+            margin-top: -1.2rem;
+            max-width: 100%;
+            padding-inline: 0;
+            margin-right: 0;
+            align-self: flex-start;
+
+            & > span {
+                font-size: 16cqw;
+            }
+        }
+
+        .pronunciation {
+            align-self: flex-start;
+        }
+
+        .hero .name, .hero .pronunciation {
+            text-align: left;
+        }
+
+        .colophon {
+            display: flex;
+            position: absolute;
+            top: 42svh;
+            bottom: auto;
+            left: 1rem;
+        }
     }
 </style>

@@ -3,18 +3,20 @@ interface Props {
     sticky: boolean,
     fill?: boolean,
     flip?: boolean,
+    heroBand?: boolean,
 }
 
 const props = Astro.props;
 
-// Every combination of theme (light/dark) x variant (gradient/fill) has been
-// pre-rendered to video (see /public/backgrounds and pages/cmyk-halftone.astro,
-// the recorder that produced them). This component no longer needs to render
-// anything itself, just point a <video> at the right pre-baked file.
+// Every combination of theme (light/dark) x variant (gradient/fill/mobile) has
+// been pre-rendered to video (see /public/backgrounds and
+// pages/cmyk-halftone.astro, the recorder that produced them). This component
+// no longer needs to render anything itself, just point a <video> at the
+// right pre-baked file.
 const variant = (props.fill ?? false) ? 'fill' : 'gradient';
 ---
 
-<div class="bg-grid halftone-wrapper" aria-hidden="true" sticky={ props.sticky } flip={ props.flip ?? false } data-variant={variant}>
+<div class="bg-grid halftone-wrapper" aria-hidden="true" sticky={ props.sticky } flip={ props.flip ?? false } data-variant={variant} data-hero-band={ props.heroBand ?? false }>
     <video class="halftone-video" muted loop playsinline preload="auto" disableRemotePlayback></video>
 </div>
 
@@ -44,7 +46,13 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
     document.addEventListener('DOMContentLoaded', () => {
         if (!$wrapper || !$video) return;
 
-        const variant = $wrapper.dataset.variant === 'fill' ? 'fill' : 'gradient';
+        const baseVariant = $wrapper.dataset.variant === 'fill' ? 'fill' : 'gradient';
+        const heroBand = $wrapper.dataset.heroBand === 'true';
+        const MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
+        function currentVariant() {
+            return (heroBand && MOBILE_QUERY.matches) ? 'mobile' : baseVariant;
+        }
+
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         function isDarkScheme(): boolean {
@@ -68,10 +76,11 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
         // support it (most, besides Safari) pick it over the mp4 fallback
         function applyTheme() {
             const theme = isDarkScheme() ? 'dark' : 'light';
-            if ($video!.dataset.theme === theme) return; // avoid an unnecessary reload/restart
-            $video!.dataset.theme = theme;
+            const key = `${theme}-${currentVariant()}`;
+            if ($video!.dataset.key === key) return; // avoid an unnecessary reload/restart
+            $video!.dataset.key = key;
 
-            const base = `/backgrounds/${theme}-${variant}`;
+            const base = `/backgrounds/${key}`;
             $video!.innerHTML = `
                 <source src="${base}.webm" type="video/webm" />
                 <source src="${base}.mp4" type="video/mp4" />
@@ -100,6 +109,8 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
         // attribute live. Swap to the matching pre-rendered video.
         new MutationObserver(applyTheme)
             .observe(document.documentElement, { attributes: true, attributeFilter: ['color-scheme'] });
+
+        if (heroBand) MOBILE_QUERY.addEventListener('change', applyTheme);
     });
 </script>
 
@@ -115,6 +126,13 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
     &[sticky="false"] {
         position: absolute;
         height: 100svh;
+    }
+
+    &[data-hero-band="true"][sticky="false"] {
+        @media (max-width: 640px) {
+            height: 60svh;
+            min-height: 0;
+        }
     }
 
     @media print {

@@ -21,12 +21,30 @@ import Page from "../../layouts/Page.astro";
             <p class="hint font-mono">
                 <code>?gradient=true</code> / <code>?gradient=false</code> in the URL (or the
                 checkbox below) toggles the right-edge fade.
+                <code>?bottom=true</code> toggles the bottom-edge fade used by the mobile hero
+                band render instead.
             </p>
         </header>
 
         <div class="preview-canvas-wrap" aria-hidden="true">
             <canvas class="preview-canvas"></canvas>
         </div>
+
+        <section class="panel">
+            <div class="channel-header">
+                <span class="channel-label">Mobile hero band preset</span>
+            </div>
+            <p class="hint">
+                Sets the output size to a short, full-width band and switches on the
+                bottom-edge fade, matching the mobile hero's "art band" (full-width color,
+                dissolving into the page below it rather than fading to one side). Record once
+                per theme and save the results as <code>light-mobile.mp4</code>/<code>.webm</code>
+                and <code>dark-mobile.mp4</code>/<code>.webm</code> in <code>public/backgrounds/</code>.
+            </p>
+            <button type="button" id="mobile-preset-btn" class="action-link font-mono">
+                <span class="bk">[</span>APPLY MOBILE BAND PRESET<span class="bk">]</span>
+            </button>
+        </section>
 
         <section class="channels-section">
             <h2>Ink channels</h2>
@@ -44,6 +62,13 @@ import Page from "../../layouts/Page.astro";
                     <label for="gradient-toggle">
                         <input type="checkbox" id="gradient-toggle" checked />
                         Edge gradient fade
+                    </label>
+                </div>
+
+                <div class="control checkbox-control">
+                    <label for="bottom-fade-toggle">
+                        <input type="checkbox" id="bottom-fade-toggle" />
+                        Bottom fade (mobile hero band)
                     </label>
                 </div>
 
@@ -126,6 +151,8 @@ import Page from "../../layouts/Page.astro";
     const $previewCanvas = document.querySelector<HTMLCanvasElement>(".preview-canvas")!;
     const $channelsPanel = document.getElementById("channels-panel") as HTMLDivElement;
     const $gradientToggle = document.getElementById("gradient-toggle") as HTMLInputElement;
+    const $bottomFadeToggle = document.getElementById("bottom-fade-toggle") as HTMLInputElement;
+    const $mobilePresetBtn = document.getElementById("mobile-preset-btn") as HTMLButtonElement;
     const $loopToggle = document.getElementById("loop-toggle") as HTMLInputElement;
     const $width = document.getElementById("out-width") as HTMLInputElement;
     const $height = document.getElementById("out-height") as HTMLInputElement;
@@ -162,9 +189,23 @@ import Page from "../../layouts/Page.astro";
         history.replaceState(null, "", url);
     }
 
+    function bottomFadeFromUrl(): boolean {
+        return new URLSearchParams(window.location.search).get("bottom") === "true";
+    }
+
+    function setUrlBottomFade(bottomFade: boolean) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("bottom", String(bottomFade));
+        history.replaceState(null, "", url);
+    }
+
     // ---- live preview (real-time, laggy if it lags, that's expected here) ----
     $gradientToggle.checked = gradientFromUrl();
-    const previewEffect = createHalftoneEffect($previewCanvas, { fill: !$gradientToggle.checked });
+    $bottomFadeToggle.checked = bottomFadeFromUrl();
+    const previewEffect = createHalftoneEffect($previewCanvas, {
+        fill: !$gradientToggle.checked,
+        bottomFade: $bottomFadeToggle.checked,
+    });
     previewEffect.resolveColors();
 
     let previewRaf: number | null = null;
@@ -209,6 +250,21 @@ import Page from "../../layouts/Page.astro";
     $gradientToggle.addEventListener("change", () => {
         setUrlGradient($gradientToggle.checked);
         previewEffect.setFill(!$gradientToggle.checked);
+    });
+
+    $bottomFadeToggle.addEventListener("change", () => {
+        setUrlBottomFade($bottomFadeToggle.checked);
+        previewEffect.setBottomFade($bottomFadeToggle.checked);
+    });
+
+    $mobilePresetBtn.addEventListener("click", () => {
+        $gradientToggle.checked = false;
+        $gradientToggle.dispatchEvent(new Event("change"));
+        $bottomFadeToggle.checked = true;
+        $bottomFadeToggle.dispatchEvent(new Event("change"));
+        $width.value = "1080";
+        $height.value = "400";
+        updateSizeEstimate();
     });
 
     let resizeTimer: ReturnType<typeof setTimeout>;
@@ -390,7 +446,7 @@ import Page from "../../layouts/Page.astro";
     }
 
     function setControlsDisabled(disabled: boolean) {
-        for (const el of [$gradientToggle, $loopToggle, $width, $height, $fps, $duration, $format, $quality]) {
+        for (const el of [$gradientToggle, $bottomFadeToggle, $loopToggle, $width, $height, $fps, $duration, $format, $quality]) {
             (el as HTMLInputElement).disabled = disabled;
         }
     }
@@ -416,6 +472,7 @@ import Page from "../../layouts/Page.astro";
         const fps = clampInt($fps.value, 1, 60, DEFAULT_DRIFT_FPS);
         const duration = clampFloat($duration.value, 0.1, 120, 6);
         const gradient = $gradientToggle.checked;
+        const bottomFade = $bottomFadeToggle.checked;
         const loopMode = $loopToggle.checked;
         const format = $format.value === "jpeg" ? "jpeg" : "png";
         const quality = Number($quality.value);
@@ -436,6 +493,7 @@ import Page from "../../layouts/Page.astro";
         resetPreviewToStart();
 
         setControlsDisabled(true);
+        $mobilePresetBtn.disabled = true;
         $recordBtn.hidden = true;
         $cancelBtn.hidden = false;
         $result.hidden = true;
@@ -447,7 +505,7 @@ import Page from "../../layouts/Page.astro";
         // entirely decoupled from the live preview canvas above, seeded with
         // the same ink colors and blobs the user has been editing there
         const offCanvas = document.createElement("canvas");
-        const effect = createHalftoneEffect(offCanvas, { fill: !gradient });
+        const effect = createHalftoneEffect(offCanvas, { fill: !gradient, bottomFade });
         effect.resolveColors();
         previewEffect.channels.forEach((srcCh) => {
             const destCh = effect.channels.find((c) => c.id === srcCh.id);
@@ -498,6 +556,7 @@ import Page from "../../layouts/Page.astro";
         }
 
         setControlsDisabled(false);
+        $mobilePresetBtn.disabled = false;
         $recordBtn.hidden = false;
         $cancelBtn.hidden = true;
         recording = false;
@@ -514,8 +573,8 @@ import Page from "../../layouts/Page.astro";
 
         const stamp = new Date().toISOString().replace(/[:.]/g, "-");
         const themeTag = isDark ? "dark" : "light";
-        const gradientTag = gradient ? "gradient" : "fill";
-        const filename = `cmyk-halftone-frames-${themeTag}-${gradientTag}-${fps}fps-${formatDurationTag(effectiveDuration)}-${stamp}.zip`;
+        const modeTag = bottomFade ? "mobile" : (gradient ? "gradient" : "fill");
+        const filename = `cmyk-halftone-frames-${themeTag}-${modeTag}-${fps}fps-${formatDurationTag(effectiveDuration)}-${stamp}.zip`;
         downloadBlob(zipBlob, filename);
 
         // explicit confirmation that the zip actually finished AND the browser
