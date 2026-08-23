@@ -5,12 +5,12 @@
         SYNC: "sync",
     }
 
-    // 1. Define the setter function globally
+    // Tell the browser to remember this theme usage
     function applyColorScheme(theme) {
         document.documentElement.setAttribute("color-scheme", theme);
     }
 
-    // 2. Define the toggle function globally
+    // Returns the updated getColorScheme();
     window.cycleColorScheme = () => {
         const current = getColorScheme();
 

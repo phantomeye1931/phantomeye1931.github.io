@@ -1,47 +1,31 @@
 # CLAUDE.md
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What this is
-
 Armand de Vries' personal site/blog (Astro, static output, deployed to GitHub Pages via `.github/workflows/deploy.yml` on push to `master`). This checkout, `PortfolioRefresh`, is a working copy split off from the original `~/IdeaProjects/Portfolio` repo specifically to build a CMYK-halftone redesign of the homepage without touching the live site. `origin` still points at the real repo (`phantomeye1931/Portfolio-Website`) — nothing here has been pushed.
 
 ## Commands
-
 ```sh
-npm install       # deps (node_modules is gitignored, not currently installed on a fresh clone)
+npm install        # deps (node_modules is gitignored, not currently installed on a fresh clone)
 npm run dev        # astro dev, default port 4321 (auto-bumps if taken)
 npm run build      # astro build -> dist/
 npm run preview    # serve the dist/ build locally
 npm run astro ...  # astro CLI passthrough (e.g. `npm run astro check`)
 ```
 
-There is no lint or test setup (no test runner, no eslint config) — don't invent one unasked.
-
-### Rebuilding the WASM ASCII generator
-
-The animated ASCII background (`Background.astro` — not currently used by any core page; `index.astro` and `BlogPost.astro` both use the halftone variant, `cv.astro` has no background at all — but still wired up in `Page.astro` and worth keeping working) is powered by a Rust crate at `rust/` (`ascii-bg`, `wasm-bindgen`-based), compiled to `src/wasm/` — **that output directory is committed** and imported directly (`import init, {get_ascii_grid} from "../wasm"`). There is no local build script; only edit `rust/src/lib.rs` if asked, then rebuild with the exact command CI uses:
-
-```sh
-wasm-pack build rust --target web --out-dir ../src/wasm
-```
-
-(`rust/target/` is a local build cache, not committed.)
-
 ## Architecture
-
-**Layout/page pattern**: every route wraps content in `src/layouts/Page.astro`, which takes an `opts` prop controlling what chrome renders:
+**Layout/page pattern**: every route wraps content in `src/layouts/Page.astro`, which takes an `opts` prop controlling what the browser renders:
 
 ```ts
 opts: {
-  background: boolean,                          // render a background component at all
+  background: boolean,                           // render a background component at all
   backgroundVariant?: 'ascii' | 'halftone',      // which one (default 'ascii')
   bgWearOff?: boolean,                           // ascii-only: fade toward the right edge (currently unused — no page opts in)
   bgFill?: boolean,                              // halftone-only: skip the right-edge fade, cover the full width edge-to-edge
   bgFlip?: boolean,                              // halftone-only: mirror the canvas horizontally (transform: scaleX(-1)) — for right-aligned instead of left
   buttons: boolean,                              // render HeaderButtons nav
   blogButtons?: boolean,                         // swaps nav to blog-post variant ([BACK TO TOP] etc.)
-  sticky?: boolean,                               // background: fixed+full-page (blog posts) vs absolute+first-viewport-only (homepage hero)
+  sticky?: boolean,                              // background: fixed+full-page (blog posts) vs absolute+first-viewport-only (homepage hero)
 }
 ```
 

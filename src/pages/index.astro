@@ -9,8 +9,15 @@ import Spacing from "../components/simple/Spacing.astro";
 import {SITE_DESCRIPTION, SITE_TITLE} from "../consts.ts";
 import ContactSection from "../components/homepage/ContactSection.astro";
 import GitSection from "../components/homepage/GitSection.astro";
+import type {Button} from "../utils/types.ts";
+
+const headerButtons: Button[] = [
+	{ alignRight: true, label: "WEBLOG", url: "/#weblog"},
+	{ alignRight: true, label: "PROJECTS",  url: "/#projects"},
+	{ alignRight: true, label: "ART",  url: "/#art"},
+];
 ---
-<Page title={SITE_TITLE} description={SITE_DESCRIPTION} opts={{ background: true, backgroundVariant: 'halftone', buttons: true, heroBand: true }}>
+<Page title={SITE_TITLE} description={SITE_DESCRIPTION} opts={{ background: true, buttons: true, extraButtons: headerButtons }}>
 	<HeroSection />
 
 	<div class="parts">
