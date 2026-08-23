@@ -1,5 +1,512 @@
 ---
-
+import CenteredPage from "../../layouts/CenteredPage.astro";
 ---
 
-Hello world
+<CenteredPage
+        title={"Tic Tac Tesseract"}
+        description="Play 4-dimensional Tic Tac Toe in your browser"
+        opts={{ background: true, bgFill: true, buttons: true }}
+>
+    <div class="game">
+        <h1>Tic Tac Tesseract</h1>
+
+        <p id="subtext">4-Dimensional Tic Tac Toe</p>
+
+        <a href="/how-to-play/" target="_blank">How to play</a>
+        <p id="display"><b>Player X</b> is first to play</p>
+
+        <table id="playField"></table>
+
+        <a onclick="toggleHardMode();" id="hardModeToggle">Disable Highlights</a>
+
+        <p id="tiny">
+            v2.0 · by <a href="https://linktr.ee/phantomeye" target="_blank">PhantomEye</a>
+            & <a href="https://linktr.ee/serialsniper" target="_blank">SerialSniper</a>
+        </p>
+    </div>
+</CenteredPage>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    let hardMode = urlParams.get("hard") != null;
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+    }
+
+    let lastMove: Vec4 | null = null;
+
+    // Generates the playing field
+    for (let w = 0; w < 4; w++) { // TODO: Fix deprecations
+        let row = $("<tr></tr>").appendTo("#playField").on("mouseleave",function() {
+            removeClasses('highlights');
+            highlightLastMove();
+        });
+
+        for (let z = 0; z < 4; z++) {
+            let cell = $("<td></td>").appendTo(row);
+            for (let y = 0; y < 4; y++) {
+                let innerTableRow = $("<tr></tr>").appendTo(cell);
+                for (let x = 0; x < 4; x++) {
+                    $("<td><div class='none'></td>").appendTo(innerTableRow)
+                        .attr("id", `${x}${y}${z}${w}`)
+                        .on("mouseenter", function() {
+                            // When hovering a cell, highlight the cell by passing the coordinates stored in the cell ID
+                            removeClasses('highlights');
+                            highlightLastMove();
+                            highlightPossible($(this).attr("id") as CoordinateString);
+                        });
+                }
+            }
+        }
+    }
+
+    let secondaryTurn = false; // Storing whose turn it is
+    let gameEnded = false;
+    let turnDisplay = $("#display"); // Gets the text element above the playing field
+
+    // Make all cells clickable
+    const playFieldElement = $("#playField");
+
+    playFieldElement.on('click', function(event) {
+        const clicked = $(event.target);
+
+        if (gameEnded) return;
+
+        // If the cell is empty, fills it with the current player's symbol
+        let empty = Number.isInteger(parseInt(clicked.attr("id") ?? ' ')) && clicked.find("div").hasClass("none");
+        if (empty) {
+            secondaryTurn = !secondaryTurn // Flip whose turn it is
+            clicked.find("div").removeClass("none");
+            clicked.find("div").addClass(secondaryTurn ? "x" : "o"); // Place the symbol
+            lastMove = Vec4.parse(clicked.attr("id"));
+
+            highlightLastMove();
+            if (!hardMode) highlightPossible($(this).attr("id") as CoordinateString);
+
+            // Update the text above the playing field
+            const statusText = checkForWin(clicked.attr("id") ?? ' ')
+                ? `<b>Player ${!secondaryTurn ? 'O' : 'X'} has won!!</b><br><u><p id="resetGame" onClick="cleanBoard();">Click here to start a new game.</p></u>`
+                : (`Now it's <b>player ${secondaryTurn ? 'O' : 'X'}</b>\'s turn`);
+            turnDisplay.html(statusText);
+        }
+    });
+
+    type Coordinate = 0 | 1 | 2 | 3;
+    type CoordinateString = `${Coordinate}${Coordinate}${Coordinate}${Coordinate}`;
+
+    class Vec4 {
+        constructor(
+            public x: Coordinate,
+            public y: Coordinate,
+            public z: Coordinate,
+            public w: Coordinate,
+        ) {};
+
+        // Parse from a string, eg. 0000
+        static parse(str: any) {
+            return new Vec4(str[0], str[1], str[2], str[3]);
+        }
+
+        // Get one of the values based on index
+        get(i: number) {
+            switch(i) {
+                case 0: return this.x;
+                case 1: return this.y;
+                case 2: return this.z;
+                case 3: return this.w;
+                default: return null;
+            }
+        }
+
+        toString(): CoordinateString {
+            return `${this.x}${this.y}${this.z}${this.w}`;
+        }
+
+        toArray() {
+            return [ this.x, this.y, this.z, this.w ];
+        }
+
+        clone() {
+            return new Vec4(this.x, this.y, this.z, this.w);
+        }
+
+        static fromBase3(n: number) {
+            let out = new Vec4(0, 0, 0, 0);
+
+            out.x = n % 3 as Coordinate;
+            n = Math.floor(n / 3);
+            out.y = n % 3 as Coordinate;
+            n = Math.floor(n / 3);
+            out.z = n % 3 as Coordinate;
+            n = Math.floor(n / 3);
+            out.w = n % 3 as Coordinate;
+
+            return out;
+        }
+    }
+
+    // Remove certain classes from all cells
+    function removeClasses(classes: 'lastMove' | 'pieces' | 'highlights') {
+        for (let w = 0; w < 4; w++)
+            for (let z = 0; z < 4; z++)
+                for (let y = 0; y < 4; y++)
+                    for (let x = 0; x < 4; x++) {
+                        let cell = $(`#${x}${y}${z}${w} > div`);
+
+                        switch (classes) {
+                            case 'lastMove':
+                                cell.removeClass("highlightLastMove");
+                                break;
+                            case 'pieces':
+                                cell
+                                    .removeClass("x")
+                                    .removeClass("o")
+                                    .removeClass("highlightWinning")
+                                    .addClass("none");
+                                break;
+                            case 'highlights':
+                                cell
+                                    .removeClass("highlight")
+                                    .removeClass("highlightSecondary");
+                                break;
+                        }
+                    }
+    }
+
+    // Check if the last placed cell finishes a line, returns boolean
+    function checkForWin(coordinates: string): boolean {
+        let clicked = Vec4.parse(coordinates);
+        for (let i = 0; i < Math.pow(3, 4); i++) {
+            // Convert i to base-3
+            let iterator = Vec4.fromBase3(i); // TODO: Check
+
+            // Ensure the line we're checking is valid
+            if (!ensureAtLeastOneOne(iterator)) continue;
+
+            // Checks whether the clicked cell is on the line
+            if (!isInCombination(clicked, iterator)) continue;
+
+            // Check the 4 cells within the line
+            let countOnLine = 0;
+            for (let j = 0; j < 4; j++) {
+                let drawIterator = checkLine(iterator, clicked, j);
+                let coordinateString: CoordinateString = drawIterator.toString();
+
+                // Check if the cell contains the right symbol, if so, increment countOnLine
+                let $div = $(`#${coordinateString}`).find("div");
+                if ($div.hasClass(secondaryTurn ? "x" : "o") && coordinateString != coordinates) {
+                    countOnLine++;
+                }
+            }
+
+            // If the entire line is filled with the right symbol (clicked + 3 extra = 4), mark the game as won
+            if (countOnLine == 3) {
+                highlightWinningPieces(iterator, clicked);
+                removeClasses('highlights');
+
+                gameEnded = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Creates a Vec4 to check cells in a line
+    function checkLine(iterator: Vec4, selected: Vec4, j: number) {
+        return new Vec4(
+            // = 0: it's static
+            // = 1: it's equal to the incrementing j
+            // = 2: it's equal to the inverse of j (3 - j)
+            iterator.x == 0 ? selected.x : (iterator.x == 1 ? j : (3 - j)) as Coordinate,
+            iterator.y == 0 ? selected.y : (iterator.y == 1 ? j : (3 - j)) as Coordinate,
+            iterator.z == 0 ? selected.z : (iterator.z == 1 ? j : (3 - j)) as Coordinate,
+            iterator.w == 0 ? selected.w : (iterator.w == 1 ? j : (3 - j)) as Coordinate,
+        );
+    }
+
+    // Highlights the last move made
+    function highlightLastMove() {
+        if (lastMove != null) {
+            removeClasses('lastMove')
+            addClass(lastMove, "highlightLastMove");
+        }
+    }
+
+    // Highlights the winning 4 cells
+    function highlightWinningPieces(iterator: Vec4, selected: Vec4) {
+        for (let j = 0; j < 4; j++) {
+            let drawIterator = checkLine(iterator, selected, j);
+
+            // Adds the winning highlight to the 4 cells of the line
+            addClass(drawIterator, "highlightWinning");
+        }
+    }
+
+    // Highlights all the possible combinations
+    function highlightPossible(coordinates: CoordinateString) {
+        // Don't highlight if the game has ended
+        if (gameEnded) return;
+
+        let selected = Vec4.parse(coordinates); // Get a vector of the selected cell
+
+        // Goes over all possible lines
+        if (!hardMode) {
+            for (let i = 0; i < Math.pow(3, 4); i++) {
+                // Convert i to base-3
+                let iterator = Vec4.fromBase3(i);
+
+                // Ensure the line we're checking is valid
+                if (!ensureAtLeastOneOne(iterator)) continue;
+
+                // Checks whether the hovered cell is in the line
+                if (!isInCombination(selected, iterator)) continue;
+
+                // Highlight the 4 cells in the line
+                for (let j = 0; j < 4; j++) {
+                    let drawIterator = checkLine(iterator, selected, j);
+                    addClass(drawIterator, "highlightSecondary");
+                }
+            }
+            addClass(selected, "highlight");
+        }
+        // Add highlights to the cell that's being hovered
+        removeClass(selected, "highlightSecondary");
+    }
+
+    // Adds a class to an element
+    function addClass(coordinates: Vec4, cssClass: string) {
+        if (coordinates != null) {
+            $(`#${coordinates.toString()} > div`).addClass(cssClass);
+        }
+    }
+
+    // Removes a class from an element
+    function removeClass(coordinates: Vec4, cssClass: string) {
+        $(`#${coordinates.toString()} > div`).removeClass(cssClass);
+    }
+
+    // Ensures that at least one value in the vector is 1
+    function ensureAtLeastOneOne(vec: Vec4) {
+        return vec.x == 1
+            || vec.y == 1
+            || vec.z == 1
+            || vec.w == 1;
+    }
+
+    // Check if the selected cell is on a line
+    function isInCombination(pos: Vec4, combination: Vec4) {
+        // Creates a temporary copy of pos so it won't be overwritten
+        let posTemp = pos.clone();
+
+        // Inverts the value if the axis is reversed, indicated by a value of 2
+        if (combination.x == 2) posTemp.x = 3 - posTemp.x as Coordinate;
+        if (combination.y == 2) posTemp.y = 3 - posTemp.y as Coordinate;
+        if (combination.z == 2) posTemp.z = 3 - posTemp.z as Coordinate;
+        if (combination.w == 2) posTemp.w = 3 - posTemp.w as Coordinate;
+
+        let num = -1;
+        let posTempArray = posTemp.toArray();
+        for (let i = 0; i < 4; i++) {
+            // If the axis is static, skip it
+            if (combination.get(i) == 0)
+                continue;
+            // Only set num if the combination axis isn't 0
+            if (num == -1)
+                num = posTempArray[i];
+            // Stop checking if one of the axes doesn't match
+            if (posTempArray[i] != num)
+                return false;
+        }
+        return true;
+    }
+
+    // Resets the board to start a new game
+    function cleanBoard() {
+        removeClasses('highlights');
+        removeClasses('pieces');
+        lastMove = null;
+        gameEnded = false;
+        secondaryTurn = false;
+        turnDisplay.html('<b>Player X</b> is first to play');
+    }
+
+    let hardModeToggle = $("#hardModeToggle");
+
+    // Toggles whether move hints are shown
+    function toggleHardMode() {
+        hardMode = !hardMode;
+        hardModeToggle.html(hardMode ? 'Enable Highlights' : 'Disable Highlights');
+    }
+
+    // Expose to the inline onclick handlers, which run outside this module's scope
+    (window as any).cleanBoard = cleanBoard;
+    (window as any).toggleHardMode = toggleHardMode;
+
+    // Scale the screen for smaller devices
+    let boardWidth = 570;
+    let boardHeight = 890;
+
+    let $root = $(":root");
+
+    function fitScreen() {
+        let scaleVertically = window.innerHeight === Math.min((window.innerWidth * boardHeight / boardWidth), window.innerHeight);
+
+        if (window.innerWidth < boardWidth && !scaleVertically) {
+            let scaleDownStyle = window.innerWidth / boardWidth;
+            $root.css('--scale-down', scaleDownStyle);
+
+        } else if (window.innerHeight < boardHeight && scaleVertically) {
+            let scaleDownStyle = window.innerHeight / boardHeight;
+            $root.css('--scale-down', scaleDownStyle);
+
+        } else {
+            $root.css('--scale-down', .95);
+        }
+    }
+
+    window.onload = fitScreen;
+    window.addEventListener('resize', _ => fitScreen());
+</script>
+
+<style is:global>
+    :root {
+        --hp: #d396ff;
+        --hs: #96b4ff;
+        --hw: #60ff89;
+        --hl: #ffd340;
+
+        /* Combined colors */
+        --hl-hp: #f7ab95;
+        --hl-hs: #a7cb5e;
+
+        /* scale script*/
+        --scale-down: .95;
+    }
+
+    .game {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        padding: 0 5em;
+
+        background-color: var(--col-background);
+    }
+
+    #playField {
+        border: solid 3px var(--col-text);
+        border-spacing: 0;
+        user-select: none;
+    }
+
+    #playField > tr > td {
+        border: solid 1px var(--col-text-2);
+        position: relative;
+    }
+
+    #playField > tr > td {
+        background-color: var(--col-text-3);
+    }
+
+    /* Cell */
+    #playField > tr > td > tr > td > div {
+        width: 30px;
+        height: 30px;
+        background-color: var(--col-background);
+        color: var(--col-text-3);
+
+        background-position: 50% 50%;
+        background-size: 70%;
+        background-repeat: no-repeat;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+
+    .none {
+        background-image: url("/pages/tic-tac-tesseract/game/empty.svg");
+    }
+
+    .x {
+        background-image: url("/pages/tic-tac-tesseract/game/cross.svg");
+    }
+
+    .o {
+        background-image: url("/pages/tic-tac-tesseract/game/circle.svg");
+    }
+
+    /* put it up here because following classes have more priority */
+    .highlightLastMove {
+        background-color: var(--hl) !important;
+    }
+
+    .highlight {
+        background-color: var(--hp) !important;
+    }
+
+    .highlightSecondary {
+        background-color: var(--hs) !important;
+    }
+
+    .highlightWinning {
+        background-color: var(--hw) !important;
+    }
+
+    /* Combined highlights */
+    .highlightLastMove.highlightSecondary {
+        background-color: var(--hl-hs) !important;
+    }
+
+    .highlightLastMove.highlight {
+        background-color: var(--hl-hp) !important;
+    }
+
+    h1 {
+        margin-bottom: -20px;
+    }
+
+    a {
+        color: var(--col-text);
+    }
+
+    #subtext {
+        font-size: 18px;
+        color: var(--col-text-2);
+        margin-bottom: 4px;
+    }
+
+    #tiny {
+        font-size: 14px;
+        color: var(--col-text-2);
+        margin-bottom: 16px;
+    }
+
+    #resetGame:hover {
+        cursor:pointer;
+    }
+
+    #display {
+        text-align: center;
+    }
+
+    #hardModeToggle {
+        cursor: pointer;
+        text-decoration: underline;
+        margin-top: 20px;
+        font-weight: 600;
+        font-size: 20px;
+    }
+
+    #hardModeToggle:hover {
+        opacity: .6;
+    }
+
+    p a {
+        color: inherit;
+        text-decoration: none;
+    }
+</style>
