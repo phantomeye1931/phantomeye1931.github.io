@@ -504,31 +504,6 @@ const version = 2.1;
     (window as any).cleanBoard = cleanBoard;
     (window as any).toggleHardMode = toggleHardMode;
     (window as any).toggleGuide = toggleGuide;
-
-    // Scale the screen for smaller devices
-    let boardWidth = 570;
-    let boardHeight = 890;
-
-    let $root = $(":root");
-
-    function fitScreen() {
-        let scaleVertically = window.innerHeight === Math.min((window.innerWidth * boardHeight / boardWidth), window.innerHeight);
-
-        if (window.innerWidth < boardWidth && !scaleVertically) {
-            let scaleDownStyle = window.innerWidth / boardWidth;
-            $root.css('--scale-down', scaleDownStyle);
-
-        } else if (window.innerHeight < boardHeight && scaleVertically) {
-            let scaleDownStyle = window.innerHeight / boardHeight;
-            $root.css('--scale-down', scaleDownStyle);
-
-        } else {
-            $root.css('--scale-down', .95);
-        }
-    }
-
-    window.onload = fitScreen;
-    window.addEventListener('resize', _ => fitScreen());
 </script>
 
 <style is:global>
@@ -547,6 +522,7 @@ const version = 2.1;
     .game {
         display: flex;
         flex-direction: column;
+        min-width: 0;
 
         padding: 0 2em;
 
@@ -559,12 +535,11 @@ const version = 2.1;
         flex-direction: column;
 
         width: min(24rem, 90vw);
-        max-height: calc(100vh - 4rem);
+        max-height: calc(100vh - 8rem);
         position: sticky;
         top: 2rem;
 
         background-color: var(--col-background);
-        border: 2px solid var(--col-divider);
 
         &.open {
             display: flex;
@@ -578,7 +553,7 @@ const version = 2.1;
         gap: 1rem;
 
         padding: 0.75rem 1rem;
-        border-bottom: 2px solid var(--col-divider);
+        border-bottom: 1px solid var(--col-divider);
 
         & h2 {
             margin: 0;
@@ -666,14 +641,6 @@ const version = 2.1;
         text-align: center;
     }
 
-    @media (max-width: 900px) {
-        .guide-panel {
-            position: static;
-            max-height: 70vh;
-            width: min(30rem, 90vw);
-        }
-    }
-
     .header {
         display: flex;
         flex-direction: column;
@@ -756,6 +723,8 @@ const version = 2.1;
 
     .playfield-wrapper {
         position: relative;
+        container-type: inline-size;
+        width: min(534px, 90vw);
     }
 
     .reset-icon {
@@ -793,6 +762,8 @@ const version = 2.1;
     }
 
     #playField {
+        --cell-size: clamp(14px, calc(6.25cqw - 3.375px), 30px);
+
         border: solid 3px var(--col-text);
         border-spacing: 0;
         user-select: none;
@@ -817,8 +788,8 @@ const version = 2.1;
     }
 
     #playField > tr > td > tr > td > div {
-        width: 30px;
-        height: 30px;
+        width: var(--cell-size);
+        height: var(--cell-size);
         background-color: var(--col-background);
 
         background-position: 50% 50%;
@@ -884,5 +855,26 @@ const version = 2.1;
 
     .highlightLastMove.highlight {
         background-color: var(--hl-hp) !important;
+    }
+
+    /* Mobile overrides kept last so they win the cascade against same-specificity rules above */
+    @media (max-width: 1120px) {
+        .guide-panel {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            max-height: none;
+            z-index: 2001;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .game {
+            padding: 0 0.5em;
+        }
+
+        .board {
+            margin-inline: 0.5em;
+        }
     }
 </style>
