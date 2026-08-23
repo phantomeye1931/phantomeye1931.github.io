@@ -101,6 +101,38 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
                     else $video!.addEventListener('canplaythrough', clearVeil, { once: true });
                 }
             }
+
+            schedulePreload(key);
+        }
+
+        // Hidden twin, always pointed at the theme this page isn't showing
+        let $preload: HTMLVideoElement | null = null;
+        function oppositeKey(key: string): string {
+            return key.startsWith('dark-') ? key.replace('dark-', 'light-') : key.replace('light-', 'dark-');
+        }
+        function warmCache(key: string) {
+            if (!$preload) {
+                $preload = document.createElement('video');
+                $preload.muted = true;
+                $preload.preload = 'auto';
+                $preload.setAttribute('aria-hidden', 'true');
+                $preload.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+                $wrapper!.appendChild($preload);
+            }
+            if ($preload.dataset.key === key) return; // already warmed or warming
+            $preload.dataset.key = key;
+            const base = `/backgrounds/${key}`;
+            $preload.innerHTML = `
+                <source src="${base}.webm" type="video/webm" />
+                <source src="${base}.mp4" type="video/mp4" />
+            `;
+            $preload.load();
+        }
+        // Wait for the page's own load event so this never competes with the initial render
+        function schedulePreload(key: string) {
+            const opp = oppositeKey(key);
+            if (document.readyState === 'complete') warmCache(opp);
+            else window.addEventListener('load', () => warmCache(opp), { once: true });
         }
 
         applyTheme();
