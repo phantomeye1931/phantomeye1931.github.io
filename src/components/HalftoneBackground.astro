@@ -71,68 +71,102 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
         // toggle swapping to the other video shouldn't re-block everything
         let firstLoad = true;
 
-        // webm listed first, smaller than the mp4 at equivalent quality for
-        // this content (see the recorder's encode notes), so browsers that
-        // support it (most, besides Safari) pick it over the mp4 fallback
-        function applyTheme() {
-            const theme = isDarkScheme() ? 'dark' : 'light';
-            const key = `${theme}-${currentVariant()}`;
-            if ($video!.dataset.key === key) return; // avoid an unnecessary reload/restart
-            $video!.dataset.key = key;
-
+        function sourcesFor(key: string): string {
             const base = `/backgrounds/${key}`;
-            $video!.innerHTML = `
+            return `
                 <source src="${base}.webm" type="video/webm" />
                 <source src="${base}.mp4" type="video/mp4" />
             `;
-            $video!.load();
-            if (!reduceMotion) $video!.play().catch(() => {});
-
-            if (firstLoad) {
-                firstLoad = false;
-                $video!.addEventListener('error', clearVeil, { once: true });
-                // reduced motion never plays, so just wait for a paintable frame
-                // instead of the "enough buffered to play through" signal
-                if (reduceMotion) {
-                    if ($video!.readyState >= 2) clearVeil();
-                    else $video!.addEventListener('loadeddata', clearVeil, { once: true });
-                } else {
-                    if ($video!.readyState >= 4) clearVeil();
-                    else $video!.addEventListener('canplaythrough', clearVeil, { once: true });
-                }
-            }
-
-            schedulePreload(key);
         }
 
-        // Hidden twin, always pointed at the theme this page isn't showing
-        let $preload: HTMLVideoElement | null = null;
         function oppositeKey(key: string): string {
             return key.startsWith('dark-') ? key.replace('dark-', 'light-') : key.replace('light-', 'dark-');
         }
-        function warmCache(key: string) {
-            if (!$preload) {
-                $preload = document.createElement('video');
-                $preload.muted = true;
-                $preload.preload = 'auto';
-                $preload.setAttribute('aria-hidden', 'true');
-                $preload.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
-                $wrapper!.appendChild($preload);
-            }
-            if ($preload.dataset.key === key) return; // already warmed or warming
-            $preload.dataset.key = key;
-            const base = `/backgrounds/${key}`;
-            $preload.innerHTML = `
-                <source src="${base}.webm" type="video/webm" />
-                <source src="${base}.mp4" type="video/mp4" />
-            `;
-            $preload.load();
+
+        // $active is the visible video, $standby a same-sized twin sitting at
+        // opacity 0 and already playing the theme this page isn't showing —
+        // swapping just toggles opacity between two already-decoded videos,
+        // instead of load()-ing the visible one and flashing the bare
+        // background color while it re-buffers a first frame
+        let $active = $video!;
+        let $standby: HTMLVideoElement | null = null;
+
+        function ensureStandby(): HTMLVideoElement {
+            if ($standby) return $standby;
+            const v = document.createElement('video');
+            v.className = 'halftone-video';
+            v.muted = true;
+            v.loop = true;
+            v.playsInline = true;
+            v.preload = 'auto';
+            v.disableRemotePlayback = true;
+            v.setAttribute('aria-hidden', 'true');
+            v.style.opacity = '0';
+            $wrapper!.appendChild(v);
+            $standby = v;
+            return v;
         }
+
+        // Keeps playing muted+hidden regardless of reduceMotion so it always has a decoded frame ready.
+        // Always reasserts play() even on a recycled node — a demoted standby never gets a fresh
+        // play() call otherwise, so a hidden video that silently stalls never resumes on its own
+        function warm(key: string) {
+            const v = ensureStandby();
+            if (v.dataset.key !== key) {
+                v.dataset.key = key;
+                v.innerHTML = sourcesFor(key);
+                v.load();
+            }
+            v.play().catch(() => {});
+        }
+
         // Wait for the page's own load event so this never competes with the initial render
         function schedulePreload(key: string) {
-            const opp = oppositeKey(key);
-            if (document.readyState === 'complete') warmCache(opp);
-            else window.addEventListener('load', () => warmCache(opp), { once: true });
+            if (document.readyState === 'complete') warm(key);
+            else window.addEventListener('load', () => warm(key), { once: true });
+        }
+
+        function swapTo(key: string) {
+            if ($standby && $standby.dataset.key === key && $standby.readyState >= 2) {
+                const incoming = $standby, outgoing = $active;
+                if (reduceMotion) incoming.pause(); // freeze on the frame it's already showing
+                else incoming.play().catch(() => {}); // reassert in case it stalled while hidden
+                incoming.style.opacity = '1';
+                outgoing.style.opacity = '0';
+                $active = incoming;
+                $standby = outgoing; // recycled below via warm() for the next toggle
+            } else {
+                // no ready standby (first load, or a toggle too fast to have preloaded) — fall
+                // back to loading the visible video directly, same as before this existed
+                $active.dataset.key = key;
+                $active.innerHTML = sourcesFor(key);
+                $active.load();
+                if (!reduceMotion) $active.play().catch(() => {});
+            }
+        }
+
+        function applyTheme() {
+            const theme = isDarkScheme() ? 'dark' : 'light';
+            const key = `${theme}-${currentVariant()}`;
+            if ($active.dataset.key === key) return; // avoid an unnecessary reload/restart
+
+            swapTo(key);
+
+            if (firstLoad) {
+                firstLoad = false;
+                $active.addEventListener('error', clearVeil, { once: true });
+                // reduced motion never plays, so just wait for a paintable frame
+                // instead of the "enough buffered to play through" signal
+                if (reduceMotion) {
+                    if ($active.readyState >= 2) clearVeil();
+                    else $active.addEventListener('loadeddata', clearVeil, { once: true });
+                } else {
+                    if ($active.readyState >= 4) clearVeil();
+                    else $active.addEventListener('canplaythrough', clearVeil, { once: true });
+                }
+            }
+
+            schedulePreload(oppositeKey(key));
         }
 
         applyTheme();
@@ -198,6 +232,7 @@ video.halftone-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: opacity 0.3s ease; /* crossfade between the active/standby pair on theme swap */
 }
 
 /* the drift/warp/fade math has no inherent handedness. Mirroring the
