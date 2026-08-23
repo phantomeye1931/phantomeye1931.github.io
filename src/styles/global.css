@@ -14,17 +14,13 @@
 
 	--col-divider: var(--col-text-3);
 
-	/* CMYK process-ink accents, used by the homepage's halftone hero art */
 	--col-cmyk-cyan:    #009fd4;
 	--col-cmyk-magenta: #d81e73;
 	--col-cmyk-yellow:  #f0bd1f;
-	/* subtractive C+Y = green, rather than reaching for a generic web green */
-	--col-cmyk-green:   color-mix(in srgb, var(--col-cmyk-cyan), var(--col-cmyk-yellow));
 
-	/* print-misregistration text-shadow applied to headers site-wide: each
-	   ink separation offset a fixed pixel amount, like a press slightly out
-	   of registration — constant in px regardless of type size, on purpose */
-	--text-shadow-cmyk:
+	--col-cmyk-green:   #00be2a;
+
+	--text-shadow-abberation: /* Chromatic abberation */
 		1.8px 0 0 color-mix(in srgb, var(--col-cmyk-cyan) 55%, transparent),
 		-1.2px 1px 0 color-mix(in srgb, var(--col-cmyk-magenta) 50%, transparent),
 		0.6px -1.4px 0 color-mix(in srgb, var(--col-cmyk-yellow) 45%, transparent);
@@ -72,6 +68,10 @@ html, body {
 
 .font-mono {
 	font-family: "Space Mono", monospace !important;
+}
+
+.heading {
+	text-shadow: var(--text-shadow-abberation);
 }
 
 @font-face {

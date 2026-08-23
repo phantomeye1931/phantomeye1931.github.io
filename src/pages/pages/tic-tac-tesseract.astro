@@ -1,29 +1,170 @@
 ---
 import CenteredPage from "../../layouts/CenteredPage.astro";
+
+const title = "Tic Tac Tesseract";
+const description = "Play Tic Tac Toe in a few more dimensions than usual. Same rules, more positions."
+const version = 2.1;
 ---
 
 <CenteredPage
-        title={"Tic Tac Tesseract"}
-        description="Play 4-dimensional Tic Tac Toe in your browser"
+        title={ title }
+        description={ description }
         opts={{ background: true, bgFill: true, buttons: true }}
 >
     <div class="game">
-        <h1>Tic Tac Tesseract</h1>
+        <div class="header">
+            <div class="title">
+                <h1 class="heading">{ title }</h1>
+                <div class="version font-dotmatrix">v{ version }</div>
+            </div>
 
-        <p id="subtext">4-Dimensional Tic Tac Toe</p>
+            <p class="subtext">{ description }</p>
+        </div>
 
-        <a href="/how-to-play/" target="_blank">How to play</a>
-        <p id="display"><b>Player X</b> is first to play</p>
+        <div class="board">
+            <div class="strip above">
+                <div class="button font-dotmatrix">
+                    <a onclick="toggleGuide();" id="guideToggle">playing guide</a>
+                </div>
 
-        <table id="playField"></table>
+                <div class="status">
+                    <span class="player">player X</span>'s turn
+                </div>
+            </div>
 
-        <a onclick="toggleHardMode();" id="hardModeToggle">Disable Highlights</a>
+            <div class="playfield-wrapper">
+                <table id="playField"></table>
 
-        <p id="tiny">
-            v2.0 · by <a href="https://linktr.ee/phantomeye" target="_blank">PhantomEye</a>
-            & <a href="https://linktr.ee/serialsniper" target="_blank">SerialSniper</a>
-        </p>
+                <button type="button" id="resetBoard" class="reset-icon" aria-label="Reset board" title="Reset board" onclick="cleanBoard();">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14M23 10l-4.64-4.36A9 9 0 0 0 3.51 9"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="strip below">
+                <div class="credit">
+                    by <a href="https://linktr.ee/phantomeye" target="_blank">PhantomEye</a>
+                    & <a href="https://linktr.ee/serialsniper" target="_blank">SerialSniper</a>
+                </div>
+
+                <div class="button font-dotmatrix">
+                    <a onclick="toggleHardMode();" id="hardModeToggle">disable highlights</a>
+                    <div class="square highlight"></div>
+                    <div class="square highlightSecondary"></div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <aside class="guide-panel" id="guidePanel">
+            <div class="guide-header">
+                <div class="description">
+                    <h2 class="font-dotmatrix">How to play</h2>
+                    <span class="guide-subtitle">(and why this is 4D)</span>
+                </div>
+
+                <button type="button" class="guide-close" onclick="toggleGuide();" aria-label="Close guide">&times;</button>
+            </div>
+
+            <div class="guide-content">
+                <p>
+                    Tic Tac Tesseract is a play on the classic game Tic Tac Toe. Like the original, it's played by two participants who take turns placing a piece in an empty cell, trying to get 4 of their pieces in a straight line, while blocking the other player from doing the same.
+                </p>
+                <p>
+                    Instead of a 3x3 board, we play on a 4x4 board, since a 3x3 would make it too easy to force a win. Unlike normal Tic Tac Toe, this version is played in 4 dimensions — a 4x4x4x4 board, for 256 cells in total. Trying to visualize this can be tough, so it's best not to try to wrap your head around the geometry, and just get used to the rules of the game instead.
+                </p>
+                <p>
+                    For simplicity, let's start with a 3D board. You can probably imagine how a 3D game would work: 4 of the same piece stacked directly above each other would win. Here's an example:
+                </p>
+
+                <figure class="tutorial-figure stack">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_3d_3dview_1.png" alt="3D example">
+                    <figcaption>A straight line that goes directly up through a 3D board</figcaption>
+                </figure>
+
+                <p>
+                    You can see 4 crosses positioned directly below each other, one per level — a win for player X. We can also represent this as four 4x4 fields next to each other, like below. Think of them as floors of a building: each field is a floor of our 4x4 board. If every floor has your piece in the same spot, you win.
+                </p>
+
+                <figure class="tutorial-figure">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_3d_1.png" alt="Floors example">
+                    <figcaption>The same board represented as floors</figcaption>
+                </figure>
+
+                <p>
+                    If you've played Tic Tac Toe before, you know you can also make diagonal lines to win. Here's an example:
+                </p>
+
+                <figure class="tutorial-figure stack">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_3d_3dview_2.png" alt="Diagonal 3D example">
+                    <figcaption>A straight line that goes diagonally up through a 3D board</figcaption>
+                </figure>
+
+                <figure class="tutorial-figure">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_3d_2.png" alt="Diagonal floors example">
+                    <figcaption>The same board represented as floors</figcaption>
+                </figure>
+
+                <p>
+                    Here's another example, where player O blocked player X from winning:
+                </p>
+
+                <figure class="tutorial-figure">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_3d_3.png" alt="Blocking example">
+                    <figcaption>A line blocked by player O</figcaption>
+                </figure>
+
+                <p>
+                    Now that we've expanded into another dimension and flattened it out, we can repeat this process to expand into the 4th dimension. Imagine the bottom row of the following board is what we already established, and all rows above it are floors stacked on top of that board:
+                </p>
+
+                <figure class="tutorial-figure">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_4d_1.png" alt="4D win example">
+                    <figcaption>A line going diagonal in all directions</figcaption>
+                </figure>
+
+                <p>
+                    Here's what that looks like stacked on top of each other — our 4D board.
+                </p>
+
+                <figure class="tutorial-figure">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_4d_3dview.png" alt="4D board as 4 stacked 3D boards">
+                    <figcaption>A 4D board represented as 4 3D boards</figcaption>
+                </figure>
+
+                <p>
+                    Here are some of the straight lines you could make on this board to win:
+                </p>
+
+                <figure class="tutorial-figure">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_4d_2.png" alt="Valid line examples">
+                    <figcaption>Examples of valid lines</figcaption>
+                </figure>
+
+                <p>
+                    To make the game easier to follow, the lines your hovered cell could be part of are highlighted like below. You can turn this off by clicking "disable highlights" below the board for an extra challenge — or add <code>?hard</code> to the end of the url.
+                </p>
+
+                <figure class="tutorial-figure">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_4d_3.png" alt="Highlight example">
+                    <figcaption>Highlights of lines the hovered cell could form</figcaption>
+                </figure>
+
+                <p>
+                    That's it! It's a confusing game at first, but it becomes much more intuitive as you get used to the rules. Here's an example of a real game where player X won:
+                </p>
+
+                <figure class="tutorial-figure">
+                    <img src="/pages/tic-tac-tesseract/guide/tutorial_4d_4.png" alt="Real game example">
+                    <figcaption>An example of a real game — player X won here</figcaption>
+                </figure>
+
+                <p class="final-line">Have fun playing!</p>
+            </div>
+        </aside>
 </CenteredPage>
 
 <script>
@@ -37,7 +178,7 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
     let lastMove: Vec4 | null = null;
 
     // Generates the playing field
-    for (let w = 0; w < 4; w++) { // TODO: Fix deprecations
+    for (let w = 0; w < 4; w++) {
         let row = $("<tr></tr>").appendTo("#playField").on("mouseleave",function() {
             removeClasses('highlights');
             highlightLastMove();
@@ -63,7 +204,8 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
 
     let secondaryTurn = false; // Storing whose turn it is
     let gameEnded = false;
-    let turnDisplay = $("#display"); // Gets the text element above the playing field
+    let turnDisplay = $(".status"); // Gets the text element above the playing field
+    let resetIcon = $("#resetBoard"); // Shown centered over the board once a player wins
 
     // Make all cells clickable
     const playFieldElement = $("#playField");
@@ -85,9 +227,10 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
             if (!hardMode) highlightPossible($(this).attr("id") as CoordinateString);
 
             // Update the text above the playing field
+            const symbol = secondaryTurn ? 'O' : 'X';
             const statusText = checkForWin(clicked.attr("id") ?? ' ')
-                ? `<b>Player ${!secondaryTurn ? 'O' : 'X'} has won!!</b><br><u><p id="resetGame" onClick="cleanBoard();">Click here to start a new game.</p></u>`
-                : (`Now it's <b>player ${secondaryTurn ? 'O' : 'X'}</b>\'s turn`);
+                ? `<span class="player">player ${symbol}</span> won!`
+                : (`<span class="player">player ${symbol}</span>\'s turn`);
             turnDisplay.html(statusText);
         }
     });
@@ -162,12 +305,14 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
                                 cell
                                     .removeClass("x")
                                     .removeClass("o")
+                                    .removeClass("highlightLastMove")
                                     .removeClass("highlightWinning")
                                     .addClass("none");
                                 break;
                             case 'highlights':
                                 cell
                                     .removeClass("highlight")
+                                    .removeClass("highlightGray")
                                     .removeClass("highlightSecondary");
                                 break;
                         }
@@ -179,7 +324,7 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
         let clicked = Vec4.parse(coordinates);
         for (let i = 0; i < Math.pow(3, 4); i++) {
             // Convert i to base-3
-            let iterator = Vec4.fromBase3(i); // TODO: Check
+            let iterator = Vec4.fromBase3(i);
 
             // Ensure the line we're checking is valid
             if (!ensureAtLeastOneOne(iterator)) continue;
@@ -206,6 +351,8 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
                 removeClasses('highlights');
 
                 gameEnded = true;
+                resetIcon.addClass("visible");
+                playFieldElement.addClass("ended");
                 return true;
             }
         }
@@ -249,6 +396,8 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
         if (gameEnded) return;
 
         let selected = Vec4.parse(coordinates); // Get a vector of the selected cell
+
+        if (hardMode) addClass(selected, "highlightGray");
 
         // Goes over all possible lines
         if (!hardMode) {
@@ -328,7 +477,9 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
         lastMove = null;
         gameEnded = false;
         secondaryTurn = false;
-        turnDisplay.html('<b>Player X</b> is first to play');
+        turnDisplay.html('<span class="player">player X</span>\'s turn');
+        resetIcon.removeClass("visible");
+        playFieldElement.removeClass("ended");
     }
 
     let hardModeToggle = $("#hardModeToggle");
@@ -336,12 +487,23 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
     // Toggles whether move hints are shown
     function toggleHardMode() {
         hardMode = !hardMode;
-        hardModeToggle.html(hardMode ? 'Enable Highlights' : 'Disable Highlights');
+        hardModeToggle.html(hardMode ? 'enable highlights' : 'disable highlights');
+
+        if (hardMode) hardModeToggle.parent().find(".square").addClass("disabled");
+        if (!hardMode) hardModeToggle.parent().find(".square").removeClass("disabled");
+    }
+
+    let guidePanel = $("#guidePanel");
+
+    // Opens/closes the how-to-play panel
+    function toggleGuide() {
+        guidePanel.toggleClass("open");
     }
 
     // Expose to the inline onclick handlers, which run outside this module's scope
     (window as any).cleanBoard = cleanBoard;
     (window as any).toggleHardMode = toggleHardMode;
+    (window as any).toggleGuide = toggleGuide;
 
     // Scale the screen for smaller devices
     let boardWidth = 570;
@@ -371,51 +533,293 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
 
 <style is:global>
     :root {
-        --hp: #d396ff;
-        --hs: #96b4ff;
-        --hw: #60ff89;
-        --hl: #ffd340;
+        --highlight-grayscale: #929aa3;
+        --highlight-hover:     color-mix(in srgb, var(--col-cmyk-magenta) 50%, white);
+        --highlight-connected: color-mix(in srgb, var(--col-cmyk-cyan) 50%, white);
+        --highlight-win:       color-mix(in srgb, var(--col-cmyk-green) 50%, white);
+        --highlight-recent:    color-mix(in srgb, var(--col-cmyk-yellow) 70%, white);
 
         /* Combined colors */
-        --hl-hp: #f7ab95;
-        --hl-hs: #a7cb5e;
-
-        /* scale script*/
-        --scale-down: .95;
+        --hl-hp: color-mix(in oklch, var(--highlight-hover), var(--highlight-recent));
+        --hl-hs: color-mix(in oklch, var(--highlight-hover), var(--highlight-connected));
     }
 
     .game {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
 
-        padding: 0 5em;
+        padding: 0 2em;
 
         background-color: var(--col-background);
+    }
+
+    /* Panel replacing the old standalone /how-to-play/ page */
+    .guide-panel {
+        display: none;
+        flex-direction: column;
+
+        width: min(24rem, 90vw);
+        max-height: calc(100vh - 4rem);
+        position: sticky;
+        top: 2rem;
+
+        background-color: var(--col-background);
+        border: 2px solid var(--col-divider);
+
+        &.open {
+            display: flex;
+        }
+    }
+
+    .guide-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+
+        padding: 0.75rem 1rem;
+        border-bottom: 2px solid var(--col-divider);
+
+        & h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+    }
+
+    .guide-subtitle {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: normal;
+        color: var(--col-text-2);
+    }
+
+    .guide-close {
+        all: unset;
+        cursor: pointer;
+        font-size: 1.5rem;
+        line-height: 1;
+        padding: 0 0.25rem;
+        color: var(--col-text-2);
+
+        &:hover {
+            opacity: 0.7;
+        }
+    }
+
+    .guide-content {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1rem;
+
+        scrollbar-color: var(--col-divider) var(--col-background);
+
+        & p {
+            line-height: 1.5;
+            margin: 0 0 1rem;
+        }
+
+        & code {
+            background-color: var(--col-background-2);
+            padding: 0.1rem 0.3rem;
+        }
+
+        &::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--col-background);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: red;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background-color: var(--col-divider);
+        }
+    }
+
+    .tutorial-figure {
+        margin: 0 0 1.25rem;
+        text-align: center;
+
+        & img {
+            max-width: 100%;
+            border: 1px solid var(--col-divider);
+        }
+
+        & figcaption {
+            margin-top: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--col-text-2);
+        }
+
+        &.stack img {
+            max-width: 10rem;
+        }
+    }
+
+    .final-line {
+        font-weight: bold;
+        text-align: center;
+    }
+
+    @media (max-width: 900px) {
+        .guide-panel {
+            position: static;
+            max-height: 70vh;
+            width: min(30rem, 90vw);
+        }
+    }
+
+    .header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        max-width: 30rem;
+        padding-bottom: 1rem;
+
+        & > .title {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+
+            margin-bottom: -2.5rem;
+        }
+
+        & > .subtext {
+            color: var(--col-text-2);
+            margin-bottom: 4px;
+        }
+    }
+
+    .strip {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+        padding-block: 0.6rem;
+
+        &.above {
+            align-items: flex-end;
+        }
+    }
+
+    .button {
+        display: flex;
+        flex-direction: row;
+        gap: 0.4rem;
+        align-items: center;
+
+        border: 2px solid var(--col-divider);
+        padding: 0.2rem 0.4rem;
+
+        cursor: pointer;
+        user-select: none;
+
+        & > a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        & > .square {
+            width: 0.8rem;
+            height: 0.8rem;
+            border: 1px solid var(--col-text-3);
+
+            &.disabled {
+                background-color: var(--highlight-grayscale) !important;
+            }
+        }
+
+        &:hover {
+            opacity: 0.7;
+        }
+    }
+
+    .status {
+        color: var(--col-text-2);
+        text-align: right;
+
+        & > .player {
+            font-weight: bold;
+            color: var(--col-cmyk-magenta);
+        }
+    }
+
+    .board {
+        margin-inline: 3em;
+    }
+
+    .playfield-wrapper {
+        position: relative;
+    }
+
+    .reset-icon {
+        all: unset;
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        width: 2.5rem;
+        height: 2.5rem;
+
+        background-color: var(--col-background);
+        border: 2px solid var(--col-text-2);
+
+        color: var(--col-text-2);
+        cursor: pointer;
+
+        svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        &:hover {
+            background-color: var(--col-background-2);
+        }
+
+        &.visible {
+            display: flex;
+        }
     }
 
     #playField {
         border: solid 3px var(--col-text);
         border-spacing: 0;
         user-select: none;
+
+        &.ended {
+            pointer-events: none;
+        }
     }
 
     #playField > tr > td {
-        border: solid 1px var(--col-text-2);
+        border: solid 1px var(--col-text);
         position: relative;
     }
 
     #playField > tr > td {
-        background-color: var(--col-text-3);
+        background-color: var(--col-text-2);
     }
 
     /* Cell */
+    #playField > tr > td > tr > td {
+        cursor: pointer;
+    }
+
     #playField > tr > td > tr > td > div {
         width: 30px;
         height: 30px;
         background-color: var(--col-background);
-        color: var(--col-text-3);
 
         background-position: 50% 50%;
         background-size: 70%;
@@ -427,6 +831,18 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
         pointer-events: none;
     }
 
+    .credit {
+        opacity: 0.7;
+        color: var(--col-cmyk-cyan);
+
+        & > a {
+            color: var(--col-text-2);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    }
+
+    /* Game icons */
     .none {
         background-image: url("/pages/tic-tac-tesseract/game/empty.svg");
     }
@@ -439,21 +855,26 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
         background-image: url("/pages/tic-tac-tesseract/game/circle.svg");
     }
 
-    /* put it up here because following classes have more priority */
+    /* Put it up here because following classes have more priority */
     .highlightLastMove {
-        background-color: var(--hl) !important;
+        background-color: var(--highlight-recent) !important;
     }
 
     .highlight {
-        background-color: var(--hp) !important;
+        background-color: var(--highlight-hover) !important;
     }
 
     .highlightSecondary {
-        background-color: var(--hs) !important;
+        background-color: var(--highlight-connected) !important;
+    }
+
+
+    .highlightGray {
+        background-color: var(--highlight-grayscale) !important;
     }
 
     .highlightWinning {
-        background-color: var(--hw) !important;
+        background-color: var(--highlight-win) !important;
     }
 
     /* Combined highlights */
@@ -463,50 +884,5 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
 
     .highlightLastMove.highlight {
         background-color: var(--hl-hp) !important;
-    }
-
-    h1 {
-        margin-bottom: -20px;
-    }
-
-    a {
-        color: var(--col-text);
-    }
-
-    #subtext {
-        font-size: 18px;
-        color: var(--col-text-2);
-        margin-bottom: 4px;
-    }
-
-    #tiny {
-        font-size: 14px;
-        color: var(--col-text-2);
-        margin-bottom: 16px;
-    }
-
-    #resetGame:hover {
-        cursor:pointer;
-    }
-
-    #display {
-        text-align: center;
-    }
-
-    #hardModeToggle {
-        cursor: pointer;
-        text-decoration: underline;
-        margin-top: 20px;
-        font-weight: 600;
-        font-size: 20px;
-    }
-
-    #hardModeToggle:hover {
-        opacity: .6;
-    }
-
-    p a {
-        color: inherit;
-        text-decoration: none;
     }
 </style>
