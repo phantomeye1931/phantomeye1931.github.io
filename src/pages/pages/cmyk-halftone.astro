@@ -1,10 +1,9 @@
 ---
 import Page from "../../layouts/Page.astro";
-import { SITE_TITLE } from "../../consts.ts";
 ---
 
 <Page
-    title={SITE_TITLE + " — CMYK Halftone Recorder"}
+    title={"CMYK Halftone Recorder"}
     description="Preview the CMYK halftone background effect, tweak its ink colors and blobs, and pre-render it frame-by-frame into a PNG/JPEG sequence for ffmpeg."
     opts={{ background: false, buttons: true }}
 >
@@ -14,8 +13,8 @@ import { SITE_TITLE } from "../../consts.ts";
             <p>
                 The live halftone background redraws itself in real time, which stutters under
                 load. This page instead renders each frame independently at its own fixed virtual
-                timestamp and saves it as an image &mdash; since no frame has to keep up with a
-                clock, the exported sequence has no dropped frames or lag spikes, no matter how
+                timestamp and saves it as an image, since no frame has to keep up with a
+                clock. The exported sequence has no dropped frames or lag spikes, no matter how
                 slow the render actually runs. Unzip the result and hand it to ffmpeg to get a
                 smooth video.
             </p>
@@ -33,7 +32,7 @@ import { SITE_TITLE } from "../../consts.ts";
             <h2>Ink channels</h2>
             <p class="hint">
                 Each channel is one metaball "blob" cluster painted in one ink color. Drag a
-                blob's slider to resize it, remove one with &times;, or add a new one — changes
+                blob's slider to resize it, remove one with &times;, or add a new one. Changes
                 show live in the preview above and carry over into the next recording.
             </p>
             <div class="channels-panel" id="channels-panel"></div>
@@ -163,7 +162,7 @@ import { SITE_TITLE } from "../../consts.ts";
         history.replaceState(null, "", url);
     }
 
-    // ---- live preview (real-time, laggy-if-it-lags — that's expected here) ---
+    // ---- live preview (real-time, laggy if it lags, that's expected here) ----
     $gradientToggle.checked = gradientFromUrl();
     const previewEffect = createHalftoneEffect($previewCanvas, { fill: !$gradientToggle.checked });
     previewEffect.resolveColors();
@@ -184,10 +183,10 @@ import { SITE_TITLE } from "../../consts.ts";
         previewEffect.drawFrame((now - previewStart) / 1000, isDarkScheme());
     }
 
-    // pauses the free-running preview and snaps it to t=0 — the exact state
+    // pauses the free-running preview and snaps it to t=0, the exact state
     // frame 0 of a recording always starts from (recording already renders
     // i/fps from i=0, never wall-clock time, so the export was never actually
-    // dependent on click timing) — this just makes that visible: what you
+    // dependent on click timing). This just makes that visible. What you
     // watch during recording is the same t=0 starting point being captured,
     // not an unrelated animation drifting on its own real-time clock
     function resetPreviewToStart() {
@@ -205,7 +204,7 @@ import { SITE_TITLE } from "../../consts.ts";
     resizePreview();
     resumePreview();
 
-    // toggling fill only rebuilds the dot lattice — channel colors/blobs the
+    // toggling fill only rebuilds the dot lattice. Channel colors/blobs the
     // user has already customized below are untouched
     $gradientToggle.addEventListener("change", () => {
         setUrlGradient($gradientToggle.checked);
@@ -225,7 +224,7 @@ import { SITE_TITLE } from "../../consts.ts";
         if (ch.blobs.length === 0) {
             const $empty = document.createElement("p");
             $empty.className = "blob-empty";
-            $empty.textContent = "No blobs — this ink stays blank.";
+            $empty.textContent = "No blobs. This ink stays blank.";
             $list.appendChild($empty);
         }
 
@@ -320,7 +319,7 @@ import { SITE_TITLE } from "../../consts.ts";
     renderChannels();
 
     // the [sync] header button flips document.documentElement's color-scheme
-    // attribute live — re-resolve ink colors (var(--col-text) changes) and
+    // attribute live. Re-resolve ink colors (var(--col-text) changes) and
     // rebuild the color pickers so non-overridden swatches reflect the new theme
     new MutationObserver(() => {
         previewEffect.resolveColors();
@@ -338,8 +337,8 @@ import { SITE_TITLE } from "../../consts.ts";
     });
 
     // ---- rough size estimate, so a runaway width/height/duration/fps combo is
-    // visible before you commit to it rather than after a long silent wait —
-    // the per-pixel byte rate is calibrated off an actual recorded halftone
+    // visible before you commit to it rather than after a long silent wait.
+    // The per-pixel byte rate is calibrated off an actual recorded halftone
     // frame: the dot pattern is high-frequency noise that compresses far worse
     // than typical photo/UI content, so PNG in particular runs large
     const $sizeEstimate = document.getElementById("size-estimate")!;
@@ -384,7 +383,7 @@ import { SITE_TITLE } from "../../consts.ts";
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     }
 
-    // "20.00" -> "20", "6.50" -> "6.5" — keeps the filename tag short for the
+    // "20.00" -> "20", "6.50" -> "6.5". Keeps the filename tag short for the
     // (common) whole-second case without losing precision for fractional ones
     function formatDurationTag(seconds: number): string {
         return `${seconds.toFixed(2).replace(/\.?0+$/, "")}s`;
@@ -424,15 +423,15 @@ import { SITE_TITLE } from "../../consts.ts";
         const ext = format === "jpeg" ? "jpg" : "png";
 
         const totalFrames = Math.max(1, Math.round(duration * fps));
-        // the actual span the recording covers once rounded to whole frames —
-        // loop quantization has to target this, not the raw input, or the last
+        // the actual span the recording covers once rounded to whole frames.
+        // Loop quantization has to target this, not the raw input, or the last
         // exported frame (at t = (totalFrames-1)/fps) won't sit exactly one
         // frame short of a full cycle
         const effectiveDuration = totalFrames / fps;
         const pad = String(totalFrames - 1).length;
 
-        // freeze the live preview at its t=0 state right away — purely a visual
-        // cue (see resetPreviewToStart's comment); the actual export below was
+        // freeze the live preview at its t=0 state right away. Purely a visual
+        // cue (see resetPreviewToStart's comment), the actual export below was
         // already deterministic regardless of when this button was clicked
         resetPreviewToStart();
 
@@ -444,8 +443,8 @@ import { SITE_TITLE } from "../../consts.ts";
         $progressFill.style.width = "0%";
         $progressText.textContent = `Rendering frame 0 / ${totalFrames}…`;
 
-        // a fresh, off-DOM canvas at the exact requested output resolution —
-        // entirely decoupled from the live preview canvas above — seeded with
+        // a fresh, off-DOM canvas at the exact requested output resolution,
+        // entirely decoupled from the live preview canvas above, seeded with
         // the same ink colors and blobs the user has been editing there
         const offCanvas = document.createElement("canvas");
         const effect = createHalftoneEffect(offCanvas, { fill: !gradient });
@@ -461,12 +460,12 @@ import { SITE_TITLE } from "../../consts.ts";
         effect.resize(width, height, 1);
         const isDark = isDarkScheme();
 
-        // built incrementally below — each addEntry() call does that frame's
+        // built incrementally below. Each addEntry() call does that frame's
         // CRC32 + header work immediately, spread across the loop's existing
         // yield points, so there's no separate "zip everything" pass left at
         // the end to block on (a halftone frame's dot pattern is high-frequency
         // noise that PNG barely compresses, so real recordings run several MB
-        // per frame — checksumming all of them in one uninterrupted burst at
+        // per frame, and checksumming all of them in one uninterrupted burst at
         // the end used to look, and functionally be, hung)
         const zipWriter = createZipWriter();
         let frameCount = 0;
@@ -476,7 +475,7 @@ import { SITE_TITLE } from "../../consts.ts";
             if (cancelRequested) break;
 
             // t is derived purely from the frame index and the target fps, never
-            // from wall-clock time — this is the whole point: every frame gets
+            // from wall-clock time. That's the whole point: every frame gets
             // rendered as if it were on time, however long it actually takes
             effect.drawFrame(i / fps, isDark);
 
@@ -491,7 +490,7 @@ import { SITE_TITLE } from "../../consts.ts";
             frameCount++;
 
             $progressFill.style.width = `${((i + 1) / totalFrames) * 100}%`;
-            $progressText.textContent = `Rendering frame ${i + 1} / ${totalFrames} — ${formatBytes(totalBytes)} so far`;
+            $progressText.textContent = `Rendering frame ${i + 1} / ${totalFrames}, ${formatBytes(totalBytes)} so far`;
 
             // yield back to the browser periodically so the tab stays responsive
             // and the progress bar actually gets a chance to paint
@@ -520,17 +519,17 @@ import { SITE_TITLE } from "../../consts.ts";
         downloadBlob(zipBlob, filename);
 
         // explicit confirmation that the zip actually finished AND the browser
-        // download was handed off — otherwise the status silently jumps from
+        // download was handed off. Otherwise the status silently jumps from
         // "Finishing archive…" straight to the result panel with no visible
         // acknowledgement that the download itself was triggered
         $progressFill.style.width = "100%";
-        $progressText.textContent = `Done — downloading ${filename}`;
+        $progressText.textContent = `Done, downloading ${filename}`;
         await new Promise((r) => setTimeout(r, 500));
         $progress.hidden = true;
 
         $result.hidden = false;
-        const loopNote = loopMode ? ` Loop-safe: frame ${totalFrames} would land back on frame 1, so just repeat the clip — no crossfade needed.` : "";
-        $resultText.textContent = `Downloaded ${filename} — ${frameCount} frame${frameCount === 1 ? "" : "s"} (${formatBytes(totalBytes)} zipped) at ${width}×${height}, ${effectiveDuration.toFixed(2)}s.${loopNote} Unzip, then run:`;
+        const loopNote = loopMode ? ` Loop-safe: frame ${totalFrames} would land back on frame 1, so just repeat the clip, no crossfade needed.` : "";
+        $resultText.textContent = `Downloaded ${filename}. ${frameCount} frame${frameCount === 1 ? "" : "s"} (${formatBytes(totalBytes)} zipped) at ${width}×${height}, ${effectiveDuration.toFixed(2)}s.${loopNote} Unzip, then run:`;
         $ffmpegCmd.textContent = `ffmpeg -framerate ${fps} -i frame_%0${pad}d.${ext} -c:v libx264 -pix_fmt yuv420p -movflags +faststart cmyk-halftone.mp4`;
 
         resumePreview();
@@ -546,7 +545,7 @@ import { SITE_TITLE } from "../../consts.ts";
      * and add/remove buttons are all built client-side via
      * document.createElement (see the <script> above), so they never receive
      * Astro's scoping attribute and scoped selectors would silently fail to
-     * match them — same reasoning as pixel-palette.astro's swatch rows.
+     * match them, same reasoning as pixel-palette.astro's swatch rows.
      */
     .recorder {
         max-width: 900px;

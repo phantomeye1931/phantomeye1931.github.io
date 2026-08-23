@@ -2,11 +2,11 @@
  * The CMYK halftone effect's pure rendering engine, shared between the live
  * animated background (HalftoneBackground.astro) and the offline frame-by-frame
  * recorder (pages/cmyk-halftone.astro). Everything about *how big the canvas is
- * or when to draw a frame* stays with the caller — this module only knows how
+ * or when to draw a frame* stays with the caller. This module only knows how
  * to build a dot lattice for a given pixel size and paint it at a given time t.
  *
  * Channel colors and each channel's blob list are live-mutable on the returned
- * handle (see `channels` below) — none of that requires rebuilding the dot
+ * handle (see `channels` below). None of that requires rebuilding the dot
  * lattice, since the lattice only depends on FILL/lattice geometry, not on
  * how many blobs a channel has or what color it's painted with.
  *
@@ -35,27 +35,27 @@ const CONFIG = {
     DRIFT_AMOUNT: 2,           // global multiplier on every blob's travel distance
 };
 
-// the live background's default redraw-rate cap — exported so consumers that
+// the live background's default redraw-rate cap. Exported so consumers that
 // want to match the on-site motion pace (rather than pick their own) can reuse it
 export const DEFAULT_DRIFT_FPS = 20;
 
 // ---- EXPERIMENT: long-tail blob falloff ------------------------------------
 // Adds a slow, faint secondary falloff on top of each blob's normal Gaussian
 // core, so a few tiny dots keep going well past where the blob would normally
-// cut off entirely — reaching toward the edges of the canvas instead of
+// cut off entirely, reaching toward the edges of the canvas instead of
 // stopping a couple of radii out. The core itself (TAIL.amount is small) is
 // barely touched, so this is meant to read as "the same blobs, with a longer
 // fade" rather than a different shape.
 //
 // To fully revert: set TAIL.enabled to false. Nothing else in this file needs
-// to change — fieldAt() falls straight back to the original pure-Gaussian
+// to change. fieldAt() falls straight back to the original pure-Gaussian
 // behavior when it's off.
 // NOTE on tuning: the field value computed here is NOT what decides whether a
-// dot is actually visible — drawFrame() raises it to the channel's `gamma`
+// dot is actually visible. drawFrame() raises it to the channel's `gamma`
 // and multiplies by `gain`, and the result has to clear DOT_MIN_RADIUS once
 // scaled to a pixel radius. For the CMY channels (gamma ~0.9-0.95) that works
 // out to an effective visibility floor around 0.09, not CONFIG.DOT_ALPHA_SKIP
-// (0.02) — `amount` has to comfortably clear THAT floor out at `reach`
+// (0.02), so `amount` has to comfortably clear THAT floor out at `reach`
 // radii, or the tail is invisible in practice despite being nonzero on paper.
 const TAIL = {
     enabled: true,
@@ -63,7 +63,7 @@ const TAIL = {
     reach: 10,    // in blob radii: where the tail's own exponential decay drops it below the ~0.09 effective visibility floor (roughly 7-8 radii out, in practice)
 };
 
-// sane authored range for a blob's radius (as a fraction of min(W,H)) — the
+// sane authored range for a blob's radius (as a fraction of min(W,H)). The
 // hand-placed blobs below all fall inside this; exported so UI sliders and
 // the "add blob" default stay consistent with what the effect actually expects
 export const BLOB_RADIUS_RANGE = { min: 0.06, max: 0.55 };
@@ -94,7 +94,7 @@ function blob(cx: number, cy: number, r: number, dx: number, dy: number, wx: num
     return { cx, cy, r, dx, dy, wx, wy, px, py };
 }
 
-// a fresh blob for the "add blob" UI action — randomized within the same
+// a fresh blob for the "add blob" UI action, randomized within the same
 // authored ranges as the hand-placed blobs below, so it fits the same visual
 // character rather than sticking out. Left-half-biased cx like the originals;
 // callers on a FILL channel get the same X_SPREAD stretch applied at draw time.
@@ -113,7 +113,7 @@ export function randomBlob(): Blob {
 }
 
 // Rewrites a blob's drift frequencies so its motion completes a whole number
-// of cycles over exactly `durationSeconds` — i.e. sin(t*wx*DRIFT_SPEED+px) at
+// of cycles over exactly `durationSeconds`. sin(t*wx*DRIFT_SPEED+px) at
 // t=durationSeconds lands back on sin(px), identical to t=0, on both value AND
 // derivative (a pure sinusoid resampled one period later is indistinguishable
 // from itself). Do this to every blob in a recording and the last rendered
@@ -177,7 +177,7 @@ export interface Channel {
     color: string;               // css color / var(--...) reference used as the default
     colorOverride: string | null; // explicit color set via setChannelColor, takes priority over `color`
     resolved: string;             // the actual fill color drawFrame uses this frame
-    blobs: Blob[];                // live and mutable — push/splice directly to add/remove blobs
+    blobs: Blob[];                // live and mutable, push/splice directly to add/remove blobs
     angle: number; ox: number; oy: number; gamma: number; gain: number; alpha: number;
     gx: number[]; gy: number[]; gwx: number[]; gwy: number[]; gsf: number[];
 }
@@ -199,13 +199,13 @@ export interface HalftoneOptions {
 export interface HalftoneEffect {
     /** (Re)builds the dot lattice for a canvas of exactly `width`x`height` device pixels.
      *  `scale` only affects how CONFIG's CSS-px tunables (dot spacing, warp amount, etc.)
-     *  convert into device pixels — pass 1 to size dots in actual output pixels. */
+     *  convert into device pixels. Pass 1 to size dots in actual output pixels. */
     resize(width: number, height: number, scale?: number): void;
-    /** Switches the right-edge fade on/off and rebuilds the lattice — unlike `resize`,
+    /** Switches the right-edge fade on/off and rebuilds the lattice. Unlike `resize`,
      *  does not touch channel colors or blobs, so live edits survive the toggle. */
     setFill(fill: boolean): void;
     /** Re-reads the CMYK ink CSS custom properties off `document.documentElement` for
-     *  every channel that doesn't have an explicit colorOverride — call once up front,
+     *  every channel that doesn't have an explicit colorOverride. Call once up front,
      *  and again any time the [color-scheme] attribute changes. */
     resolveColors(): void;
     /** Sets (or, with `null`, clears) an explicit color for one channel, bypassing its
@@ -214,7 +214,7 @@ export interface HalftoneEffect {
     /** Paints one frame at animation time `t` (seconds). `isDark` selects the ink
      *  blend mode (multiply on light paper, screen on dark paper). */
     drawFrame(t: number, isDark: boolean): void;
-    /** Live per-channel state (id/label/color/blobs) — mutate `blobs` (push/splice)
+    /** Live per-channel state (id/label/color/blobs). Mutate `blobs` (push/splice)
      *  or call setChannelColor to edit; read `resolved` for the current paint color. */
     channels: Channel[];
 }
@@ -332,7 +332,7 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
             let g = Math.exp(-dSq / (2 * c.r * c.r));
             if (TAIL.enabled) {
                 // exponential decay too, but with a much longer time-constant than
-                // the core's — additive via (1 - g) so it never pushes the core
+                // the core's. Additive via (1 - g) so it never pushes the core
                 // above 1 and fades to ~0 wherever the core is already saturated
                 const tail = TAIL.amount * Math.exp(-Math.sqrt(dSq) / (c.r * TAIL.reach));
                 g = g + tail * (1 - g);

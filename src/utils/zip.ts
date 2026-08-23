@@ -1,8 +1,8 @@
 /**
  * Minimal client-side ZIP writer, "store" method only (no compression).
  *
- * Used to bundle a recorded frame sequence into a single downloadable file —
- * the PNG frames are already compressed, so re-deflating them would just burn
+ * Used to bundle a recorded frame sequence into a single downloadable file.
+ * The PNG frames are already compressed, so re-deflating them would just burn
  * CPU for no size benefit. Avoids pulling in a zip dependency for what's a
  * couple hundred lines of well-specified binary format.
  *
@@ -10,11 +10,11 @@
  * noise that PNG barely compresses, so real recordings run several MB *per
  * frame*. Doing every frame's CRC32 in one uninterrupted pass at the end (as
  * an earlier version of this file did) blocks the main thread for as long as
- * the whole recording takes to checksum, with zero feedback — it looks hung
+ * the whole recording takes to checksum, with zero feedback, so it looks hung
  * even when it isn't. `addEntry` instead does one frame's CRC32 work right
  * when that frame is captured, inside a loop that already yields to the
  * browser periodically, so `finish()` at the end has nothing left to do but
- * concatenate already-built chunks — bounded by memory bandwidth, not CPU.
+ * concatenate already-built chunks. That's bounded by memory bandwidth, not CPU.
  */
 
 const CRC_TABLE = (() => {
@@ -44,12 +44,12 @@ function dosDateTime(date: Date): { time: number; date: number } {
 }
 
 export interface ZipWriter {
-    /** Adds one file's worth of bytes. Does its CRC32 + header work immediately —
+    /** Adds one file's worth of bytes. Does its CRC32 + header work immediately,
      *  call this right as each frame is produced rather than batching, so the
      *  cost is spread across the recording loop instead of dumped into finish(). */
     addEntry(name: string, data: Uint8Array): void;
-    /** Assembles the central directory and returns the finished archive. Cheap —
-     *  every entry's checksum was already computed in addEntry. */
+    /** Assembles the central directory and returns the finished archive. Cheap,
+     *  since every entry's checksum was already computed in addEntry. */
     finish(): Blob;
 }
 

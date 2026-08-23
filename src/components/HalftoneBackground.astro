@@ -9,8 +9,8 @@ const props = Astro.props;
 
 // Every combination of theme (light/dark) x variant (gradient/fill) has been
 // pre-rendered to video (see /public/backgrounds and pages/cmyk-halftone.astro,
-// the recorder that produced them) — so this component no longer needs to
-// render anything itself, just point a <video> at the right pre-baked file.
+// the recorder that produced them). This component no longer needs to render
+// anything itself, just point a <video> at the right pre-baked file.
 const variant = (props.fill ?? false) ? 'fill' : 'gradient';
 ---
 
@@ -18,9 +18,28 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
     <video class="halftone-video" muted loop playsinline preload="auto" disableRemotePlayback></video>
 </div>
 
+<!-- Opaque by default via plain CSS (no JS needed to show it), so it's already
+     blocking on first paint, long before any script has had a chance to run.
+     That closes the gap where page content used to appear a beat before the
+     background video finished downloading. JS only ever removes the block. -->
+<div class="halftone-veil"></div>
+<noscript><style>.halftone-veil { display: none !important; }</style></noscript>
+
+<script is:inline>
+    // A plain inline script, not the bundled/deferred module script below.
+    // It runs the instant it's parsed, so this safety net's countdown starts
+    // as early as possible instead of only after the main bundle finishes
+    // loading, which on a slow connection could itself eat into the window
+    // this is meant to bound.
+    setTimeout(() => {
+        document.querySelector('.halftone-veil')?.classList.add('is-hidden');
+    }, 4000);
+</script>
+
 <script>
     const $wrapper = document.querySelector<HTMLDivElement>(".halftone-wrapper");
     const $video = document.querySelector<HTMLVideoElement>(".halftone-video");
+    const $veil = document.querySelector<HTMLDivElement>(".halftone-veil");
 
     document.addEventListener('DOMContentLoaded', () => {
         if (!$wrapper || !$video) return;
@@ -32,7 +51,19 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
             return document.documentElement.getAttribute('color-scheme') === 'dark';
         }
 
-        // webm listed first — smaller than the mp4 at equivalent quality for
+        // The hard 4s ceiling on how long the veil can block lives in an
+        // inline, non-deferred <script> above this one, so it starts counting
+        // before this module even finishes loading. This just needs its own
+        // idempotent way to lift the veil the moment the video is actually ready.
+        function clearVeil() {
+            $veil?.classList.add('is-hidden');
+        }
+
+        // only the very first load should gate the page. A later theme
+        // toggle swapping to the other video shouldn't re-block everything
+        let firstLoad = true;
+
+        // webm listed first, smaller than the mp4 at equivalent quality for
         // this content (see the recorder's encode notes), so browsers that
         // support it (most, besides Safari) pick it over the mp4 fallback
         function applyTheme() {
@@ -47,12 +78,26 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
             `;
             $video!.load();
             if (!reduceMotion) $video!.play().catch(() => {});
+
+            if (firstLoad) {
+                firstLoad = false;
+                $video!.addEventListener('error', clearVeil, { once: true });
+                // reduced motion never plays, so just wait for a paintable frame
+                // instead of the "enough buffered to play through" signal
+                if (reduceMotion) {
+                    if ($video!.readyState >= 2) clearVeil();
+                    else $video!.addEventListener('loadeddata', clearVeil, { once: true });
+                } else {
+                    if ($video!.readyState >= 4) clearVeil();
+                    else $video!.addEventListener('canplaythrough', clearVeil, { once: true });
+                }
+            }
         }
 
         applyTheme();
 
-        // the [sync] header button flips document.documentElement's
-        // color-scheme attribute live — swap to the matching pre-rendered video
+        // the [sync] header button flips document.documentElement's color-scheme
+        // attribute live. Swap to the matching pre-rendered video.
         new MutationObserver(applyTheme)
             .observe(document.documentElement, { attributes: true, attributeFilter: ['color-scheme'] });
     });
@@ -77,6 +122,25 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
     }
 }
 
+.halftone-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: var(--col-background);
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.35s ease;
+
+    &.is-hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    @media print {
+        display: none !important;
+    }
+}
+
 video.halftone-video {
     display: block;
     position: absolute;
@@ -86,7 +150,7 @@ video.halftone-video {
     object-fit: cover;
 }
 
-/* the drift/warp/fade math has no inherent handedness — mirroring the
+/* the drift/warp/fade math has no inherent handedness. Mirroring the
    pre-rendered video is a cheap way to reuse the exact same
    "concentrated + fading" look on the opposite side, rather than
    re-recording a mirrored pass */
