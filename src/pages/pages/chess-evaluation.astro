@@ -1,0 +1,472 @@
+---
+import CenteredPage from "../../layouts/CenteredPage.astro";
+
+const title = "Chess Evaluation";
+---
+
+<CenteredPage
+        title={ title }
+        description="Chess evaluation demo"
+        opts={{ background: true, buttons: true }}
+>
+    <div class="game">
+        <div class="header">
+            <div class="title">
+                <h1 class="heading">{ title }</h1>
+            </div>
+        </div>
+
+        <div class="board">
+            <div class="strip above">
+
+                <div class="status">
+                    <span class="player">White to play</span>
+                </div>
+            </div>
+
+            <div class="playfield-wrapper">
+                <table id="playField"></table>
+                <div id="dragPiece" class="piece-drag hidden"></div>
+            </div>
+
+            <div class="strip below">
+                <!--<div class="credit">-->
+                <!--    by <a href="https://linktr.ee/phantomeye" target="_blank">PhantomEye</a>-->
+                <!--    & <a href="https://linktr.ee/serialsniper" target="_blank">SerialSniper</a>-->
+                <!--</div>-->
+            </div>
+        </div>
+    </div>
+
+</CenteredPage>
+
+<script>
+    // Game logic: board state and move rules, no DOM access
+
+    type Coordinate = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+    type PositionString = `${Coordinate}${Coordinate}`;
+
+    class Position {
+        constructor(
+            public row: Coordinate,
+            public column: Coordinate,
+        ) {};
+
+        // Parse from a string, eg. "11"
+        static parse(str: PositionString) {
+            return new Position((str as any)[0], (str as any)[1]);
+        }
+
+        toString(): PositionString {
+            return `${this.row}${this.column}`;
+        }
+
+        toName(): string {
+            return ''; // TODO: Position -> eg. "a1" "e4"
+        }
+    }
+
+    enum Type {
+        PAWN = 'pawn',
+        KNIGHT = 'knight',
+        BISHOP = 'bishop',
+        ROOK = 'rook',
+        QUEEN = 'queen',
+        KING = 'king',
+    }
+
+    enum Color {
+        WHITE = 'white',
+        BLACK = 'black',
+    }
+
+    // For parsing eg. "p-w:11"
+    const TYPE_CHARS: Record<string, Type> = {
+        p: Type.PAWN,
+        n: Type.KNIGHT,
+        b: Type.BISHOP,
+        r: Type.ROOK,
+        q: Type.QUEEN,
+        k: Type.KING,
+    };
+
+    const COLOR_CHARS: Record<string, Color> = {
+        w: Color.WHITE,
+        b: Color.BLACK,
+    };
+
+    class Piece extends Position {
+        // TODO: Extend implementation with a facing direction
+        public type: Type;
+        public color: Color;
+
+        constructor(type: Type, color: Color, row: Coordinate, column: Coordinate) {
+            super(row, column);
+            this.type = type;
+            this.color = color;
+        }
+
+        // Parse from eg. "p-w:11"
+        static parsePiece(str: string): Piece | null {
+            if (str == '') return null;
+
+            const [typeColor, position] = str.split(':');
+            const [type, color] = typeColor.split('-');
+            const pos = Position.parse(position as PositionString);
+
+            return new Piece(TYPE_CHARS[type], COLOR_CHARS[color], pos.row, pos.column);
+        }
+
+        // eg. "pawn-white", matches the background-image classes
+        cssClass(): string {
+            return `${this.type}-${this.color}`;
+        }
+    }
+
+    // Starting position:
+    // Row 1 = white's back rank
+    // Row 8 = black's back rank
+    const STARTING_POSITION: string[][] = [
+        ['r-w:11', 'n-w:12', 'b-w:13', 'q-w:14', 'k-w:15', 'b-w:16', 'n-w:17', 'r-w:18'],
+        ['p-w:21', 'p-w:22', 'p-w:23', 'p-w:24', 'p-w:25', 'p-w:26', 'p-w:27', 'p-w:28'],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['p-b:71', 'p-b:72', 'p-b:73', 'p-b:74', 'p-b:75', 'p-b:76', 'p-b:77', 'p-b:78'],
+        ['r-b:81', 'n-b:82', 'b-b:83', 'q-b:84', 'k-b:85', 'b-b:86', 'n-b:87', 'r-b:88'],
+    ];
+
+    const GAME_BOARD: (Piece | null)[][] = STARTING_POSITION.map(row => row.map(s => Piece.parsePiece(s)));
+
+    // TODO: validate the move, resolve captures, update GAME_BOARD, check for checkmate
+    function move(piece: Piece, to: Position) {
+    }
+
+    // Astro compiles each <script> tag as its own module, this is the handoff to the web script below
+    (window as any).Chess = { Position, Piece, Type, Color, GAME_BOARD, move };
+</script>
+
+<script>
+    // Web code: DOM rendering and input handling, talks to the game logic above via window.Chess
+
+    const { Position, Piece, Type, Color, GAME_BOARD, move } = (window as any).Chess;
+
+    let lastMove: any = null; // A Position, from the game logic script
+
+    let draggingPiece: any = null; // The Piece currently being dragged, or null
+    let draggingOrigin: JQuery | null = null; // The cell div the dragged piece was picked up from
+    const dragDiv = $("#dragPiece");
+
+    // Generates the playing field, rank 8 first so white's back rank (row 1) ends up at the bottom
+    for (let w = 7; w >= 0; w--) {
+        let row = $("<tr></tr>").appendTo("#playField").on("mouseleave", function() {
+            removeClasses('highlights');
+            highlightLastMove();
+        });
+
+        for (let z = 0; z < 8; z++) {
+            let cell = $("<td><div></div></td>")
+                .appendTo(row)
+                .attr("id", `${w + 1}${z + 1}`)
+                .addClass(w % 2 !== z % 2 ? 'lightSquare' : 'darkSquare')
+                .on("mouseenter", function() {
+                    removeClasses('highlights');
+                    highlightLastMove();
+                })
+                .on("mousedown", function() {
+                    startDrag($(this));
+                });
+        }
+    }
+
+    let turnDisplay = $(".status"); // Gets the text element above the playing field
+
+    // Every class renderBoard() might put on a cell, so it can clear stale ones
+    const PIECE_CLASSES = Object.values(Type)
+        .flatMap((type: string) => Object.values(Color).map((color: string) => `${type}-${color}`));
+
+    // Draws every piece in GAME_BOARD onto the grid, clearing any piece already sat in a cell
+    function renderBoard() {
+        for (let row = 1; row <= 8; row++) {
+            for (let column = 1; column <= 8; column++) {
+                const piece = GAME_BOARD[row - 1][column - 1];
+                const cell = $(`#${row}${column} > div`);
+
+                cell.removeClass(PIECE_CLASSES.join(' '));
+                if (piece != null) cell.addClass(piece.cssClass());
+            }
+        }
+    }
+
+    renderBoard();
+
+    // Picks the piece out of `cell` and starts it following the cursor
+    function startDrag(cell: JQuery) {
+        const id = cell.attr("id") ?? '';
+        const row = Number(id[0]), column = Number(id[1]);
+        const piece = GAME_BOARD[row - 1][column - 1];
+        if (piece == null) return;
+
+        draggingPiece = piece;
+        draggingOrigin = cell.find("div").addClass("hidden");
+
+        const rect = cell[0].getBoundingClientRect();
+        dragDiv
+            .removeClass(PIECE_CLASSES.join(' '))
+            .addClass(piece.cssClass())
+            .removeClass("hidden")
+            .css({ left: rect.left + rect.width / 2, top: rect.top + rect.height / 2 });
+    }
+
+    // Follows the cursor while a piece is being dragged
+    $(document).on("mousemove", function(event) {
+        if (draggingPiece == null) return;
+        dragDiv.css({ left: event.clientX, top: event.clientY });
+    });
+
+    // Drops the piece on release, hands the move off to the game logic, then resets the drag state
+    $(document).on("mouseup", function(event) {
+        if (draggingPiece == null) return;
+
+        const target = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)?.closest("td");
+        if (target != null) {
+            const id = target.id;
+            move(draggingPiece, new Position(Number(id[0]), Number(id[1])));
+        }
+
+        renderBoard();
+        draggingOrigin?.removeClass("hidden");
+        dragDiv.addClass("hidden");
+        draggingPiece = null;
+        draggingOrigin = null;
+    });
+
+    // Remove certain classes from all cells
+    function removeClasses(classes: 'lastMove' | 'highlights') {
+        for (let w = 0; w < 8; w++)
+            for (let z = 0; z < 8; z++) {
+                let cell = $(`#${w + 1}${z + 1} > div`);
+
+                switch (classes) {
+                    case 'lastMove':
+                        cell.removeClass("highlightLastMove");
+                        break;
+                    case 'highlights':
+                        cell
+                            .removeClass("highlight")
+                            .removeClass("highlightSecondary");
+                        break;
+                }
+            }
+    }
+
+    // Highlights the last move made
+    function highlightLastMove() {
+        if (lastMove != null) {
+            removeClasses('lastMove')
+            addClass(lastMove, "highlightLastMove");
+        }
+    }
+
+    // Adds a class to an element
+    function addClass(coordinates: any, cssClass: string) {
+        if (coordinates != null) {
+            $(`#${coordinates.toString()} > div`).addClass(cssClass);
+        }
+    }
+</script>
+
+<style is:global>
+    :root {
+        --highlight-hover:     color-mix(in srgb, var(--col-cmyk-magenta) 50%, var(--col-background));
+        --highlight-connected: color-mix(in srgb, var(--col-cmyk-cyan) 50%, var(--col-background));
+        --highlight-win:       color-mix(in srgb, var(--col-cmyk-green) 50%, var(--col-background));
+        --highlight-recent:    color-mix(in srgb, var(--col-cmyk-yellow) 70%, var(--col-background));
+
+        /* Combined colors */
+        --hl-hp: color-mix(in oklch, var(--highlight-hover), var(--highlight-recent));
+        --hl-hs: color-mix(in oklch, var(--highlight-hover), var(--highlight-connected));
+    }
+
+    .game {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+
+        padding: 0 2em;
+
+        background-color: var(--col-background);
+    }
+
+    .header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        max-width: 30rem;
+        padding-bottom: 1rem;
+
+        & > .title {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+
+            margin-bottom: -2.5rem;
+        }
+
+        & > .subtext {
+            color: var(--col-text-2);
+            margin-bottom: 4px;
+        }
+    }
+
+    .strip {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+        padding-block: 0.6rem;
+
+        &.above {
+            align-items: flex-end;
+        }
+    }
+
+    .status {
+        color: var(--col-text-2);
+        text-align: right;
+
+        & > .player {
+            font-weight: bold;
+            color: var(--col-cmyk-magenta);
+        }
+    }
+
+    .board {
+        margin-inline: 3em;
+    }
+
+    .playfield-wrapper {
+        position: relative;
+        container-type: inline-size;
+        width: min(534px, 90vw);
+
+        --cell-size: clamp(28px, calc(12.5cqw - 6.75px), 60px);
+    }
+
+    #playField {
+        border: solid 2px var(--col-border-1);
+        border-spacing: 0;
+        user-select: none;
+    }
+
+    #playField > tr > td {
+        cursor: pointer;
+
+        background-color: var(--col-background);
+
+        &.darkSquare {
+            background-color: var(--col-background-2) !important;
+        }
+    }
+
+    /* Cell */
+    #playField > tr > td > div {
+        width: var(--cell-size);
+        height: var(--cell-size);
+
+        background-position: 50% 50%;
+        background-size: 100%;
+        background-repeat: no-repeat;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+
+    /* Follows the cursor while a piece is being dragged, teleported into place by JS */
+    .piece-drag {
+        position: fixed;
+        top: 0;
+        left: 0;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+
+        width: var(--cell-size);
+        height: var(--cell-size);
+
+        background-position: 50% 50%;
+        background-size: 100%;
+        background-repeat: no-repeat;
+
+        pointer-events: none;
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    .credit {
+        opacity: 0.7;
+        color: var(--col-cmyk-cyan);
+
+        & > a {
+            color: var(--col-text-2);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    }
+
+    /* Piece icons, :not(.hidden) so a picked-up piece's cell keeps its box but loses the icon */
+    .pawn-white:not(.hidden)   { background-image: url("/pages/chess/pawn-white.svg"); }
+    .knight-white:not(.hidden) { background-image: url("/pages/chess/knight-white.svg"); }
+    .bishop-white:not(.hidden) { background-image: url("/pages/chess/bishop-white.svg"); }
+    .rook-white:not(.hidden)   { background-image: url("/pages/chess/rook-white.svg"); }
+    .queen-white:not(.hidden)  { background-image: url("/pages/chess/queen-white.svg"); }
+    .king-white:not(.hidden)   { background-image: url("/pages/chess/king-white.svg"); }
+
+    .pawn-black:not(.hidden)   { background-image: url("/pages/chess/pawn-black.svg"); }
+    .knight-black:not(.hidden) { background-image: url("/pages/chess/knight-black.svg"); }
+    .bishop-black:not(.hidden) { background-image: url("/pages/chess/bishop-black.svg"); }
+    .rook-black:not(.hidden)   { background-image: url("/pages/chess/rook-black.svg"); }
+    .queen-black:not(.hidden)  { background-image: url("/pages/chess/queen-black.svg"); }
+    .king-black:not(.hidden)   { background-image: url("/pages/chess/king-black.svg"); }
+
+    /* Put it up here because following classes have more priority */
+    .highlightLastMove {
+        background-color: var(--highlight-recent) !important;
+    }
+
+    .highlight {
+        background-color: var(--highlight-hover) !important;
+    }
+
+    .highlightSecondary {
+        background-color: var(--highlight-connected) !important;
+    }
+
+    .highlightWinning {
+        background-color: var(--highlight-win) !important;
+    }
+
+    /* Combined highlights */
+    .highlightLastMove.highlightSecondary {
+        background-color: var(--hl-hs) !important;
+    }
+
+    .highlightLastMove.highlight {
+        background-color: var(--hl-hp) !important;
+    }
+
+    @media (max-width: 600px) {
+        .game {
+            padding: 0 0.5em;
+        }
+
+        .board {
+            margin-inline: 0.5em;
+        }
+    }
+</style>
