@@ -21,13 +21,6 @@
 </div>
 
 <style>
-    html {
-        --background-color: var(--col-background);
-        --background-color2: var(--col-element);
-        --item_color: var(--col-text);
-        --item_color2: var(--col-text-2);
-    }
-
     #container {
         perspective: 1000px;
         width: 455px;
@@ -89,7 +82,7 @@
         align-items: center;
         justify-content: center;
 
-        background-color: var(--background-color);
+        background-color: var(--col-background);
         background-size: cover;
         background-repeat: no-repeat;
 
@@ -97,7 +90,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background-color: var(--background-color2);
+            background-color: var(--col-accent);
 
             padding: .6rem;
             mask: var(--mask-url) no-repeat center / cover border-box content-box;
@@ -128,8 +121,8 @@
             font-size: 50px;
             line-height: 50px;
 
-            color: var(--item_color);
-            text-shadow: var(--text-shadow-abberation);
+            color: var(--col-text-1);
+            text-shadow: var(--text-shadow-aberration);
         }
 
         & ._website {
@@ -137,7 +130,7 @@
             top: calc(var(--padding) + 2rem);
 
             font-weight: 600;
-            color: var(--item_color2);
+            color: var(--col-text-2);
 
             font-size: 20px;
         }
@@ -163,13 +156,13 @@
 
         & ._details_top {
             text-align: right;
-            color: var(--background-color);
+            color: var(--col-accent-fill-text);
             inset: var(--padding) var(--padding) auto auto;
         }
 
         & ._details_bottom {
             text-align: right;
-            color: var(--background-color);
+            color: var(--col-accent-fill-text);
             inset: auto var(--padding) var(--padding) auto;
         }
     }

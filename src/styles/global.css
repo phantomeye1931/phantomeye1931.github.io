@@ -6,14 +6,26 @@
 	--col-background:     #ece4d4;
 	--col-background-dark: #d9d1c2;
 	--col-background-2:   #ddd8ca;
-	--col-element:      #0d7fa3;
-	--col-text:         #211a14;
+
+	/* Text - legibility ramp, tuned to contrast against the background. Use
+	   only for color/text-shadow ink - never border, never background */
+	--col-text-1:       #211a14;
 	--col-text-2:       #595650;
 	--col-text-3:       #8d8a80;
 
-	--col-selection: var(--col-background-2);
+	/* Border - subtlety ramp, derived from text-1/background so each theme
+	   gets a proportionally similar (subtle) step, instead of borrowing a
+	   value that was calibrated for legibility and reads as too loud */
+	--col-border-1: color-mix(in srgb, var(--col-text-1) 45%, var(--col-background)); /* emphasized/heavy outlines */
+	--col-border-2: color-mix(in srgb, var(--col-text-1) 25%, var(--col-background)); /* default 1px divider */
+	--col-border-3: color-mix(in srgb, var(--col-text-1) 12%, var(--col-background)); /* hairline */
 
-	--col-divider: var(--col-text-3);
+	/* Accent - foreground use only (text/icon/canvas/border) */
+	--col-accent: #0d7fa3;
+	/* Ink for anything drawn on top of a shape filled with --col-accent */
+	--col-accent-fill-text: var(--col-background);
+
+	--col-selection: var(--col-background-2);
 
 	--col-cmyk-cyan:    #009fd4;
 	--col-cmyk-magenta: #d81e73;
@@ -23,12 +35,12 @@
 
 	/* HeaderButtons nav, aliased so a page can reskin just the nav later */
 	--col-nav-background:  var(--col-background);
-	--col-nav-border:      var(--col-text-3);
+	--col-nav-border:      var(--col-border-2);
 	--col-nav-link:        var(--col-cmyk-magenta);
 	--col-nav-link-hover:  var(--col-cmyk-cyan);
-	--col-nav-link-text:   var(--col-text);
+	--col-nav-link-text:   var(--col-text-1);
 
-	--text-shadow-abberation: /* Chromatic abberation */
+	--text-shadow-aberration: /* Chromatic aberration */
 		1.8px 0 0 color-mix(in srgb, var(--col-cmyk-cyan) 55%, transparent),
 		-1.2px 1px 0 color-mix(in srgb, var(--col-cmyk-magenta) 50%, transparent),
 		0.6px -1.4px 0 color-mix(in srgb, var(--col-cmyk-yellow) 45%, transparent);
@@ -45,10 +57,13 @@
 	--col-background:     #1c1712;
 	--col-background-dark: #191410;
 	--col-background-2:   #332f28;
-	--col-element:       #4fc3e8;
-	--col-text:         #ece4d4;
+	--col-text-1:       #ece4d4;
 	--col-text-2:       #c2bfb2;
 	--col-text-3:       #9d9a8f;
+	--col-accent:       #4fc3e8;
+	/* --col-border-* and --col-accent-fill-text need no override here -
+	   they re-derive from this theme's own --col-text-1/--col-background/
+	   --col-accent, which is what fixes borders reading too light/loud */
 }
 
 html, body {
@@ -80,7 +95,7 @@ html, body {
 }
 
 .heading {
-	text-shadow: var(--text-shadow-abberation);
+	text-shadow: var(--text-shadow-aberration);
 }
 
 @font-face {
@@ -138,14 +153,14 @@ html, body {
 
 /* TODO: Bleh */
 *::selection {
-	background: var(--col-text);
+	background: var(--col-text-1);
 	color: var(--col-background-2);
 }
 *::-moz-selection {
-	background: var(--col-text);
+	background: var(--col-text-1);
 	color: var(--col-background-2);;
 }
 *::-webkit-selection {
-	background: var(--col-text);
+	background: var(--col-text-1);
 	color: var(--col-background-2);;
 }
