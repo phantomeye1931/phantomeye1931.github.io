@@ -1,52 +1,30 @@
 ---
 // PhantomEye (Armand's art brand) as an isolated route on armand.dev.
 //
-// Deliberately does NOT use `../layouts/Page.astro` or `../components/BaseHead.astro`
-// and does NOT import `../styles/global.css` — this page owns its full <html> document
-// and every style below is namespaced with a `pe-`/`--pe-` prefix. That's the whole
-// isolation mechanism: no shared layout, no shared stylesheet, so there is nothing to
-// leak in either direction between this page and the rest of the site. See
-// CLAUDE.md ("PhantomEye route") before changing that.
-//
 // Currently hosted at armand.dev/phantomeye; intended to move behind phantomeye.art
 // once that domain is routed here (GitHub Pages hosting is a temporary arrangement).
-import Nav from "../components/phantomeye/Nav.astro";
 import HeroSection from "../components/phantomeye/HeroSection.astro";
 import WallSection from "../components/phantomeye/WallSection.astro";
+import MinecraftSkinSection from "../components/phantomeye/MinecraftSkinSection.astro";
+import Page from "../layouts/Page.astro";
+import type {Button} from "../utils/types.ts";
 
 const title = "PhantomEye";
 const description = "PhantomEye — low-poly 3D renders and pixel work.";
+
+const headerButtons: Button[] = [
+	{ alignRight: true, label: "MODELS", url: "/#weblog"},
+	{ alignRight: true, label: "SKINS",  url: "/#projects"},
+	{ alignRight: true, label: "SPRITES",  url: "/#projects"},
+	{ alignRight: true, label: "CODING",  url: "https://armand.dev/"},
+];
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<title>{title}</title>
-		<meta name="description" content={description} />
-
-		<link
-			rel="preload"
-			href="/fonts/Unbounded-Bold.woff2"
-			as="font"
-			type="font/woff2"
-			crossorigin
-		/>
-		<link
-			rel="preload"
-			href="/fonts/IBMPlexMono-Regular.woff2"
-			as="font"
-			type="font/woff2"
-			crossorigin
-		/>
-	</head>
-	<body data-pe>
-		<Nav />
-		<HeroSection />
-		<WallSection />
-	</body>
-</html>
+<Page title={ title } description={ description } opts={{ background: false, buttons: true, noTheme: true, mobileCentered: true, extraButtons: headerButtons, defaultButtons: false }} >
+	<HeroSection />
+	<WallSection />
+	<MinecraftSkinSection />
+</Page>
 
 <style is:global>
 	/* Self-hosted fonts for this page only. */
@@ -79,23 +57,7 @@ const description = "PhantomEye — low-poly 3D renders and pixel work.";
 		src: url("/fonts/IBMPlexMono-SemiBold.woff2") format("woff2");
 	}
 
-	/* Same physical font files as the armand.dev hero (shared storage in
-	   public/fonts/, not a shared stylesheet — that page never loads this
-	   declaration and this page never loads its global.css one). Used only
-	   for the "Phantom / Eye" name below; everything else on this page
-	   stays on --pe-font-display (Unbounded). */
-	@font-face {
-		font-family: "PE Name Display";
-		src: url("/fonts/Fraunces-Variable.woff2") format("woff2");
-		font-weight: 300 900;
-		font-style: normal;
-	}
-
-	/* Brand tokens, `--pe-` prefixed. No relation to the site's --col-* tokens
-	   in styles/global.css — this page doesn't import that file, and Astro
-	   ships each page as its own static document, so nothing here reaches
-	   any other route and nothing from global.css reaches this one. */
-	body[data-pe] {
+	body {
 		--pe-blue: #5e71b9;
 		--pe-blue-deep: #48588f;
 		--pe-blue-deeper: #384570;
@@ -115,26 +77,34 @@ const description = "PhantomEye — low-poly 3D renders and pixel work.";
 		--pe-font-display: "Unbounded", "Arial Black", ui-sans-serif, sans-serif;
 		--pe-font-mono: "IBM Plex Mono", "Space Mono", ui-monospace, "Courier New", monospace;
 
+		--col-background:      var(--pe-void);
+		--col-nav-background:  #00000000;
+		--col-nav-border:      var(--pe-blue-tint);
+		--col-nav-link:        var(--pe-white);
+		--col-nav-link-hover:  var(--pe-white-faint);
+		--col-nav-link-text:   var(--pe-white);
+
 		margin: 0;
 		padding: 0;
 		background: var(--pe-void);
-		font-family: var(--pe-font-mono);
+		font-family: var(--pe-font-mono), serif;
+
 		color: var(--pe-white);
 		-webkit-font-smoothing: antialiased;
 	}
-	html:has(body[data-pe]) {
+	html {
 		margin: 0;
 	}
-	body[data-pe] *,
-	body[data-pe] *::before,
-	body[data-pe] *::after {
+	body *,
+	body *::before,
+	body *::after {
 		box-sizing: border-box;
 	}
-	body[data-pe] img {
+	body img {
 		max-width: 100%;
 		display: block;
 	}
-	body[data-pe] a {
+	body a {
 		color: inherit;
 		text-decoration: none;
 	}

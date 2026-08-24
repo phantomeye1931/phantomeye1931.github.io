@@ -1,15 +1,22 @@
 ---
 import type {Button} from "../utils/types.ts";
-const buttons: Button[] = [
-    { alignRight: true, label: "</>", url: "https://github.com/phantomeye1931/phantomeye1931.github.io"},
-    { alignRight: true, label: "sync",  url: "javascript:void(0)", behavior: "toggle-dark-mode"},
-]
+
 
 interface Props {
+    defaultButtons?: boolean,
     extraButtons: Button[],
     mobileCentered?: boolean,
 }
+
 const props = Astro.props;
+
+const buttons: Button[] = [];
+
+if (props.defaultButtons === null || props.defaultButtons) buttons.push(
+    { alignRight: true, label: "</>", url: "https://github.com/phantomeye1931/phantomeye1931.github.io"},
+    { alignRight: true, label: "sync",  url: "javascript:void(0)", behavior: "toggle-dark-mode"},
+)
+
 buttons.push( ...props.extraButtons );
 ---
 

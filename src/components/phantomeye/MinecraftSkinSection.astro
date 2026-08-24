@@ -1,0 +1,28 @@
+---
+import GalleryHeader from "./GalleryHeader.astro";
+---
+
+<section class="skin-gallary" id="skins">
+	<div class="skin-gallary-wrapper">
+		<GalleryHeader text="Minecraft Skins" />
+
+		<img class="skin-sheet" src="/phantomeye/renders/skins.png" alt="Sheet of custom Minecraft skins" loading="lazy" />
+	</div>
+</section>
+
+<style>
+	.skin-gallary {
+		background: var(--pe-void);
+		padding: clamp(48px, 7vw, 84px) 0 clamp(56px, 8vw, 96px);
+	}
+	.skin-gallary-wrapper {
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 0 clamp(18px, 3.5vw, 48px);
+	}
+
+	.skin-sheet {
+		width: 100%;
+		height: auto;
+	}
+</style>

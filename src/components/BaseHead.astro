@@ -1,7 +1,4 @@
 ---
-// Import the global.css file here so that it is included on
-// all pages through the use of the <BaseHead /> component.
-import '../styles/global.css';
 import type { ImageMetadata } from 'astro';
 import FallbackImage from '../assets/card.png';
 import { SITE_TITLE } from '../consts';
@@ -10,12 +7,19 @@ interface Props {
 	title: string;
 	description: string;
 	image?: ImageMetadata;
+
+	noTheme?: boolean;
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-const { title, description, image = FallbackImage } = Astro.props;
+const { title, description, image = FallbackImage, noTheme } = Astro.props as Props;
+
+// Import the global.css file here so that it is included on
+// all pages through the use of the <BaseHead /> component.
+if (!noTheme) import('../styles/global.css');
 ---
+
 <!--Include JQuery-->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js" />
 

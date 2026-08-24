@@ -6,7 +6,7 @@ import HalftoneBackground, {BackgroundVariant} from "../components/HalftoneBackg
 import HeaderButtons from "../components/HeaderButtons.astro";
 import type {Button} from "../utils/types.ts";
 
-export interface PageProps {
+export interface Props {
     opts: {
         background: boolean,
         bgVariant?: BackgroundVariant,
@@ -14,14 +14,17 @@ export interface PageProps {
         bgSticky?: boolean,
 
         buttons: boolean,
+        defaultButtons?: boolean,
         extraButtons?: Button[],
         mobileCentered?: boolean,
+
+        noTheme?: boolean,
     },
     title: string,
     description: string,
 }
 
-const props = Astro.props as PageProps;
+const props = Astro.props;
 ---
 
 <!doctype html>
@@ -33,12 +36,12 @@ const props = Astro.props as PageProps;
     </head>
     <body>
         <main>
-            <div class="page-wrapper">
+            <div class=`page-wrapper ${ props.opts.noTheme ? '' : 'styled' }`>
                 { props.opts.background
                     ? (<HalftoneBackground variant={ props.opts.bgVariant } flip={ props.opts.bgFlip ?? false } sticky={ props.opts.bgSticky ?? false }/>)
                     : '' }
                 <div class="page-contents">
-                    { props.opts.buttons ? <HeaderButtons extraButtons={ props.opts.extraButtons ?? [] } mobileCentered={ props.opts.mobileCentered ?? false }/> : '' }
+                    { props.opts.buttons ? <HeaderButtons defaultButtons={ props.opts.defaultButtons ?? true } extraButtons={ props.opts.extraButtons ?? [] } mobileCentered={ props.opts.mobileCentered ?? false }/> : '' }
                     <slot />
                 </div>
             </div>
@@ -51,7 +54,14 @@ const props = Astro.props as PageProps;
 <style>
 html {
     scroll-behavior: smooth;
-    background-color: var(--col-background-dark);
+    /*background-color: var(--col-background-dark);*/
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .overlay {
@@ -72,23 +82,26 @@ html {
 }
 
 .page-wrapper {
-    background-color: var(--col-background);
     position: absolute;
     min-height: 100svh;
     width: 100%;
 
-    &:after {
-        content: "";
-        z-index: 1000;
-        inset: 0;
-        position: absolute;
+    &.styled {
+        background-color: var(--col-background);
 
-        background-image: url("/svg/grain.svg");
-        background-size: 400px 400px;
-        pointer-events: none;
+        &:after {
+            content: "";
+            z-index: 1000;
+            inset: 0;
+            position: absolute;
 
-        mix-blend-mode: multiply;
-        opacity: 0.5;
+            background-image: url("/svg/grain.svg");
+            background-size: 400px 400px;
+            pointer-events: none;
+
+            mix-blend-mode: multiply;
+            opacity: 0.5;
+        }
     }
 }
 

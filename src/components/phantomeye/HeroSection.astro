@@ -8,31 +8,25 @@
 		<canvas class="pe-guardian-canvas"></canvas>
 	</div>
 
-	<div class="pe-grain"></div>
-
-	<div class="pe-aperture-mark" aria-hidden="true">
-		<svg viewBox="0 0 40 40" fill="none" stroke="currentColor">
-			<circle cx="20" cy="20" r="9" stroke-width="1.2"></circle>
-			<line x1="20" y1="1" x2="20" y2="39" stroke-width="1.2"></line>
-			<line x1="1" y1="20" x2="39" y2="20" stroke-width="1.2"></line>
-		</svg>
-	</div>
-
 	<div class="pe-identity">
-		<h1 class="pe-name">Phantom<br />Eye</h1>
+		<h1 class="pe-name font-phont">Phantom<br />Eye</h1>
 		<span class="pe-tag-code"
 			><span class="pe-hash">#</span><span class="pe-num">1931</span><span class="pe-cursor"
 			></span></span
 		>
-		<div class="pe-roles">Digital Artist<br />3D Renders &middot; Pixel Work</div>
+		<div class="pe-roles">
+			Pixel Artist <br>
+			Low Poly Modeler <br>
+			Developer
+		</div>
 		<div class="pe-colophon">
 			<span class="pe-ring"></span>
-			<span class="pe-label">f/1.8 &middot; digital renders</span>
+			<span class="pe-label">0&deg; fov &middot; orthographic</span>
 		</div>
 	</div>
 </div>
 
-<style>
+<style is:global>
 	.pe-hero {
 		position: relative;
 		width: 100%;
@@ -40,33 +34,6 @@
 		overflow: hidden;
 		background: var(--pe-blue);
 		isolation: isolate;
-	}
-
-	.pe-grain {
-		position: absolute;
-		inset: 0;
-		z-index: 2;
-		pointer-events: none;
-		mix-blend-mode: overlay;
-		opacity: 0.09;
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-		background-size: 180px 180px;
-	}
-
-	.pe-aperture-mark {
-		position: absolute;
-		top: 28px;
-		left: 28px;
-		width: 24px;
-		height: 24px;
-		color: var(--pe-white);
-		opacity: 0.5;
-		z-index: 3;
-	}
-	.pe-aperture-mark svg {
-		display: block;
-		width: 100%;
-		height: 100%;
 	}
 
 	.pe-guardian-wrap {
@@ -118,13 +85,7 @@
 
 	h1.pe-name {
 		margin: 0;
-		/* "PE Name Display" is Fraunces under the hood (see phantomeye.astro's
-		   @font-face) — the one deliberate font borrowed from the armand.dev
-		   hero, just for this heading, for the personality a plain geometric
-		   sans wasn't giving it at a calmer weight/size. */
-		font-family: "PE Name Display", "Iowan Old Style", ui-serif, Georgia, serif;
-		font-weight: 900;
-		font-optical-sizing: auto;
+		/* .font-phont (global.css) applies the hand-drawn Phont pixel font */
 		font-size: clamp(2.8rem, 7.2vw, 5.6rem);
 		line-height: 0.92;
 		letter-spacing: -0.01em;

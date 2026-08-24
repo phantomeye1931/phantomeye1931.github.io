@@ -1,80 +1,144 @@
 ---
-// First pass at the gallery block-out. Dark ground (`--pe-void`) distinct
-// from the hero's `--pe-blue`, so the two sections read as separate
-// registers on the same page rather than one continuous surface.
+import {padZero} from "../../utils/strings.ts";
+import GalleryHeader from "./GalleryHeader.astro";
+
 interface Piece {
+	title: string;
+	sketchfabLink?: string;
 	image: string;
 	alt: string;
-	num: string;
-	title: string;
-	medium: string;
-	frameClass: string;
+	description?: string;
+	frameClass?: string;
 }
 
 const pieces: Piece[] = [
 	{
-		image: "/phantomeye/renders/nomai-mask.png",
-		alt: "Symmetrical low-poly mask render in navy, gold and charcoal",
-		num: "No. 03",
-		title: "nomai mask",
-		medium: "3D render",
-		frameClass: "f-nomai",
+		title: "Master Cycle Zero",
+		description: "(Zelda)",
+		sketchfabLink: "https://sketchfab.com/3d-models/master-cycle-zero-bd61c11ea04c4190a391e99a0ff26146",
+		image: "/phantomeye/renders/master-cycle.png",
+		alt: "Low-poly pixelated 'Master Cycle Zero' motorbike from The Legend Of Zelda: Breath of the Wild",
 	},
 	{
-		image: "/phantomeye/renders/radiance.png",
-		alt: "Faceted creature bust surrounded by a radiant starburst, cream and gold",
-		num: "No. 11",
-		title: "radiance",
-		medium: "3D render",
-		frameClass: "f-radiance",
+		title: "Open your Mind",
+		description: "(Valve intro)",
+		sketchfabLink: "https://sketchfab.com/3d-models/valve-logo-open-your-mind-d4520a81ac724b81952a0528d71b3db7",
+		image: "/phantomeye/renders/open-your-mind.png",
+		alt: "Low-poly pixelated rendition of the 'Open your mind' logo from the Valve intro",
 	},
 	{
+		title: "Master Sword",
+		description: "(Zelda)",
+		sketchfabLink: "https://sketchfab.com/3d-models/master-sword-5a85fdbe4a894cba88d239f99b27a6d9",
+		image: "/phantomeye/renders/master-sword.jpg",
+		alt: "Low-poly pixelated Master Sword and Sheathe from The Legend of Zelda: Breath of the Wild",
+	},
+	{
+		title: "The lamb",
+		description: "(Cult of the Lamb)",
+		sketchfabLink: "https://sketchfab.com/3d-models/the-lamb-cd476d5154924668963fae1fdee4a723",
+		image: "/phantomeye/renders/cult-of-the-lamb.jpg",
+		alt: "Low-poly pixelated Lamb from Cult of the Lamb flying, surrounded by rune symbols",
+	},
+	{
+		title: "Magic Masks",
+		description: "(Zelda)",
+		image: "/phantomeye/renders/masks.png",
+		alt: "Small pixelated model of Majora's Mask and a Korok Mask from The Legend of Zelda games",
+	},
+	{
+		title: "' E '",
+		description: "(The Entropy Centre)",
+		sketchfabLink: "https://sketchfab.com/3d-models/e-the-entropy-centre-afe710d77a30432682269b8a96541094",
+		image: "/phantomeye/renders/entropy-centre-e.jpg",
+		alt: "Low-poly pixelated model of the robot character 'E' from The Entropy Centre",
+	},
+	{
+		title: "Sony Walkman",
+		image: "/phantomeye/renders/walkman.png",
+		sketchfabLink: "https://sketchfab.com/3d-models/walkman-56bb0351e4e24ca3b045301c3fa2c310",
+		alt: "Low-poly pixelated model of a blue 80s Sony Walkman with headphones",
+	},
+	{
+		title: "Custom Pokemon",
+		image: "/phantomeye/renders/some-pokemon.jpg",
+		alt: "Low-poly pixelated model of a dragon-like creature on a white background",
+	},
+	{
+		title: "Hornet",
+		description: "(Hollow Knight)",
 		image: "/phantomeye/renders/hornet.jpg",
-		alt: "Faceted low-poly bust in magenta and white, encircled by a broken ring",
-		num: "No. 14",
-		title: "hornet study",
-		medium: "3D render",
-		frameClass: "f-hornet",
+		alt: "Low-poly pixelated model of Hornet from Hollow Knight spinning her needle to make circles of thread",
 	},
 	{
-		image: "/phantomeye/renders/skull-kid.jpg",
-		alt: "Top-down low-poly render of a masked figure clutching a glowing heart piece",
-		num: "#1431",
-		title: "heart piece",
-		medium: "3D render",
-		frameClass: "f-skullkid",
+		title: "Stylised Skull",
+		image: "/phantomeye/renders/stylised-skull.png",
+		alt: "Low-poly pixelated model of a colorful purple skull",
 	},
 	{
-		image: "/phantomeye/renders/cosmetic-set.png",
-		alt: "Four cosmetic crate skins in a game asset set, each a different colorway",
-		num: "No. 22",
-		title: "cosmetic set, four colorways",
-		medium: "game asset · pixel",
-		frameClass: "f-skins",
+		title: "Radiance",
+		description: "(Hollow Knight)",
+		sketchfabLink: "https://sketchfab.com/3d-models/hornet-hollow-knight-5a83454b46da4d7e92fa4d0550386bdf",
+		image: "/phantomeye/renders/radiance.png",
+		alt: "Low-poly pixelated model of The Radiance from Hollow Knight, shining bright on a dark background of void",
+	},
+	{
+		title: "Nomai Mask",
+		description: "(Outer Wilds)",
+		image: "/phantomeye/renders/nomai-mask.png",
+		alt: "Low-poly pixelated model of a Nomai Mask from Outer Wilds",
+	},
+	{
+		title: "Skull Kid",
+		description: "(Zelda)",
+		image: "/phantomeye/renders/skull-kid.png",
+		alt: "Low-poly pixelated model of Skull Kid from The Legend of Zelda: Ocarina of Time",
+	},
+	{
+		title: "Minecraft Christmas Presents",
+		image: "/phantomeye/renders/presents.png",
+		alt: "Low-poly pixelated model of an Elevator from Portal 2",
+	},
+	{
+		title: "1990s Car",
+		image: "/phantomeye/renders/car.gif",
+		sketchfabLink: "https://sketchfab.com/3d-models/90s-car-59fe840a12734416b8a2ba0c0bbf61e5",
+		alt: "Low-poly pixelated model of an Elevator from Portal 2",
+	},
+	{
+		title: "Aperture Elevator",
+		description: "(Portal 2)",
+		image: "/phantomeye/renders/elevator.png",
+		alt: "Low-poly pixelated model of an Elevator from Portal 2",
+	},
+	{
+		title: "Emotiguy",
+		description: "(Posable)",
+		sketchfabLink: "https://sketchfab.com/3d-models/emotiguy-df60dd01728f4a17868c7bc33db38782",
+		image: "/phantomeye/renders/emotiguy.png",
+		alt: "Low-poly pixelated model of an 'Emotiguy', an early-internet character of an emoji with floating shoes and hands",
 	},
 ];
 ---
 
-<section class="pe-wall" id="wall">
-	<div class="pe-wall-wrap">
-		<div class="pe-wall-head">
-			<span class="pe-eyebrow">the wall &mdash; block-out</span>
-			<span class="pe-rule"></span>
-		</div>
+<section class="render-gallary" id="wall">
+	<div class="render-gallary-wrapper">
+		<GalleryHeader text="Low-poly Models" />
 
-		<div class="pe-wall-grid">
+		<div class="render-grid">
 			{
-				pieces.map((piece) => (
-					<figure class={`pe-frame ${piece.frameClass}`}>
-						<div class="pe-shot">
-							<img src={piece.image} alt={piece.alt} loading="lazy" />
+				pieces.reverse().map((piece, i) => (
+					<figure class={`${piece.frameClass ?? ''} render-item`} data-sketchfab={piece.sketchfabLink}>
+						<div class="image">
+							<img src={ piece.image } alt={ piece.alt } loading="lazy" />
+							{piece.image.toLowerCase().endsWith('.gif') && <canvas class="gif-freeze" />}
 						</div>
 						<figcaption>
-							<div>
-								<span class="pe-cap-num">{piece.num}</span>
-								<span class="pe-cap-title">{piece.title}</span>
+							<div class="details-row">
+								<span class="pe-cap-num">Nr. { padZero(pieces.length - i, 3) }</span>
+								<span class="pe-cap-medium">3D Render</span>
 							</div>
-							<span class="pe-cap-medium">{piece.medium}</span>
+							<span class="pe-cap-title">{ piece.title } <span class="description font-dotmatrix">{ piece.description }</span> </span>
 						</figcaption>
 					</figure>
 				))
@@ -83,130 +147,335 @@ const pieces: Piece[] = [
 	</div>
 </section>
 
+<div class="pe-lightbox">
+	<div class="pe-lightbox-card">
+		<div class="pe-lightbox-head">
+			<span class="pe-lightbox-meta">
+				<span class="pe-cap-num"></span>
+				<span class="pe-lightbox-dot">&middot;</span>
+				<span class="pe-cap-medium"></span>
+			</span>
+			<button type="button" class="pe-lightbox-close" aria-label="Close">&times;</button>
+		</div>
+
+		<div class="pe-lightbox-image">
+			<img alt="" />
+		</div>
+
+		<div class="pe-lightbox-foot">
+			<span class="pe-lightbox-title">
+				<span class="pe-lightbox-title-text"></span>
+				<span class="description font-dotmatrix pe-lightbox-description"></span>
+			</span>
+			<a class="pe-lightbox-link" target="_blank" rel="noopener" hidden>
+				<span class="bk">[</span>View on Sketchfab &rarr;<span class="bk">]</span>
+			</a>
+		</div>
+	</div>
+</div>
+
+<script>
+	document.querySelectorAll<HTMLCanvasElement>(".gif-freeze").forEach((canvas) => {
+		const img = canvas.previousElementSibling as HTMLImageElement | null;
+		if (!img) return;
+
+		const freeze = () => {
+			canvas.width = img.naturalWidth;
+			canvas.height = img.naturalHeight;
+			canvas.getContext("2d")?.drawImage(img, 0, 0);
+		};
+
+		if (img.complete) freeze();
+		else img.addEventListener("load", freeze, { once: true });
+	});
+
+	const overlay = document.querySelector<HTMLElement>(".overlay");
+	const lightbox = document.querySelector<HTMLElement>(".pe-lightbox");
+	// Move to <body> so its z-index compares directly against .overlay's instead of being
+	// capped by the z-index:1 stacking context that .page-contents wraps this component in
+	if (lightbox) document.body.appendChild(lightbox);
+	const lightboxImg = lightbox?.querySelector<HTMLImageElement>(".pe-lightbox-image img");
+	const lightboxNum = lightbox?.querySelector(".pe-cap-num");
+	const lightboxMedium = lightbox?.querySelector(".pe-cap-medium");
+	const lightboxTitle = lightbox?.querySelector(".pe-lightbox-title-text");
+	const lightboxDescription = lightbox?.querySelector(".pe-lightbox-description");
+	const lightboxLink = lightbox?.querySelector<HTMLAnchorElement>(".pe-lightbox-link");
+
+	const openLightbox = (card: HTMLElement) => {
+		const img = card.querySelector<HTMLImageElement>(".image img");
+		if (lightboxImg && img) {
+			lightboxImg.src = img.src;
+			lightboxImg.alt = img.alt;
+		}
+		if (lightboxNum) lightboxNum.textContent = card.querySelector(".pe-cap-num")?.textContent ?? "";
+		if (lightboxMedium) lightboxMedium.textContent = card.querySelector(".pe-cap-medium")?.textContent ?? "";
+		if (lightboxTitle) lightboxTitle.textContent = card.querySelector(".pe-cap-title")?.childNodes[0]?.textContent?.trim() ?? "";
+		if (lightboxDescription) lightboxDescription.textContent = card.querySelector(".description")?.textContent ?? "";
+
+		const sketchfab = card.dataset.sketchfab;
+		if (lightboxLink) {
+			if (sketchfab) {
+				lightboxLink.href = sketchfab;
+				lightboxLink.hidden = false;
+			} else {
+				lightboxLink.hidden = true;
+			}
+		}
+
+		lightbox?.classList.add("active");
+		overlay?.setAttribute("active", "true");
+		document.body.style.overflow = "hidden";
+	};
+
+	const closeLightbox = () => {
+		lightbox?.classList.remove("active");
+		overlay?.removeAttribute("active");
+		document.body.style.overflow = "";
+	};
+
+	document.querySelectorAll<HTMLElement>(".render-item").forEach((card) => {
+		card.addEventListener("click", () => openLightbox(card));
+	});
+
+	lightbox?.querySelector(".pe-lightbox-close")?.addEventListener("click", closeLightbox);
+	lightbox?.addEventListener("click", (e) => {
+		if (e.target === lightbox) closeLightbox();
+	});
+	document.addEventListener("keydown", (e) => {
+		if (e.key === "Escape") closeLightbox();
+	});
+</script>
+
 <style>
-	.pe-wall {
+	.render-gallary {
 		background: var(--pe-void);
 		padding: clamp(48px, 7vw, 84px) 0 clamp(56px, 8vw, 96px);
 	}
-	.pe-wall-wrap {
+	.render-gallary-wrapper {
 		max-width: 1280px;
 		margin: 0 auto;
 		padding: 0 clamp(18px, 3.5vw, 48px);
 	}
-	.pe-wall-head {
-		display: flex;
-		align-items: baseline;
-		gap: 1em;
-		margin-bottom: clamp(24px, 3.5vw, 36px);
-	}
-	.pe-wall-head .pe-eyebrow {
-		font-family: var(--pe-font-mono);
-		font-size: 0.68rem;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: var(--pe-muted-dim);
-		white-space: nowrap;
-	}
-	.pe-wall-head .pe-rule {
-		flex: 1;
-		height: 1px;
-		background: var(--pe-void-hair);
+	.render-grid {
+		--item-size: 300px;
+
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: repeat(auto-fit, minmax(min(var(--item-size), 100%), 1fr));
+
+		/*align-items: end;*/
 	}
 
-	.pe-wall-grid {
+	.render-item {
 		display: grid;
-		grid-template-columns: repeat(12, 1fr);
-		gap: clamp(14px, 2.2vw, 26px);
-		align-items: end;
-	}
-	.pe-frame {
-		grid-column: span 12;
+		grid-row: span 3; /* image / details-row / title */
+		grid-template-rows: subgrid;
+
 		border: 1px solid var(--pe-void-hair);
 		background: var(--pe-void-raised);
 		padding: 8px 8px 0;
 		margin: 0;
+
+		&:hover {
+			cursor: pointer;
+		}
 	}
-	.pe-frame .pe-shot {
+
+	.render-item .image {
+		grid-row: 1;
+		position: relative;
 		overflow: hidden;
-		background: #000;
+		background: deeppink;
 	}
-	.pe-frame img {
+
+	.render-item img {
 		width: 100%;
 		height: auto;
 		display: block;
-		transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+
+		/* Hover effect */
+		/*transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);*/
 	}
-	.pe-frame:hover img {
+
+	.render-item:hover img {
 		transform: scale(1.035);
 	}
-	.pe-frame figcaption {
+
+	.gif-freeze {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+		transition: opacity 0.2s ease;
+	}
+
+	.render-item:hover .gif-freeze {
+		opacity: 0;
+	}
+
+	figcaption {
+		display: contents; /* lets .details-row and .pe-cap-title sit directly in the subgrid, each on their own row */
+	}
+
+	.render-item .details-row {
+		grid-row: 2;
 		display: flex;
+		flex-direction: row;
+		width: 100%;
 		justify-content: space-between;
-		align-items: baseline;
-		gap: 1em;
-		padding: 0.75em 0.2em 1em;
+		padding: 0.75em 0.2em 0;
 	}
-	.pe-cap-num {
-		font-family: var(--pe-font-mono);
-		font-size: 0.62rem;
-		color: var(--pe-muted);
+
+	.render-item .description {
+		padding-left: 0.5em;
+		font-size: 0.8em;
+		color: var(--pe-white-soft);
+	}
+
+	.pe-cap-num,
+	.pe-cap-medium {
+		font-family: var(--pe-font-mono), serif;
+		color: var(--pe-muted-dim);
 		display: block;
-		margin-bottom: 0.5em;
-		letter-spacing: 0.03em;
+
+		font-size: 0.68rem;
+		letter-spacing: 0.05em;
 	}
+
 	.pe-cap-title {
-		font-family: var(--pe-font-display);
+		grid-row: 3;
+		font-family: var(--pe-font-display), serif;
+		color: var(--pe-white);
+
+		padding: 0.1em 0.2em 1em;
 		font-weight: 600;
 		font-size: 1.02rem;
+	}
+
+	/*@media (prefers-reduced-motion: reduce) {*/
+	/*	.render-item img {*/
+	/*		transition: none;*/
+	/*	}*/
+	/*}*/
+
+	.pe-lightbox {
+		position: fixed;
+		inset: 0;
+		z-index: 1001;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: clamp(16px, 4vw, 48px);
+
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	.pe-lightbox.active {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.pe-lightbox-card {
+		display: flex;
+		flex-direction: column;
+		width: min(920px, 100%);
+		max-height: 100%;
+
+		border: 1px solid var(--pe-void-hair);
+		background: var(--pe-void-raised);
+		padding: 8px 8px 0;
+
+		transform: scale(0.96);
+		transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	.pe-lightbox.active .pe-lightbox-card {
+		transform: scale(1);
+	}
+
+	.pe-lightbox-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 0.2em 0.75em;
+	}
+
+	.pe-lightbox-meta {
+		display: flex;
+		align-items: center;
+		gap: 0.5em;
+	}
+
+	.pe-lightbox-dot {
+		color: var(--pe-muted-dim);
+	}
+
+	.pe-lightbox-close {
+		appearance: none;
+		border: none;
+		background: none;
+		color: var(--pe-white-soft);
+		font-size: 1.4rem;
+		line-height: 1;
+		padding: 0.2em;
+
+		&:hover {
+			cursor: pointer;
+			color: var(--pe-white);
+		}
+	}
+
+	.pe-lightbox-image {
+		width: min(100%, 70vh);
+		aspect-ratio: 1 / 1;
+		margin: 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		background: #000;
+	}
+
+	.pe-lightbox-image img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		display: block;
+	}
+
+	.pe-lightbox-foot {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 0.5em 1em;
+		padding: 1em 0.2em;
+	}
+
+	.pe-lightbox-title {
+		font-family: var(--pe-font-display), serif;
+		color: var(--pe-white);
+		font-weight: 600;
+		font-size: 1.02rem;
+	}
+
+	.pe-lightbox-link {
+		white-space: nowrap;
+		font-family: var(--pe-font-mono), serif;
+		font-size: 0.78rem;
+		letter-spacing: 0.02em;
 		color: var(--pe-white);
 	}
-	.pe-cap-medium {
-		font-family: var(--pe-font-mono);
-		font-size: 0.68rem;
-		color: var(--pe-muted-dim);
-		text-align: right;
-		white-space: nowrap;
-		flex-shrink: 0;
+
+	.pe-lightbox-link .bk {
+		color: var(--pe-white-faint);
 	}
 
-	.f-nomai {
-		grid-column: span 4;
-	}
-	.f-radiance {
-		grid-column: span 4;
-	}
-	.f-hornet {
-		grid-column: span 4;
-	}
-	.f-skullkid {
-		grid-column: span 5;
-	}
-	.f-skins {
-		grid-column: span 7;
-	}
-
-	@media (max-width: 820px) {
-		.f-nomai,
-		.f-radiance,
-		.f-hornet {
-			grid-column: span 6;
-		}
-		.f-skullkid,
-		.f-skins {
-			grid-column: span 12;
-		}
-	}
-	@media (max-width: 520px) {
-		.f-nomai,
-		.f-radiance,
-		.f-hornet {
-			grid-column: span 12;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.pe-frame img {
-			transition: none;
-		}
+	.pe-lightbox-link:hover {
+		color: var(--pe-blue-tint);
+		cursor: pointer;
 	}
 </style>

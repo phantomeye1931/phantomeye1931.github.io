@@ -1,7 +1,9 @@
 ---
-import Page, {type PageProps} from "./Page.astro";
+import Page, {type Props as PageProps} from "./Page.astro";
 
-let props = Astro.props as PageProps;
+export interface Props extends PageProps {}
+
+let props = Astro.props;
 
 props.opts.extraButtons = [
     { alignRight: false, url: "/", label: "HOME" }

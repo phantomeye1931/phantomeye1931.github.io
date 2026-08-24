@@ -79,6 +79,10 @@ html, body {
 	font-family: "Space Mono", monospace !important;
 }
 
+.font-phont {
+	font-family: "Phont", ui-monospace, monospace !important;
+}
+
 .heading {
 	text-shadow: var(--text-shadow-abberation);
 }
@@ -133,6 +137,14 @@ html, body {
 	font-family: "Space Mono";
 	src: url("/fonts/SpaceMono-Bold.woff2") format("woff2");
 	font-weight: 700;
+}
+
+@font-face {
+	font-family: "Phont";
+	src: url("/fonts/Phont.ttf?v=8edc1b3d") format("truetype");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
 }
 
 
