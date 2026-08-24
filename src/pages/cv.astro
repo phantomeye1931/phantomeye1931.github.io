@@ -330,16 +330,6 @@ const content = {
 </script>
 
 <style>
-    :root {
-        --accent: var(--col-text);
-        --text-main: var(--col-text);
-        --text-muted: var(--col-text-2);
-        --bg-main: var(--col-background);
-        --bg-alt: var(--col-background-2);
-        --border-ui: var(--col-background-2);
-        --border-switch: var(--col-element);
-    }
-
     * {
         box-sizing: border-box;
     }
@@ -353,7 +343,7 @@ const content = {
     .resume-layout {
         display: grid;
         grid-template-columns: 260px 1fr;
-        background: var(--bg-main);
+        background: var(--col-background);
         height: 100vh;
         max-width: 1400px;
         overflow: hidden;
@@ -381,15 +371,15 @@ const content = {
     }
 
     .sidebar {
-        background: var(--bg-alt);
+        background: var(--col-background-2);
         padding: 1.8rem;
-        border-right: 1px solid var(--border-ui);
+        border-right: 1px solid var(--col-border-2);
     }
 
     .profile-img-container {
         width: 115px;
         height: 115px;
-        border: 1px solid var(--border-switch);
+        border: 1px solid var(--col-accent);
         border-radius: 8px;
         margin: 0 auto 1.4rem;
         overflow: hidden;
@@ -407,11 +397,11 @@ const content = {
         font-size: 1.7rem;
         margin: 0.4rem 0;
         line-height: 1.2;
-        text-shadow: var(--text-shadow-abberation);
+        text-shadow: var(--text-shadow-aberration);
     }
 
     .tagline {
-        color: var(--accent);
+        color: var(--col-text-1);
         font-weight: 600;
         font-size: 0.88rem;
         margin-bottom: 1.25rem;
@@ -433,7 +423,7 @@ const content = {
 
     .content {
         padding: 2rem 2.5rem;
-        background: var(--bg-main);
+        background: var(--col-background);
     }
 
     .section-title {
@@ -442,15 +432,15 @@ const content = {
         font-size: 1.05rem;
         text-transform: uppercase;
         letter-spacing: 0.03em;
-        color: var(--accent);
-        text-shadow: var(--text-shadow-abberation);
+        color: var(--col-text-1);
+        text-shadow: var(--text-shadow-aberration);
         margin-bottom: 1.08rem;
         border-bottom: 3px solid var(--col-cmyk-cyan);
         padding-bottom: 0.2rem;
     }
 
     .timeline {
-        border-left: 2px solid var(--border-ui);
+        border-left: 2px solid var(--col-border-2);
         margin-left: 0.5rem;
     }
 
@@ -469,12 +459,12 @@ const content = {
         height: 12px;
         border-radius: 50%;
         background: var(--col-cmyk-yellow);
-        box-shadow: 0 0 0 2px var(--bg-main);
+        box-shadow: 0 0 0 2px var(--col-background);
     }
 
     .time {
         font-size: 0.78rem;
-        color: var(--text-muted);
+        color: var(--col-text-2);
         font-weight: 700;
         margin-bottom: 0.075rem;
     }
@@ -488,7 +478,7 @@ const content = {
     .org {
         font-size: 0.88rem;
         font-style: italic;
-        color: var(--text-muted);
+        color: var(--col-text-2);
         margin-top: 0.075rem;
     }
 
@@ -521,7 +511,7 @@ const content = {
     }
 
     .skill-tags li {
-        background: var(--bg-main);
+        background: var(--col-background);
         border: 1.5px solid var(--col-cmyk-cyan);
         padding: 0.18rem 0.55rem;
         border-radius: 4px;
@@ -540,10 +530,10 @@ const content = {
 
     .lang-switch {
         display: flex;
-        background: var(--bg-alt);
+        background: var(--col-background-2);
         padding: 0.2rem;
         border-radius: 8px;
-        border: 1px solid var(--border-switch);
+        border: 1px solid var(--col-accent);
         width: 90px;
         position: relative;
     }
@@ -554,7 +544,7 @@ const content = {
         left: 0.2rem;
         width: calc(50% - 0.2rem);
         height: calc(100% - 0.4rem);
-        background: var(--bg-main);
+        background: var(--col-background);
         border-radius: 6px;
         z-index: 1;
     }
@@ -567,19 +557,19 @@ const content = {
         font-size: 0.7rem;
         font-weight: 700;
         cursor: pointer;
-        color: var(--text-muted);
+        color: var(--col-text-2);
         position: relative;
         z-index: 2;
     }
 
     .lang-btn.active {
-        color: var(--text-main);
+        color: var(--col-text-1);
     }
 
     .print-btn {
-        background: var(--bg-alt);
-        border: 1px solid var(--border-switch);
-        color: var(--text-main);
+        background: var(--col-background-2);
+        border: 1px solid var(--col-accent);
+        color: var(--col-text-1);
         padding: 0.4rem;
         border-radius: 8px;
         cursor: pointer;
@@ -598,7 +588,7 @@ const content = {
 
         .sidebar {
             border-right: none;
-            border-bottom: 1px solid var(--border-ui);
+            border-bottom: 1px solid var(--col-border-2);
         }
 
         .profile-img-container {
