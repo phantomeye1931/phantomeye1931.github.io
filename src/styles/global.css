@@ -3,8 +3,9 @@
 	   Only the paper itself and the ink text are allowed to be warm — the
 	   mid-tones are kept close to neutral gray (not brown), and the one
 	   accent color is a process-ink cyan instead of a brown "wood" accent. */
-	--col-background:   #ece4d4;
-	--col-background-2: #ddd8ca;
+	--col-background:     #ece4d4;
+	--col-background-dark: #d9d1c2;
+	--col-background-2:   #ddd8ca;
 	--col-element:      #0d7fa3;
 	--col-text:         #211a14;
 	--col-text-2:       #595650;
@@ -41,9 +42,10 @@
 [color-scheme='dark'] {
 	/* dark stock: paper/ink roles swap rather than just dimming, same as the
 	   halftone canvas's multiply/screen switch */
-	--col-background:   #1c1712;
-	--col-background-2: #332f28;
-	--col-element:      #4fc3e8;
+	--col-background:     #1c1712;
+	--col-background-dark: #191410;
+	--col-background-2:   #332f28;
+	--col-element:       #4fc3e8;
 	--col-text:         #ece4d4;
 	--col-text-2:       #c2bfb2;
 	--col-text-3:       #9d9a8f;
