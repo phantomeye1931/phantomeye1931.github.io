@@ -7,24 +7,27 @@ const buttons: Button[] = [
 
 interface Props {
     extraButtons: Button[],
+    mobileCentered?: boolean,
 }
 const props = Astro.props;
 buttons.push( ...props.extraButtons );
 ---
 
-<div class="buttons left">
-    { buttons.filter(button => !button.alignRight).map((button) => (
+<div class="nav-bar" mobile-centered={ props.mobileCentered ?? false }>
+    <div class="buttons left">
+        { buttons.filter(button => !button.alignRight).map((button) => (
+                    <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
+        ))}
+    </div>
+    <div class="buttons right">
+        { buttons.filter(button => button.alignRight).map((button) => (
                 <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
-    ))}
-</div>
-<div class="buttons right">
-    { buttons.filter(button => button.alignRight).map((button) => (
-            <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
-    ))}
+        ))}
+    </div>
 </div>
 
 <script>
-    const $buttonsDiv = $(".buttons");
+    const $buttonsDiv = $(".buttons, .nav-bar");
 
     window.addEventListener("scroll", () => {
         $buttonsDiv.toggleClass("is-scrolled", window.scrollY > 0);
@@ -44,6 +47,10 @@ buttons.push( ...props.extraButtons );
 </script>
 
 <style scoped>
+    .nav-bar {
+        display: contents;
+    }
+
     .left {
         left: 0;
     }
@@ -64,8 +71,8 @@ buttons.push( ...props.extraButtons );
         align-items: flex-start;
         flex-wrap: wrap;
 
-        color: var(--col-text);
-        background-color: var(--col-background);
+        color: var(--col-nav-link-text);
+        background-color: var(--col-nav-background);
         border: 1px solid transparent;
         transition: border 150ms, color 150ms;
 
@@ -84,22 +91,73 @@ buttons.push( ...props.extraButtons );
             transition: color 150ms;
 
             .bk {
-                color: var(--col-cmyk-magenta);
+                color: var(--col-nav-link);
                 transition: color 150ms;
             }
 
             &:hover {
-                color: var(--col-text);
+                color: var(--col-nav-link-text);
                 text-decoration: underline;
 
                 .bk {
-                    color: var(--col-cmyk-cyan);
+                    color: var(--col-nav-link-hover);
                 }
             }
         }
     }
 
     .is-scrolled {
-        border: 1px solid var(--col-text-3);
+        border: 1px solid var(--col-nav-border);
+    }
+
+    @media (max-width: 640px) {
+        .nav-bar {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+
+            position: fixed;
+            inset: 0 0 auto 0;
+            z-index: 2000;
+            box-sizing: border-box;
+
+            color: var(--col-nav-link-text);
+            background-color: var(--col-nav-background);
+            border: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 150ms, color 150ms;
+
+            font-size: 0.95rem;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+            padding: .3rem .5rem;
+            gap: .5rem;
+
+            &.is-scrolled {
+                border-bottom-color: var(--col-nav-border);
+            }
+
+            /* combine left + right buttons into one flat row, evenly spaced */
+            &[mobile-centered="true"] {
+                justify-content: space-evenly;
+
+                .buttons {
+                    display: contents;
+                }
+            }
+        }
+
+        .buttons {
+            position: static;
+            width: auto;
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: none;
+            font-size: 1em; /* cancel the desktop 1.3em multiplier */
+            flex-wrap: nowrap;
+            gap: .5rem;
+        }
     }
 </style>

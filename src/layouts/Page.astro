@@ -15,6 +15,7 @@ export interface PageProps {
 
         buttons: boolean,
         extraButtons?: Button[],
+        mobileCentered?: boolean,
     },
     title: string,
     description: string,
@@ -37,7 +38,7 @@ const props = Astro.props as PageProps;
                     ? (<HalftoneBackground variant={ props.opts.bgVariant } flip={ props.opts.bgFlip ?? false } sticky={ props.opts.bgSticky ?? false }/>)
                     : '' }
                 <div class="page-contents">
-                    { props.opts.buttons ? <HeaderButtons extraButtons={ props.opts.extraButtons ?? [] }/> : '' }
+                    { props.opts.buttons ? <HeaderButtons extraButtons={ props.opts.extraButtons ?? [] } mobileCentered={ props.opts.mobileCentered ?? false }/> : '' }
                     <slot />
                 </div>
             </div>

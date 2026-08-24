@@ -20,6 +20,13 @@
 
 	--col-cmyk-green:   #00be2a;
 
+	/* HeaderButtons nav, aliased so a page can reskin just the nav later */
+	--col-nav-background:  var(--col-background);
+	--col-nav-border:      var(--col-text-3);
+	--col-nav-link:        var(--col-cmyk-magenta);
+	--col-nav-link-hover:  var(--col-cmyk-cyan);
+	--col-nav-link-text:   var(--col-text);
+
 	--text-shadow-abberation: /* Chromatic abberation */
 		1.8px 0 0 color-mix(in srgb, var(--col-cmyk-cyan) 55%, transparent),
 		-1.2px 1px 0 color-mix(in srgb, var(--col-cmyk-magenta) 50%, transparent),
