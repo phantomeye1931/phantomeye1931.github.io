@@ -6,7 +6,7 @@
     --col-matrix-1: #e1ead4;
     --col-matrix-2: #fcf8ea;
     --col-matrix-line: #b6c3cd;
-    --col-photo-border: var(--col-matrix-2);
+    --col-photo-fill: var(--col-matrix-2);
 
     --tape-opacity: 0.8;
     --code-filter: invert() hue-rotate(180deg);
@@ -110,7 +110,7 @@ html {
         background-image: radial-gradient(circle, transparent 40%, var(--col-paper) 40%);
         background-size: var(--hole-size) var(--hole-size);
 
-        border-right: 3px dotted var(--col-text-3);
+        border-right: 3px dotted var(--col-border-2);
     }
 
     &::after {
@@ -136,7 +136,7 @@ html {
 
 /* # Markdown styling */
 hr { /* Separator */
-    border: 1px solid var(--col-text-2);
+    border: 1px solid var(--col-border-2);
     margin: 0.7rem;
 }
 
@@ -178,7 +178,7 @@ h2 {
 
     &::after {
         content: "";
-        border-bottom: 2px solid var(--col-text-2);
+        border-bottom: 2px solid var(--col-border-2);
 
         flex: 1;
 
@@ -290,7 +290,7 @@ pre.astro-code {
     width: fit-content;
     height: fit-content;
 
-    background-color: var(--col-photo-border);
+    background-color: var(--col-photo-fill);
     padding: 1rem 1.6rem;
 
     rotate: var(--rotation);

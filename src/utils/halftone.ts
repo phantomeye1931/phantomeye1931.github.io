@@ -167,7 +167,7 @@ function defaultChannelDefs(): DefaultChannel[] {
         // switches to a 'screen' blend, under which this near-black plate is a no-op —
         // the bare dark substrate already reads as the shadow, exactly as on real dark stock
         {
-            id: 'key', label: 'Key (black)', color: 'var(--col-text)', angle: 45, ox: 0, oy: 0, gamma: 2.1, gain: 0.55, alpha: 0.75,
+            id: 'key', label: 'Key (black)', color: 'var(--col-text-1)', angle: 45, ox: 0, oy: 0, gamma: 2.1, gain: 0.55, alpha: 0.75,
             blobs: [
                 blob(0.23, 0.50, 0.15, 0.032, 0.032, 0.020, 0.026, 0.7, 3.1),
             ],
