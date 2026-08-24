@@ -1,38 +1,30 @@
 ---
+export enum BackgroundVariant {
+    Fill = 'fill',
+    Gradient = 'gradient',
+    HeroBand = 'hero-band',
+}
+
 interface Props {
     sticky: boolean,
-    fill?: boolean,
+    variant?: BackgroundVariant,
     flip?: boolean,
-    heroBand?: boolean,
 }
 
 const props = Astro.props;
 
-// Every combination of theme (light/dark) x variant (gradient/fill/mobile) has
-// been pre-rendered to video (see /public/backgrounds and
-// pages/cmyk-halftone.astro, the recorder that produced them). This component
-// no longer needs to render anything itself, just point a <video> at the
-// right pre-baked file.
-const variant = (props.fill ?? false) ? 'fill' : 'gradient';
+const variant = props.variant ?? BackgroundVariant.Fill;
 ---
 
-<div class="bg-grid halftone-wrapper" aria-hidden="true" sticky={ props.sticky } flip={ props.flip ?? false } data-variant={variant} data-hero-band={ props.heroBand ?? false }>
+<div class="bg-grid halftone-wrapper" aria-hidden="true" sticky={ props.sticky } flip={ props.flip ?? false } data-variant={variant}>
     <video class="halftone-video" muted loop playsinline preload="auto" disableRemotePlayback></video>
 </div>
 
-<!-- Opaque by default via plain CSS (no JS needed to show it), so it's already
-     blocking on first paint, long before any script has had a chance to run.
-     That closes the gap where page content used to appear a beat before the
-     background video finished downloading. JS only ever removes the block. -->
+<!-- Hide the site until the halftone videos are loaded, for max 4 seconds -->
 <div class="halftone-veil"></div>
 <noscript><style>.halftone-veil { display: none !important; }</style></noscript>
 
 <script is:inline>
-    // A plain inline script, not the bundled/deferred module script below.
-    // It runs the instant it's parsed, so this safety net's countdown starts
-    // as early as possible instead of only after the main bundle finishes
-    // loading, which on a slow connection could itself eat into the window
-    // this is meant to bound.
     setTimeout(() => {
         document.querySelector('.halftone-veil')?.classList.add('is-hidden');
     }, 4000);
@@ -46,8 +38,11 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
     document.addEventListener('DOMContentLoaded', () => {
         if (!$wrapper || !$video) return;
 
-        const baseVariant = $wrapper.dataset.variant === 'fill' ? 'fill' : 'gradient';
-        const heroBand = $wrapper.dataset.heroBand === 'true';
+        const wrapperVariant = $wrapper.dataset.variant === 'gradient' ? 'gradient' : 'fill';
+        const heroBand = $wrapper.dataset.variant === 'hero-band';
+
+        // Hero-band only overrides the video source below 640px. Above that it renders as a plain gradient
+        const baseVariant = heroBand ? 'gradient' : wrapperVariant;
         const MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
         function currentVariant() {
             return (heroBand && MOBILE_QUERY.matches) ? 'mobile' : baseVariant;
@@ -59,16 +54,10 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
             return document.documentElement.getAttribute('color-scheme') === 'dark';
         }
 
-        // The hard 4s ceiling on how long the veil can block lives in an
-        // inline, non-deferred <script> above this one, so it starts counting
-        // before this module even finishes loading. This just needs its own
-        // idempotent way to lift the veil the moment the video is actually ready.
         function clearVeil() {
             $veil?.classList.add('is-hidden');
         }
 
-        // only the very first load should gate the page. A later theme
-        // toggle swapping to the other video shouldn't re-block everything
         let firstLoad = true;
 
         function sourcesFor(key: string): string {
@@ -83,11 +72,7 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
             return key.startsWith('dark-') ? key.replace('dark-', 'light-') : key.replace('light-', 'dark-');
         }
 
-        // $active is the visible video, $standby a same-sized twin sitting at
-        // opacity 0 and already playing the theme this page isn't showing —
-        // swapping just toggles opacity between two already-decoded videos,
-        // instead of load()-ing the visible one and flashing the bare
-        // background color while it re-buffers a first frame
+        // $active is the visible video, $standby is the dark mode version
         let $active = $video!;
         let $standby: HTMLVideoElement | null = null;
 
@@ -107,9 +92,6 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
             return v;
         }
 
-        // Keeps playing muted+hidden regardless of reduceMotion so it always has a decoded frame ready.
-        // Always reasserts play() even on a recycled node — a demoted standby never gets a fresh
-        // play() call otherwise, so a hidden video that silently stalls never resumes on its own
         function warm(key: string) {
             const v = ensureStandby();
             if (v.dataset.key !== key) {
@@ -129,15 +111,13 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
         function swapTo(key: string) {
             if ($standby && $standby.dataset.key === key && $standby.readyState >= 2) {
                 const incoming = $standby, outgoing = $active;
-                if (reduceMotion) incoming.pause(); // freeze on the frame it's already showing
-                else incoming.play().catch(() => {}); // reassert in case it stalled while hidden
+                if (reduceMotion) incoming.pause(); // Freeze on the frame it's already showing
+                else incoming.play().catch(() => {}); // Reassert in case it stalled while hidden
                 incoming.style.opacity = '1';
                 outgoing.style.opacity = '0';
                 $active = incoming;
-                $standby = outgoing; // recycled below via warm() for the next toggle
+                $standby = outgoing; // Recycled below via warm() for the next toggle
             } else {
-                // no ready standby (first load, or a toggle too fast to have preloaded) — fall
-                // back to loading the visible video directly, same as before this existed
                 $active.dataset.key = key;
                 $active.innerHTML = sourcesFor(key);
                 $active.load();
@@ -155,8 +135,7 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
             if (firstLoad) {
                 firstLoad = false;
                 $active.addEventListener('error', clearVeil, { once: true });
-                // reduced motion never plays, so just wait for a paintable frame
-                // instead of the "enough buffered to play through" signal
+
                 if (reduceMotion) {
                     if ($active.readyState >= 2) clearVeil();
                     else $active.addEventListener('loadeddata', clearVeil, { once: true });
@@ -171,8 +150,6 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
 
         applyTheme();
 
-        // the [sync] header button flips document.documentElement's color-scheme
-        // attribute live. Swap to the matching pre-rendered video.
         new MutationObserver(applyTheme)
             .observe(document.documentElement, { attributes: true, attributeFilter: ['color-scheme'] });
 
@@ -194,7 +171,7 @@ const variant = (props.fill ?? false) ? 'fill' : 'gradient';
         height: 100svh;
     }
 
-    &[data-hero-band="true"][sticky="false"] {
+    &[data-variant="hero-band"][sticky="false"] {
         @media (max-width: 640px) {
             height: 60svh;
             min-height: 0;
@@ -232,13 +209,9 @@ video.halftone-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 0.3s ease; /* crossfade between the active/standby pair on theme swap */
+    transition: opacity 0.3s ease; /* Crossfade between the active/standby pair on theme swap */
 }
 
-/* the drift/warp/fade math has no inherent handedness. Mirroring the
-   pre-rendered video is a cheap way to reuse the exact same
-   "concentrated + fading" look on the opposite side, rather than
-   re-recording a mirrored pass */
 .bg-grid[flip="true"] video.halftone-video {
     transform: scaleX(-1);
 }

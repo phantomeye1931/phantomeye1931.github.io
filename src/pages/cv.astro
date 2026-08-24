@@ -1,6 +1,7 @@
 ---
 // CV.astro
 import Page from "../layouts/Page.astro";
+import { BackgroundVariant } from "../components/HalftoneBackground.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts.ts";
 
 const personal = {
@@ -56,7 +57,7 @@ const content = {
 };
 ---
 
-<Page title={SITE_TITLE + " CV"} description={"Armand de Vries Curriculum Vitae"} opts={{ background: true, backgroundVariant: 'halftone', bgFlip: true, sticky: false, buttons: false }}>
+<Page title={SITE_TITLE + " CV"} description={"Armand de Vries Curriculum Vitae"} opts={{ background: true, bgVariant: BackgroundVariant.Gradient, bgFlip: true, bgSticky: false, buttons: false }}>
     <div class="lang-switch-wrapper no-print">
         <button class="print-btn" onclick="window.print()" title="Print to PDF">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

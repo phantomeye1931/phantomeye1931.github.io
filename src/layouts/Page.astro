@@ -2,14 +2,14 @@
 import BaseHead from "../components/BaseHead.astro";
 
 import ThemeManager from "../components/util/ThemeManager.astro";
-import HalftoneBackground from "../components/HalftoneBackground.astro";
+import HalftoneBackground, {BackgroundVariant} from "../components/HalftoneBackground.astro";
 import HeaderButtons from "../components/HeaderButtons.astro";
 import type {Button} from "../utils/types.ts";
 
 export interface PageProps {
     opts: {
         background: boolean,
-        bgFill?: boolean,
+        bgVariant?: BackgroundVariant,
         bgFlip?: boolean,
         bgSticky?: boolean,
 
@@ -34,7 +34,7 @@ const props = Astro.props as PageProps;
         <main>
             <div class="page-wrapper">
                 { props.opts.background
-                    ? (<HalftoneBackground fill={ props.opts.bgFill ?? false } flip={ props.opts.bgFlip ?? false } sticky={ props.opts.bgSticky ?? false }/>)
+                    ? (<HalftoneBackground variant={ props.opts.bgVariant } flip={ props.opts.bgFlip ?? false } sticky={ props.opts.bgSticky ?? false }/>)
                     : '' }
                 <div class="page-contents">
                     { props.opts.buttons ? <HeaderButtons extraButtons={ props.opts.extraButtons ?? [] }/> : '' }

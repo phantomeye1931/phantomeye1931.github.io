@@ -20,7 +20,7 @@ const props = Astro.props as LocalProps;
 const headerButtons: Button[] = [{ alignRight: true, label: "BACK TO TOP", url: "#"}];
 ---
 
-<Page title={props.title} description={props.description} opts={{ background: true, bgFill: true, buttons: true, extraButtons: headerButtons, bgSticky: true }}>
+<Page title={props.title} description={props.description} opts={{ background: true, buttons: true, extraButtons: headerButtons, bgSticky: true }}>
 	<article>
 		<div class="paper" style={ getPageStyle(props.description) }>
 			<ShapePaperClip class="paperclip"/>
