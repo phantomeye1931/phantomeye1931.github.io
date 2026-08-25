@@ -1,0 +1,49 @@
+---
+import arrowSvg from "../../../public/svg/doodles/curly-arrow-right.svg?raw";
+interface Props {
+    x?: number // px, moves the arrow from its inherited anchor point
+    y?: number // px
+    textX?: number // px, moves the label independently of the arrow
+    textY?: number // px
+}
+
+const { x = 0, y = 0, textX = 0, textY = 0 } = Astro.props;
+---
+
+<div class="pointout" style={`translate: ${x}px ${y}px;`}>
+    <div class="arrow" set:html={arrowSvg} />
+    <span class="text" style={`translate: ${textX}px ${textY}px;`}><slot /></span>
+</div>
+
+<style>
+    .pointout {
+        --col-doodle: var(--col-text-2);
+
+        position: absolute;
+        inset: 0 auto auto 0;
+        pointer-events: none;
+    }
+
+    .arrow {
+        display: block;
+        width: 7rem;
+
+        & :global(svg) {
+
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+    }
+
+    .text {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        white-space: nowrap;
+
+        font-family: "Caveat", sans-serif;
+        font-size: 2.55rem;
+        color: var(--col-doodle);
+    }
+</style>

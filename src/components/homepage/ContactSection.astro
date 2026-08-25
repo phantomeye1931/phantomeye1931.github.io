@@ -1,5 +1,6 @@
 ---
-import BusinessCard from "../BusinessCard.astro";
+import BusinessCard from "../items/BusinessCard.astro";
+import DoodleComment from "../items/DoodleComment.astro";
 ---
 
 <div class="section" id="contact">
@@ -12,6 +13,7 @@ import BusinessCard from "../BusinessCard.astro";
 
     <div class="card-wrapper">
         <BusinessCard />
+        <DoodleComment x={-130} y={-20} textX={-180} textY={-95}>Click to flip!</DoodleComment>
     </div>
 
     <div class="contact-fallback">
@@ -40,6 +42,10 @@ import BusinessCard from "../BusinessCard.astro";
 
     .contact-fallback {
         display: none;
+    }
+
+    :global(.card-wrapper) {
+        position: relative;
     }
 
     @media (max-width: 1000px) {
