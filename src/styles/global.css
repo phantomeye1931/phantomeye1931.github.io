@@ -6,7 +6,7 @@
 	--col-background:     #ece4d4;
 	--col-background-dark: #d9d1c2;
 	--col-background-2:   #ddd8ca;
-
+	--col-background-black: #1e202b;
 	/* Text - legibility ramp, tuned to contrast against the background. Use
 	   only for color/text-shadow ink - never border, never background */
 	--col-text-1:       #211a14;
