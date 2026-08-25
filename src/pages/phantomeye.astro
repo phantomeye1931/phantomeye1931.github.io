@@ -6,6 +6,8 @@
 import HeroSection from "../components/phantomeye/HeroSection.astro";
 import WallSection from "../components/phantomeye/WallSection.astro";
 import MinecraftSkinSection from "../components/phantomeye/MinecraftSkinSection.astro";
+import SpriteSection from "../components/phantomeye/SpriteSection.astro";
+import SocialsSection from "../components/phantomeye/SocialsSection.astro";
 import Page from "../layouts/Page.astro";
 import type {Button} from "../utils/types.ts";
 
@@ -13,9 +15,10 @@ const title = "PhantomEye";
 const description = "PhantomEye — low-poly 3D renders and pixel work.";
 
 const headerButtons: Button[] = [
-	{ alignRight: true, label: "MODELS", url: "/#weblog"},
-	{ alignRight: true, label: "SKINS",  url: "/#projects"},
-	{ alignRight: true, label: "SPRITES",  url: "/#projects"},
+	{ alignRight: true, label: "MODELS", url: "#wall"},
+	{ alignRight: true, label: "SKINS",  url: "#skins"},
+	{ alignRight: true, label: "SPRITES",  url: "#sprites"},
+	{ alignRight: true, label: "SOCIALS",  url: "#socials"},
 	{ alignRight: true, label: "CODING",  url: "https://armand.dev/"},
 ];
 ---
@@ -24,6 +27,8 @@ const headerButtons: Button[] = [
 	<HeroSection />
 	<WallSection />
 	<MinecraftSkinSection />
+	<SpriteSection />
+	<SocialsSection />
 </Page>
 
 <style is:global>
@@ -78,7 +83,7 @@ const headerButtons: Button[] = [
 		--pe-font-mono: "IBM Plex Mono", "Space Mono", ui-monospace, "Courier New", monospace;
 
 		--col-background:      var(--pe-void);
-		--col-nav-background:  #00000000;
+		--col-nav-background:  var(--pe-blue);
 		--col-nav-border:      var(--pe-blue-tint);
 		--col-nav-link:        var(--pe-white);
 		--col-nav-link-hover:  var(--pe-white-faint);
@@ -91,6 +96,15 @@ const headerButtons: Button[] = [
 
 		color: var(--pe-white);
 		-webkit-font-smoothing: antialiased;
+	}
+	/* Nav background tracks whatever's actually behind it (hero blue, then the void
+	   below) instead of going transparent, so it still reads as "see-through" without
+	   fighting the busier backgrounds further down the page. Border switches to the
+	   same hairline color the cards below use. Both toggled by the scroll listener
+	   in this page's script below. */
+	body.pe-past-hero {
+		--col-nav-background: var(--pe-void);
+		--col-nav-border: var(--pe-void-hair);
 	}
 	html {
 		margin: 0;
@@ -109,3 +123,16 @@ const headerButtons: Button[] = [
 		text-decoration: none;
 	}
 </style>
+
+<script>
+	// Flips the nav's background var (see body.pe-past-hero above) from hero blue to
+	// void dark once the page has scrolled a full viewport height, so it keeps tracking
+	// whatever's actually behind it instead of just going transparent.
+	const NAV_SWITCH_AT = () => window.innerHeight;
+
+	const update = () => {
+		document.body.classList.toggle("pe-past-hero", window.scrollY > NAV_SWITCH_AT());
+	};
+	update();
+	window.addEventListener("scroll", update, { passive: true });
+</script>

@@ -1,0 +1,149 @@
+---
+import {padZero} from "../../utils/strings.ts";
+import GalleryHeader from "./GalleryHeader.astro";
+
+interface Piece {
+	title: string;
+	image: string;
+	alt: string;
+	description?: string;
+}
+
+// Placeholder until real sprite/2D pieces are ready — drop entries in here the
+// same way WallSection's `pieces` array works, same Piece shape minus sketchfabLink.
+const pieces: Piece[] = [];
+---
+
+<section class="sprite-gallary" id="sprites">
+	<div class="sprite-gallary-wrapper">
+		<GalleryHeader text="2D Art &amp; Sprites" />
+
+		{ pieces.length > 0 ? (
+			<div class="sprite-grid">
+				{
+					pieces.reverse().map((piece, i) => (
+						<figure class="sprite-item">
+							<div class="image">
+								<img src={ piece.image } alt={ piece.alt } loading="lazy" />
+							</div>
+							<figcaption>
+								<div class="details-row">
+									<span class="pe-cap-num">Nr. { padZero(pieces.length - i, 3) }</span>
+									<span class="pe-cap-medium">2D Art</span>
+								</div>
+								<span class="pe-cap-title">{ piece.title } <span class="description font-dotmatrix">{ piece.description }</span> </span>
+							</figcaption>
+						</figure>
+					))
+				}
+			</div>
+		) : (
+			<div class="sprite-placeholder">
+				<span class="placeholder-label">Coming soon</span>
+				<p>Pixel sprites and other 2D work are on their way — check back soon.</p>
+			</div>
+		) }
+	</div>
+</section>
+
+<style>
+	.sprite-gallary {
+		background: var(--pe-void);
+		padding: clamp(48px, 7vw, 84px) 0 clamp(56px, 8vw, 96px);
+	}
+	.sprite-gallary-wrapper {
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 0 clamp(18px, 3.5vw, 48px);
+	}
+
+	.sprite-grid {
+		--item-size: 300px;
+
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: repeat(auto-fit, minmax(min(var(--item-size), 100%), 1fr));
+	}
+
+	.sprite-item {
+		display: grid;
+		grid-row: span 3;
+		grid-template-rows: subgrid;
+
+		border: 1px solid var(--pe-void-hair);
+		background: var(--pe-void-raised);
+		padding: 8px 8px 0;
+		margin: 0;
+	}
+
+	.sprite-item .image {
+		grid-row: 1;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.sprite-item img {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+
+	figcaption {
+		display: contents;
+	}
+
+	.sprite-item .details-row {
+		grid-row: 2;
+		display: flex;
+		flex-direction: row;
+		width: 100%;
+		justify-content: space-between;
+		padding: 0.75em 0.2em 0;
+	}
+
+	.sprite-item .description {
+		padding-left: 0.5em;
+		font-size: 0.8em;
+		color: var(--pe-white-soft);
+	}
+
+	.pe-cap-num,
+	.pe-cap-medium {
+		font-family: var(--pe-font-mono), serif;
+		color: var(--pe-muted-dim);
+		display: block;
+
+		font-size: 0.68rem;
+		letter-spacing: 0.05em;
+	}
+
+	.pe-cap-title {
+		grid-row: 3;
+		font-family: var(--pe-font-display), serif;
+		color: var(--pe-white);
+
+		padding: 0.1em 0.2em 1em;
+		font-weight: 600;
+		font-size: 1.02rem;
+	}
+
+	.sprite-placeholder {
+		border: 1px dashed var(--pe-void-hair);
+		padding: clamp(40px, 6vw, 64px) clamp(20px, 4vw, 32px);
+		text-align: center;
+	}
+
+	.placeholder-label {
+		font-family: var(--pe-font-mono), serif;
+		font-size: 0.7rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--pe-white-faint);
+	}
+
+	.sprite-placeholder p {
+		margin: 0.8em auto 0;
+		max-width: 40ch;
+		color: var(--pe-white-soft);
+	}
+</style>

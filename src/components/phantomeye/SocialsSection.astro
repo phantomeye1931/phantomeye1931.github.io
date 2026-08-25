@@ -1,0 +1,107 @@
+---
+import GalleryHeader from "./GalleryHeader.astro";
+
+interface Social {
+	label: string;
+	handle: string;
+	url: string;
+}
+
+// Discord invite is still a placeholder until Armand sends a real one.
+const discord: Social = { label: "Discord", handle: "@phantomeye", url: "#" };
+
+const socials: Social[] = [
+	{ label: "GitHub", handle: "phantomeye1931", url: "https://github.com/phantomeye1931" },
+	{ label: "Modrinth", handle: "PhantomEye", url: "https://modrinth.com/user/PhantomEye" },
+	{ label: "Sketchfab", handle: "PhantomEye", url: "https://sketchfab.com/PhantomEye" },
+];
+---
+
+<section class="socials-section" id="socials">
+	<div class="socials-wrapper">
+		<GalleryHeader text="Elsewhere" />
+
+		<div class="socials-grid">
+			<a class="social-card discord-card" href={ discord.url } target="_blank" rel="noopener">
+				<span class="social-label font-mono">{ discord.label }</span>
+				<span class="social-handle">{ discord.handle }</span>
+				<span class="social-cta font-mono"><span class="bk">[</span>Best way to reach me<span class="bk">]</span></span>
+			</a>
+
+			{ socials.map((social) => (
+				<a class="social-card" href={ social.url } target="_blank" rel="noopener">
+					<span class="social-label font-mono">{ social.label }</span>
+					<span class="social-handle">{ social.handle }</span>
+					<span class="social-cta font-mono"><span class="bk">[</span>Visit &rarr;<span class="bk">]</span></span>
+				</a>
+			)) }
+		</div>
+	</div>
+</section>
+
+<style>
+	.socials-section {
+		background: var(--pe-void);
+		padding: clamp(48px, 7vw, 84px) 0 clamp(72px, 10vw, 120px);
+	}
+	.socials-wrapper {
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 0 clamp(18px, 3.5vw, 48px);
+	}
+
+	.socials-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 1rem;
+	}
+
+	.social-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4em;
+
+		border: 1px solid var(--pe-void-hair);
+		background: var(--pe-void-raised);
+		padding: 1.4em 1.2em;
+
+		transition: border-color 150ms;
+	}
+	.social-card:hover {
+		border-color: var(--pe-blue-tint);
+	}
+
+	.social-label {
+		font-size: 0.7rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--pe-white-faint);
+	}
+	.social-handle {
+		font-family: var(--pe-font-display), sans-serif;
+		font-weight: 600;
+		font-size: 1.2rem;
+		color: var(--pe-white);
+	}
+	.social-cta {
+		margin-top: 0.4em;
+		font-size: 0.8rem;
+		color: var(--pe-white-soft);
+	}
+	.social-cta .bk {
+		color: var(--pe-white-faint);
+	}
+	.social-card:hover .social-cta {
+		color: var(--pe-white);
+	}
+
+	.discord-card {
+		grid-column: 1 / -1;
+		background: linear-gradient(135deg, var(--pe-blue-deeper), var(--pe-void-raised) 70%);
+		border-color: var(--pe-blue-tint);
+		padding: 1.8em 1.6em;
+	}
+	.discord-card .social-handle {
+		font-size: 1.7rem;
+	}
+</style>

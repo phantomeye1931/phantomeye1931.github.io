@@ -7,6 +7,21 @@ import GalleryHeader from "./GalleryHeader.astro";
 		<GalleryHeader text="Minecraft Skins" />
 
 		<img class="skin-sheet" src="/phantomeye/renders/skins.png" alt="Sheet of custom Minecraft skins" loading="lazy" />
+
+		<div class="commission-card">
+			<img class="commission-avatar" src="/phantomeye/pfp.png" alt="PhantomEye avatar" loading="lazy" />
+			<div class="commission-body">
+				<div class="commission-status">
+					<span class="ring"></span>
+					<span class="status-label">Commissions open</span>
+				</div>
+				<h3 class="commission-title">Minecraft Skin Commissions</h3>
+				<p class="commission-text">Custom skins made to order — tell me what you're after and I'll work it out with you.</p>
+				<span class="pe-tag-code commission-discord font-mono">
+					<span class="pe-hash">Discord @</span><span class="pe-num">phantomeye</span>
+				</span>
+			</div>
+		</div>
 	</div>
 </section>
 
@@ -24,5 +39,73 @@ import GalleryHeader from "./GalleryHeader.astro";
 	.skin-sheet {
 		width: 100%;
 		height: auto;
+	}
+
+	.commission-card {
+		margin-top: clamp(28px, 4vw, 40px);
+		display: flex;
+		align-items: center;
+		gap: clamp(20px, 3vw, 32px);
+
+		border: 1px solid var(--pe-void-hair);
+		background: var(--pe-void-raised);
+		padding: clamp(20px, 3vw, 32px);
+	}
+
+	.commission-avatar {
+		width: clamp(120px, 14vw, 176px);
+		height: clamp(120px, 14vw, 176px);
+		flex-shrink: 0;
+		border: 1px solid var(--pe-void-hair);
+		object-fit: cover;
+	}
+
+	.commission-status {
+		display: flex;
+		align-items: center;
+		gap: 0.6em;
+		margin-bottom: 0.6em;
+	}
+	.commission-status .ring {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: var(--pe-blue-tint);
+		flex-shrink: 0;
+	}
+	.commission-status .status-label {
+		font-size: 0.7rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--pe-white-faint);
+	}
+
+	.commission-title {
+		margin: 0 0 0.5em;
+		font-family: var(--pe-font-display), sans-serif;
+		font-weight: 600;
+		font-size: clamp(1.2rem, 2vw, 1.5rem);
+		color: var(--pe-white);
+	}
+
+	.commission-text {
+		margin: 0 0 1em;
+		color: var(--pe-white-soft);
+		font-size: 0.92rem;
+		line-height: 1.5;
+		max-width: 46ch;
+	}
+
+	@media (max-width: 640px) {
+		.commission-card {
+			flex-direction: column;
+			text-align: center;
+		}
+		.commission-status {
+			justify-content: center;
+		}
+		.commission-text {
+			max-width: none;
+		}
 	}
 </style>
