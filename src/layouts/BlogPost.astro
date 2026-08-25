@@ -5,7 +5,7 @@ import ShapePaperClip from '../components/shapes/ShapePaperClip.astro';
 import {getPageStyle} from "../utils/random_blog_style.ts";
 import Page from "./Page.astro";
 import type {Button} from "../utils/types.ts";
-import DoodleComment from "../components/items/DoodleComment.astro";
+import DoodleComment, {Doodle} from "../components/items/DoodleComment.astro";
 import BusinessCard from '../components/items/BusinessCard.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
@@ -45,7 +45,7 @@ const headerButtons: Button[] = [
 
 			<div class="business-card">
 				<div class="comment">
-					<DoodleComment x={200} y={-60} textX={-180} textY={-95}>Click to flip!</DoodleComment>
+					<DoodleComment x={200} y={-60} textX={-180} textY={-95} doodle={ Doodle.ARROW_CURLY_RIGHT }>Click to flip!</DoodleComment>
 				</div>
 				<BusinessCard />
 			</div>
