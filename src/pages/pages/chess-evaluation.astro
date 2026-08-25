@@ -16,7 +16,6 @@ import boardSource from "../../chess/implementation-details.ts?raw";
 import testConfigurationsSource from "../../chess/test-configurations.ts?raw";
 
 const title = "Chess Validation";
-const description = "Chess static evaluation demo. Algorithm implementation based on this blog post.";
 
 // One entry per file under src/chess/ that's actually algorithm (not DOM/rendering plumbing) -
 // each raw-imported straight from the file that also runs it, so this panel can never drift out
@@ -50,7 +49,7 @@ const UNINTERESTING_SECTIONS = [
                 <h1 class="heading">{ title }</h1>
             </div>
 
-            <p class="subtext">{ description }</p>
+            <p class="subtext"> Chess static evaluation demo. Algorithm implementation based on <a href="/blog/static-chess-engine">this blog post</a>. </p>
         </div>
 
         <div class="board">
@@ -79,19 +78,19 @@ const UNINTERESTING_SECTIONS = [
             <div class="highlights-title">Highlights - Click to enable:</div>
 
             <div class="strip below">
-                <div class="button font-dotmatrix">
+                <div class="button highlight-button font-dotmatrix">
                     <a id="toggle-none">none</a>
                     <div class="square" />
                 </div>
-                <div class="button font-dotmatrix">
+                <div class="button highlight-button font-dotmatrix">
                     <a id="toggle-last-move">last move</a>
                     <div class="square disabled" style="background-color: var(--highlight-recent);" />
                 </div>
-                <div class="button font-dotmatrix">
+                <div class="button highlight-button font-dotmatrix">
                     <a id="toggle-attacked">attacks</a>
                     <div class="square disabled" style="background-color: var(--highlight-attack);" />
                 </div>
-                <div class="button font-dotmatrix">
+                <div class="button highlight-button font-dotmatrix">
                     <a id="toggle-checks">checks</a>
                     <div class="square disabled" style="background-color: var(--highlight-check-line);" />
                     <div class="square disabled" style="background-color: var(--highlight-check-origin);" />
@@ -102,7 +101,7 @@ const UNINTERESTING_SECTIONS = [
 
     <SidePanel id="algorithmPanel" title="Live Page code" width="min(34rem, 90vw)">
         <p class="algorithm-intro">
-            The code behind this demo, read alongside <a href="/blog/static-chess-engine">the blog post</a>.
+            The code behind this demo, read alongside <a href="/blog/static-chess-engine">the associating blog post</a>.
             <br><br>
             The code is not entirely ordered in the same way as the blog post, so I recommend you finish reading it first.
         </p>
@@ -133,6 +132,8 @@ const UNINTERESTING_SECTIONS = [
         <div class="divider"><span class="text font-dotmatrix">Load a Test Configuration</span></div>
 
         <div class="buttons-wrapper">
+            <div class="config-button font-dotmatrix" data-config="normalGame">Normal Setup</div>
+            <div class="config-button font-dotmatrix" data-config="castling">Castling</div>
             <div class="config-button font-dotmatrix" data-config="doubleCheck">Double Check</div>
             <div class="config-button font-dotmatrix" data-config="noPawns">No Pawns</div>
             <div class="config-button font-dotmatrix" data-config="enPassantCheck">En Passant Check</div>
@@ -148,8 +149,8 @@ const UNINTERESTING_SECTIONS = [
     import { selectPiece, movePiece } from "../../chess/game-flow";
     import { endMessage } from "../../chess/mate-detection";
     import { promotePiece } from "../../chess/special-moves";
-    import { TEST_DOUBLE_CHECK, TEST_NO_PAWNS, TEST_EN_PASSANT_CHECK, TEST_EN_PASSANT_PSEUDO_PIN } from "../../chess/test-configurations";
-    import {loadConfiguration} from "../../chess/test-configurations.ts";
+    import { TEST_DOUBLE_CHECK, TEST_NO_PAWNS, TEST_EN_PASSANT_CHECK, TEST_EN_PASSANT_PSEUDO_PIN,
+            TEST_KINGS_AND_ROOKS, TEST_NORMAL_BOARD, loadConfiguration } from "../../chess/test-configurations";
 
     /* # Web-page code to make the interactable chess board # */
 
@@ -209,7 +210,7 @@ const UNINTERESTING_SECTIONS = [
             }
         }
 
-        $(".player").text(gameBoard.currentTurn === Color.WHITE ? "White" : "Black");
+        $(".status").html(endMessage ? '' : `<span class="player">${ gameBoard.currentTurn === Color.WHITE ? "White" : "Black" }</span> to move`);
         $(".chess-move-count").text(endMessage ?? String(gameBoard.availableMoves) + " available moves");
 
         if (gameBoard.phase === Phase.PROMOTING && gameBoard.promotingPiece != null) {
@@ -260,6 +261,8 @@ const UNINTERESTING_SECTIONS = [
 
     // Maps each config button's data-config attribute to the board layout it should load
     const TEST_CONFIGURATIONS: Record<string, string[][]> = {
+        normalGame: TEST_NORMAL_BOARD,
+        castling: TEST_KINGS_AND_ROOKS,
         doubleCheck: TEST_DOUBLE_CHECK,
         noPawns: TEST_NO_PAWNS,
         enPassantCheck: TEST_EN_PASSANT_CHECK,
@@ -286,19 +289,19 @@ const UNINTERESTING_SECTIONS = [
         { buttonId: "toggle-last-move", bodyClass: "show-recent" },
         { buttonId: "toggle-attacked", bodyClass: "show-attacked" },
         { buttonId: "toggle-checks", bodyClass: "show-checks" },
+        { buttonId: "toggle-none", bodyClass: null },
     ];
 
     // Activates one highlight type (or none)
     function selectHighlight(active: string | null) {
         for (let option of HIGHLIGHT_OPTIONS) {
-            $("body").toggleClass(option.bodyClass, option.bodyClass === active);
-            $(`#${option.buttonId}`).parent().find(".square").toggleClass("disabled", option.bodyClass !== active);
+            if (option.bodyClass) $("body").toggleClass(option.bodyClass, option.bodyClass === active);
+            $(`#${option.buttonId}`).parent().toggleClass("disabled", option.bodyClass !== active);
         }
     }
 
     for (let option of HIGHLIGHT_OPTIONS)
         $(`#${option.buttonId}`).parent().on("click", () => selectHighlight(option.bodyClass));
-    $("#toggle-none").parent().on("click", () => selectHighlight(null));
 
     selectHighlight(null); // Start on "none": only the always-on valid-move dots show
 
@@ -426,6 +429,10 @@ const UNINTERESTING_SECTIONS = [
         & > .subtext {
             color: var(--col-text-2);
             margin-bottom: 4px;
+        }
+
+        & a {
+            color: var(--col-cmyk-cyan);
         }
     }
 
@@ -729,19 +736,28 @@ const UNINTERESTING_SECTIONS = [
             color: inherit;
             text-decoration: none;
         }
+    }
+
+    .highlight-button {
 
         & > .square {
             width: 0.8rem;
             height: 0.8rem;
             border: 1px solid var(--col-border-2);
 
-            &.disabled {
+            opacity: 0.7;
+        }
+
+        &.disabled {
+            opacity: 0.7;
+
+            & > .square {
                 opacity: 0.3;
             }
         }
 
         &:hover {
-            opacity: 0.7;
+            opacity: 1;
         }
     }
 
