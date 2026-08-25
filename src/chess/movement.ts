@@ -13,9 +13,13 @@ export function knightMoves(knight: Piece) {
 
     for (let offset of knightOffsets) {
         let move = knight.offset( offset[0], offset[1] );
+        if (!move.onBoard()) continue;
 
-        if (move.onBoard() && !hasFriendlyPiece(move))
-            validateSpot(move);
+        // During ATTACK, still mark squares defended by our own pieces - otherwise a king
+        // could illegally capture a piece the knight is protecting
+        if (hasFriendlyPiece(move) && gameBoard.phase !== Phase.ATTACK) continue;
+
+        validateSpot(move);
     }
 }
 
