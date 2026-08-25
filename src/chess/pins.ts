@@ -2,23 +2,23 @@ import { gameBoard, Phase, Marking, Type, type Piece, type Position, getKing } f
 import { traceState } from "./_trace-state";
 
 /* START SHOWN CODE */
-// Scroll + 🖱️ to pan sideways ->
+// Scroll + 🖱️ to pan sideways →
 
-// Check if we found a piece that is pinned, and mark it as actually pinned.
-// The code that prevents this piece from then moving outside its path is in
-// validateSpot(), under Validation
+// Part of the long-range tracing logic. We check if the first piece we hit is actually pinned on a king
 export function markPinIfFound() {
     const hit: Position | null = traceState.firstHit;
+
+    // If we're not looking for pins right now, never found a King or never hit any piece at all, do nothing
     if (gameBoard.phase !== Phase.ATTACK || !traceState.foundKing || hit == null) return;
 
     const hitPiece = gameBoard.getPiece(hit);
-    if (hitPiece == null || hitPiece.type === Type.KING) return;
+    if (hitPiece == null || hitPiece.type === Type.KING) return; // Make sure a King can't be pinned on itself
 
     gameBoard.markings.get(hit.row, hit.column).add(traceState.passedEnPassantable ? Marking.PSEUDO_PINNED : Marking.PINNED);
 }
 
-// Checks whether the piece position, move and king positions line up
-// This is the only way a pinned piece can move
+// Checks whether the piece position, move and king positions line up. If not, the pinned
+// piece will not be allowed to move to this square.
 export function moveLinesUpWithKing(move: Piece) {
     const king = getKing(move.color);
 

@@ -1,5 +1,5 @@
 /* START SHOWN CODE */
-// Scroll + 🖱️ to pan sideways ->
+// Scroll + 🖱️ to pan sideways →
 
 // This contains all the underlying data structures and utility classes/functions
 // Useful to refer to when unsure about a certain functionality
@@ -180,7 +180,7 @@ export enum Phase {
     OVER,
 }
 
-export class ImplementationDetails {
+export class Board {
     public pieces: Matrix<Piece | null> = new Matrix(STARTING_POSITION.map((row, i) => row.map((s, j) => Piece.parsePiece(s == '' ? '' : `${s}:${i + 1}${j + 1}`))) );
 
     public markings: Matrix<Set<string>> = new Matrix(STARTING_POSITION.map(row => row.map(() => new Set<string>())) );
@@ -197,7 +197,7 @@ export class ImplementationDetails {
     }
 }
 
-export const gameBoard = new ImplementationDetails();
+export const gameBoard = new Board();
 
 // Check whether a certain position has a piece friendly to the current piece.
 export function hasFriendlyPiece(move: Piece) {

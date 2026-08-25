@@ -107,6 +107,8 @@ const UNINTERESTING_SECTIONS = [
             The code is not entirely ordered in the same way as the blog post, so I recommend you finish reading it first.
         </p>
 
+        <div class="divider"><span class="text font-dotmatrix">Chess logic</span></div>
+
         <div class="sections-wrapper">
             {INTERESTING_SECTIONS.map(section => (
                     <details class="algorithm-section">
@@ -131,10 +133,10 @@ const UNINTERESTING_SECTIONS = [
         <div class="divider"><span class="text font-dotmatrix">Load a Test Configuration</span></div>
 
         <div class="buttons-wrapper">
-            <div class="config-button font-dotmatrix">Double Check</div>
-            <div class="config-button font-dotmatrix">No Pawns</div>
-            <div class="config-button font-dotmatrix">En Passant Check</div>
-            <div class="config-button font-dotmatrix">En Passant Pseudo-pin</div>
+            <div class="config-button font-dotmatrix" data-config="doubleCheck">Double Check</div>
+            <div class="config-button font-dotmatrix" data-config="noPawns">No Pawns</div>
+            <div class="config-button font-dotmatrix" data-config="enPassantCheck">En Passant Check</div>
+            <div class="config-button font-dotmatrix" data-config="enPassantPseudoPin">En Passant Pseudo-pin</div>
         </div>
 
     </SidePanel>
@@ -146,6 +148,8 @@ const UNINTERESTING_SECTIONS = [
     import { selectPiece, movePiece } from "../../chess/game-flow";
     import { endMessage } from "../../chess/mate-detection";
     import { promotePiece } from "../../chess/special-moves";
+    import { TEST_DOUBLE_CHECK, TEST_NO_PAWNS, TEST_EN_PASSANT_CHECK, TEST_EN_PASSANT_PSEUDO_PIN } from "../../chess/test-configurations";
+    import {loadConfiguration} from "../../chess/test-configurations.ts";
 
     /* # Web-page code to make the interactable chess board # */
 
@@ -253,6 +257,29 @@ const UNINTERESTING_SECTIONS = [
     }
 
     renderBoard();
+
+    // Maps each config button's data-config attribute to the board layout it should load
+    const TEST_CONFIGURATIONS: Record<string, string[][]> = {
+        doubleCheck: TEST_DOUBLE_CHECK,
+        noPawns: TEST_NO_PAWNS,
+        enPassantCheck: TEST_EN_PASSANT_CHECK,
+        enPassantPseudoPin: TEST_EN_PASSANT_PSEUDO_PIN,
+    };
+
+    $(".config-button").on("click", function() {
+        const config = TEST_CONFIGURATIONS[$(this).attr("data-config") ?? ''];
+        if (config == null) return;
+
+        loadConfiguration(config);
+
+        // The loaded position has no history of its own - clear leftover UI state (last-move
+        // highlight, hover highlights) from whatever position was on the board before
+        lastMove = null;
+        removeClasses('lastMove');
+        removeClasses('highlights');
+
+        renderBoard();
+    });
 
     // Highlight visibility is mutually exclusive between these three and 'none'.
     const HIGHLIGHT_OPTIONS = [
@@ -519,6 +546,13 @@ const UNINTERESTING_SECTIONS = [
         padding-block: 0.5rem;
 
         padding: 0.5rem 0.7rem;
+
+        cursor: pointer;
+        user-select: none;
+
+        &:hover {
+            opacity: 0.7;
+        }
     }
 
     .algorithm-section pre.astro-code {

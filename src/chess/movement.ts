@@ -3,7 +3,7 @@ import { attemptCastle } from './special-moves';
 import { validateSpot } from './validation';
 
 /* START SHOWN CODE */
-// Scroll + 🖱️ to pan sideways ->
+// Scroll + 🖱️ to pan sideways →
 
 // Movement for the Knight
 export function knightMoves(knight: Piece) {
@@ -67,5 +67,5 @@ export function kingMoves(king: Piece) {
     attemptCastle(king, -1);
 }
 
-// The movement code for long-range pieces is below this one,
+// The movement code for long-range pieces is in the section below this one,
 // as their combined movement logic is substantially more complex

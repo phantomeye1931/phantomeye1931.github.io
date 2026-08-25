@@ -9,3 +9,10 @@ export const traceState = {
     foundKing: false,
     passedEnPassantable: false,
 };
+
+export function resetTraceState() {
+    traceState.checkOrigin = false;
+    traceState.firstHit = null;
+    traceState.foundKing = false;
+    traceState.passedEnPassantable = false;
+}

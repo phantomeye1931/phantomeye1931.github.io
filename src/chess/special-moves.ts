@@ -3,13 +3,10 @@ import { validateSpot } from './validation';
 import { postMove } from './game-flow';
 
 /* START SHOWN CODE */
-// Scroll + 🖱️ to pan sideways ->
+// Scroll + 🖱️ to pan sideways →
 
-// Locates the rook to castle with in the given column direction from the king: walks outward
-// until the first piece and returns it only if it's a friendly, unmoved rook. Doing it this
-// way also closes the blog's flagged "TODO: check if the rook is blocked" for free, since
-// finding a rook here already proves nothing sits between the king and it. Also used by
-// movePiece in game-flow.ts, to find the same rook again when actually executing the castle
+// Utility function for finding a rook in a certain direction for castling. Checks it has not moved,
+// and there are no pieces in the way. Returns null otherwise
 export function findRookForCastle(king: Piece, direction: number): Piece | null {
     let scan = king.offset(0, direction);
     while (scan.onBoard()) {
@@ -37,9 +34,8 @@ export function attemptCastle(king: Piece, direction: number) {
     validateSpot(second);
 }
 
-// Finishes a pending promotion: swaps the pawn for the chosen piece type, then resumes the
-// normal post-move flow (attack/count-moves/turn switch) that movePiece (game-flow.ts) paused
-// for it once it saw the pawn reach the back rank
+// Runs when the player has selected a promotion for their piece. Swaps it out on the board,
+// and then resumes the post-move code that was paused in movePiece() under 'Game Flow'
 export function promotePiece(type: Type) {
     const pawn = gameBoard.promotingPiece;
     if (pawn == null) return;
@@ -48,5 +44,5 @@ export function promotePiece(type: Type) {
     gameBoard.pieces.set(promoted.row, promoted.column, promoted);
     gameBoard.promotingPiece = null;
 
-    postMove(promoted);
+    postMove();
 }
