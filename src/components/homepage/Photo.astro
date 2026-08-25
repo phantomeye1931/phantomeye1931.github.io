@@ -1,0 +1,44 @@
+---
+import '../../styles/blog.css';
+---
+
+<div class="item-wrapper image-wrapper" }>
+    <div class="picture">
+        <img src="/photo.jpg" />
+    </div>
+</div>
+
+<style>
+    .item-wrapper {
+        float: right;
+        padding: .6em .6em 2em .6em;
+        max-width: 200px;
+        background-color: var(--col-photo-fill);
+
+        rotate: 3deg;
+        filter: var(--shadow);
+    }
+
+    .picture {
+        max-width: 200px;
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: -2rem;
+            pointer-events: none;
+            z-index: 5;
+
+            background-image: url('/svg/tape/tape2.svg');
+            background-repeat: no-repeat;
+
+            background-position: center top;
+
+            opacity: var(--tape-opacity);
+        }
+
+        & img {
+            width: 100%;
+        }
+    }
+</style>

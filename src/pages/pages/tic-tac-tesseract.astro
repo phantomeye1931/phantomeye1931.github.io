@@ -1,5 +1,6 @@
 ---
 import CenteredPage from "../../layouts/CenteredPage.astro";
+import SidePanel from "../../components/SidePanel.astro";
 
 const title = "Tic Tac Tesseract";
 const description = "Play Tic Tac Toe in a few more dimensions than usual. Same rules, more positions."
@@ -24,7 +25,7 @@ const version = 2.1;
         <div class="board">
             <div class="strip above">
                 <div class="button font-dotmatrix">
-                    <a onclick="toggleGuide();" id="guideToggle">playing guide</a>
+                    <a onclick="togglePanel('guidePanel');" id="guideToggle">playing guide</a>
                 </div>
 
                 <div class="status">
@@ -59,17 +60,8 @@ const version = 2.1;
         </div>
     </div>
 
-    <aside class="guide-panel" id="guidePanel">
-            <div class="guide-header">
-                <div class="description">
-                    <h2 class="font-dotmatrix">How to play</h2>
-                    <span class="guide-subtitle">(and why this is 4D)</span>
-                </div>
-
-                <button type="button" class="guide-close" onclick="toggleGuide();" aria-label="Close guide">&times;</button>
-            </div>
-
-            <div class="guide-content">
+    <SidePanel id="guidePanel" title="How to play" subtitle="(and why this is 4D)">
+            <div class="guide-prose">
                 <p>
                     Tic Tac Tesseract is a play on the classic game Tic Tac Toe. Like the original, it's played by two participants who take turns placing a piece in an empty cell, trying to get 4 of their pieces in a straight line, while blocking the other player from doing the same.
                 </p>
@@ -164,7 +156,7 @@ const version = 2.1;
 
                 <p class="final-line">Have fun playing!</p>
             </div>
-        </aside>
+    </SidePanel>
 </CenteredPage>
 
 <script>
@@ -493,17 +485,9 @@ const version = 2.1;
         if (!hardMode) hardModeToggle.parent().find(".square").removeClass("disabled");
     }
 
-    let guidePanel = $("#guidePanel");
-
-    // Opens/closes the how-to-play panel
-    function toggleGuide() {
-        guidePanel.toggleClass("open");
-    }
-
     // Expose to the inline onclick handlers, which run outside this module's scope
     (window as any).cleanBoard = cleanBoard;
     (window as any).toggleHardMode = toggleHardMode;
-    (window as any).toggleGuide = toggleGuide;
 </script>
 
 <style is:global>
@@ -529,66 +513,9 @@ const version = 2.1;
         background-color: var(--col-background);
     }
 
-    /* Panel replacing the old standalone /how-to-play/ page */
-    .guide-panel {
-        display: none;
-        flex-direction: column;
-
-        width: min(24rem, 90vw);
-        max-height: calc(100vh - 8rem);
-        position: sticky;
-        top: 2rem;
-
-        background-color: var(--col-background);
-
-        &.open {
-            display: flex;
-        }
-    }
-
-    .guide-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--col-border-2);
-
-        & h2 {
-            margin: 0;
-            font-size: 1.1rem;
-        }
-    }
-
-    .guide-subtitle {
-        display: block;
-        font-size: 0.8rem;
-        font-weight: normal;
-        color: var(--col-text-2);
-    }
-
-    .guide-close {
-        all: unset;
-        cursor: pointer;
-        font-size: 1.5rem;
-        line-height: 1;
-        padding: 0 0.25rem;
-        color: var(--col-text-2);
-
-        &:hover {
-            opacity: 0.7;
-        }
-    }
-
-    .guide-content {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        padding: 1rem;
-
-        scrollbar-color: var(--col-border-2) var(--col-background);
-
+    /* Panel chrome (open/close, scrolling, sticky/mobile-fullscreen) lives in SidePanel.astro now -
+       this is just the guide's own prose styling for the content inside it */
+    .guide-prose {
         & p {
             line-height: 1.5;
             margin: 0 0 1rem;
@@ -597,22 +524,6 @@ const version = 2.1;
         & code {
             background-color: var(--col-background-2);
             padding: 0.1rem 0.3rem;
-        }
-
-        &::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--col-background);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background-color: red;
-        }
-
-        &::-webkit-scrollbar-thumb:hover {
-            background-color: var(--col-border-2);
         }
     }
 
@@ -854,17 +765,6 @@ const version = 2.1;
 
     .highlightLastMove.highlight {
         background-color: var(--hl-hp) !important;
-    }
-
-    /* Mobile overrides kept last so they win the cascade against same-specificity rules above */
-    @media (max-width: 1120px) {
-        .guide-panel {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            max-height: none;
-            z-index: 2001;
-        }
     }
 
     @media (max-width: 600px) {
