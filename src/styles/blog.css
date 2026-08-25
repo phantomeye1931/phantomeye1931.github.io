@@ -43,18 +43,18 @@ html {
     }
 }
 
-.heading .description {
+.header .description {
     text-align: justify;
     margin: 0.5rem 0;
 }
 
-.heading .top {
+.header .top {
     display: flex;
     justify-content: space-between;
     width: 100%;
 }
 
-.heading .title {
+.header .title {
     font-family: "Type right!", sans-serif;
     font-weight: bold;
     font-size: 2.6rem;
@@ -62,7 +62,7 @@ html {
     margin-top: 0.7rem;
 }
 
-.heading .date {
+.header .date {
     font-weight: bold;
     align-self: flex-end;
     font-family: "Doto", monospace;
