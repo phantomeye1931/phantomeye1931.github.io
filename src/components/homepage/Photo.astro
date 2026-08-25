@@ -1,10 +1,14 @@
 ---
 import '../../styles/blog.css';
+import DoodleComment, {Doodle} from "../items/DoodleComment.astro";
 ---
 
 <div class="item-wrapper image-wrapper" }>
     <div class="picture">
         <img src="/photo.jpg" />
+    </div>
+    <div class="comment">
+        <DoodleComment x={240} y={100} textX={90} textY={-55} doodle={ Doodle.ARROW_LEFT }>Me :)</DoodleComment>
     </div>
 </div>
 
@@ -15,8 +19,30 @@ import '../../styles/blog.css';
         max-width: 200px;
         background-color: var(--col-photo-fill);
 
+        margin: 4em 1em 1em;
+
         rotate: 3deg;
         filter: var(--shadow);
+    }
+
+    .comment {
+        visibility: hidden;
+    }
+
+    @media (max-width: 640px) {
+        .item-wrapper {
+            float: none;
+            margin-right: auto;
+
+            margin-top: 0;
+            margin-bottom: 2em;
+        }
+    }
+
+    @media (min-width: 470px) and (max-width: 640px) {
+        .comment {
+            visibility: visible;
+        }
     }
 
     .picture {

@@ -1,6 +1,7 @@
 ---
-
-import Spacing from "../simple/Spacing.astro";---
+import DoodleComment, {Doodle} from "../items/DoodleComment.astro";
+import Spacing from "../simple/Spacing.astro";
+---
 
 <link rel="stylesheet" href="https://githubgraph.jigyansurout.com/assets/css/gh.css">
 
@@ -9,9 +10,24 @@ import Spacing from "../simple/Spacing.astro";---
     <div id="gh" data-login="phantomeye1931" data-show-thumbnail="false">
         <div class="loader"></div>
     </div>
+    <div class="comment">
+        <DoodleComment x={430} y={320} textX={80} textY={-45} doodle={ Doodle.ARROW_UP_LEFT }>GitHub Activity</DoodleComment>
+    </div>
 </div>
 
 <style>
+    .center {
+        position: relative;
+        overflow: visible;
+    }
+
+    @media (max-width: 900px) {
+        :global(.center) {
+            display: none;
+        }
+    }
+
+    /* Theming below*/
     :global(#gh) {
         margin-inline: auto;
 
@@ -30,12 +46,6 @@ import Spacing from "../simple/Spacing.astro";---
             & :global(a::before) {
                 content: "@";
             }
-        }
-    }
-
-    @media (max-width: 800px) {
-        :global(.center) {
-            display: none;
         }
     }
 

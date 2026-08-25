@@ -1,17 +1,26 @@
 ---
-import arrowSvg from "../../../public/svg/doodles/curly-arrow-right.svg?raw";
+export enum Doodle {
+    ARROW_CURLY_RIGHT = 'arrow-curly-right',
+    ARROW_LEFT = 'arrow-left',
+    ARROW_UP_LEFT = 'arrow-up-left',
+    ARROW_DOWN_RIGHT = 'arrow-down-right',
+    SMILEY = 'smiley',
+}
+
 interface Props {
     x?: number // px, moves the arrow from its inherited anchor point
     y?: number // px
     textX?: number // px, moves the label independently of the arrow
     textY?: number // px
+    doodle: Doodle,
 }
 
-const { x = 0, y = 0, textX = 0, textY = 0 } = Astro.props;
+const { x = 0, y = 0, textX = 0, textY = 0, doodle } = Astro.props;
+const { default: svgContent } = await import(`../../../public/svg/doodles/${doodle}.svg?raw`);
 ---
 
 <div class="pointout" style={`translate: ${x}px ${y}px;`}>
-    <div class="arrow" set:html={arrowSvg} />
+    <div class="arrow" set:html={svgContent} />
     <span class="text" style={`translate: ${textX}px ${textY}px;`}><slot /></span>
 </div>
 

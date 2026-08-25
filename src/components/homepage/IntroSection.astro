@@ -3,8 +3,8 @@ import Photo from "./Photo.astro";
 ---
 <div class="section-wrapper">
     <div class="section about">
-        <div class="title">About</div>
         <Photo />
+        <div class="title">About</div>
         Hi! I'm Armand! <strong>Full-stack developer</strong> based in <strong>the Netherlands</strong>.
         <br><br>
         I study Computing Science, and work on tons of passion projects. I love creating <strong>websites, front-to-back</strong>.
@@ -52,6 +52,10 @@ import Photo from "./Photo.astro";
     scale: 105%;
 }
 
+.section {
+    overflow: visible;
+}
+
 .section-wrapper {
     display: flex;
     justify-content: space-evenly;
@@ -65,7 +69,7 @@ import Photo from "./Photo.astro";
     }
 
     & .about {
-        flex: 2;
+        flex: 3;
     }
 
     & .experience {

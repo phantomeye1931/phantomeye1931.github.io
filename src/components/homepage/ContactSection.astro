@@ -1,6 +1,6 @@
 ---
 import BusinessCard from "../items/BusinessCard.astro";
-import DoodleComment from "../items/DoodleComment.astro";
+import DoodleComment, {Doodle} from "../items/DoodleComment.astro";
 ---
 
 <div class="section" id="contact">
@@ -14,7 +14,7 @@ import DoodleComment from "../items/DoodleComment.astro";
     <div class="card-wrapper">
         <BusinessCard />
         <div class="comment">
-            <DoodleComment x={-130} y={-20} textX={-180} textY={-95}>Click to flip!</DoodleComment>
+            <DoodleComment x={-130} y={-20} textX={-180} textY={-95} doodle={ Doodle.ARROW_CURLY_RIGHT }>Click to flip!</DoodleComment>
         </div>
     </div>
 
