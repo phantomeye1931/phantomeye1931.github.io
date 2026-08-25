@@ -13,7 +13,9 @@ import DoodleComment from "../items/DoodleComment.astro";
 
     <div class="card-wrapper">
         <BusinessCard />
-        <DoodleComment x={-130} y={-20} textX={-180} textY={-95}>Click to flip!</DoodleComment>
+        <div class="comment">
+            <DoodleComment x={-130} y={-20} textX={-180} textY={-95}>Click to flip!</DoodleComment>
+        </div>
     </div>
 
     <div class="contact-fallback">
@@ -32,6 +34,7 @@ import DoodleComment from "../items/DoodleComment.astro";
         max-width: 1500px;
         margin-block: 2rem;
         gap: 2rem;
+        overflow: visible;
     }
 
     .text {
@@ -44,30 +47,25 @@ import DoodleComment from "../items/DoodleComment.astro";
         display: none;
     }
 
-    :global(.card-wrapper) {
+    .card-wrapper {
         position: relative;
     }
 
     @media (max-width: 1000px) {
         .section {
             flex-direction: column;
+            align-items: flex-end;
             gap: 1rem;
         }
+    }
 
-        :global(.card-wrapper) {
-            display: none;
+    @media (max-width: 850px) {
+        .section {
+            align-items: center;
         }
 
-        .contact-fallback {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            padding: 1.5rem;
-            border: 1px solid var(--col-accent);
-
-            & a {
-                color: var(--col-text-2);
-            }
+        .comment {
+            display: none;
         }
     }
 </style>

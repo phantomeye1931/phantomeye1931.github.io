@@ -42,11 +42,8 @@
     #container {
         perspective: 1000px;
         width: 455px;
-        height: 260px;
 
-        @media (max-width: 1000px) {
-            scale: .7;
-        }
+        aspect-ratio: 455 / 260;
     }
 
     #flip-wrapper {
@@ -221,10 +218,6 @@
             background-size: cover;
             background-position: right center;
 
-            /* Fade the left edge instead of a hard cutoff */
-            mask-image: linear-gradient(to right, transparent, black 28%);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 28%);
-
             :global(html[color-scheme='dark']) & {
                 background-image: url("/business_card/back_gradient_dark.webp");
             }
@@ -255,6 +248,22 @@
             font-size: 0.85rem;
             letter-spacing: 0.03em;
             inset: auto calc(var(--padding) * 0.6) calc(var(--padding) * 0.6) auto;
+        }
+    }
+
+    @media (max-width: 800px) {
+        #flip-wrapper {
+            pointer-events: none;
+        }
+
+        .face {
+            &.front {
+                display: none;
+            }
+
+            &.back {
+                transform: rotateY(0deg);
+            }
         }
     }
 </style>
