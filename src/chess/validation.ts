@@ -3,7 +3,7 @@ import { traceState } from './_trace-state';
 import { moveLinesUpWithKing } from './pins';
 
 /* START SHOWN CODE */
-// Scroll + 🖱️ to pan sideways ->
+// Scroll + 🖱️ to pan sideways →
 
 // The final validation filter function that does two things:
 // - Filter away pseudo-valid moves that are blocked by niche rules

@@ -5,8 +5,10 @@ import { findRookForCastle } from './special-moves';
 import { checkGameOver } from './mate-detection';
 
 /* START SHOWN CODE */
-// Scroll + 🖱️ to pan sideways ->
+// Scroll + 🖱️ to pan sideways →
 
+// The function that is called the moment a piece is selected/lifted.
+// Shows the valid move for the selected piece
 export function selectPiece(piece: Piece) {
     clearMarkings([Marking.VALID]);
 
@@ -14,6 +16,8 @@ export function selectPiece(piece: Piece) {
     runValidation([ piece ]);
 }
 
+// The function that is called the moment a piece is dropped, or a destination square
+// was selected. Will only move if this position was marked as valid in selectPiece()
 export function movePiece(piece: Piece, position: Position) {
     const markings = gameBoard.markings.get(position.row, position.column);
 
@@ -23,28 +27,38 @@ export function movePiece(piece: Piece, position: Position) {
         return;
     }
 
-    // clearMarkings mutates this same Set in place, so this has to be read before that call
+    // This is set by this same function further down, thus from a previous call.
+    // Whether the current move we're verifying is a capture via En Passant
     const isEnPassantCapture = piece.type === Type.PAWN && markings.has(Marking.EN_PASSANTABLE);
 
+    // Reset things we have remembered about the board, so we have a clean slate to recompute everything
     gameBoard.checkCount = 0;
-    clearMarkings([Marking.VALID, Marking.ATTACKED, Marking.CHECK_LINE, Marking.CHECK_ORIGIN, Marking.LATEST_MOVE, Marking.PINNED, Marking.EN_PASSANTABLE, Marking.PSEUDO_PINNED]);
+    clearMarkings([
+        Marking.VALID,
+        Marking.ATTACKED,
+        Marking.CHECK_LINE,
+        Marking.CHECK_ORIGIN,
+        Marking.LATEST_MOVE,
+        Marking.PINNED,
+        Marking.EN_PASSANTABLE,
+        Marking.PSEUDO_PINNED,
+    ]);
 
-    // En Passant capture: per the blog, "check if the new position is behind an En-Passantable
-    // piece, and if so, capture said piece." The captured pawn isn't on the destination square
-    // (that's the whole point - it's an empty square being moved into), it's one rank behind the
-    // destination, on the same rank the capturing pawn started from
+    // En Passant capture. Since we're not just capturing on the same square we're moving to, we have
+    // to remove the En Passantable pawn manually, here by sampling the current row and new column
     if (isEnPassantCapture)
         gameBoard.pieces.set(piece.row, position.column, null);
 
-    gameBoard.pieces.set(piece.row, piece.column, null); // Leave a void behind
+    gameBoard.pieces.set(piece.row, piece.column, null); // Leave a void behind on the square we left
     const movedPiece = piece.move(position.row, position.column);
     gameBoard.pieces.set(position.row, position.column, movedPiece);
 
-    // Castling: Detected here as the king making a double move. The matching rook (found the same way
-    // attemptCastle found it) hops to the square the king just crossed over
+    // Castling: Simply detected here as the King making a double move, which we follow up by the Rook in
+    // that direction moving over to the other side of the King
     if (piece.type === Type.KING && Math.abs(position.column - piece.column) === 2) {
         const direction = Math.sign(position.column - piece.column);
         const rook = findRookForCastle(movedPiece, direction);
+
         if (rook != null) {
             gameBoard.pieces.set(rook.row, rook.column, null);
             const rookDestination = movedPiece.offset(0, -direction);
@@ -52,17 +66,8 @@ export function movePiece(piece: Piece, position: Position) {
         }
     }
 
-    // En Passant tracking: per the blog, "track which pawn has just moved two squares, mark
-    // said pawn as En-Passantable." Deviation: the blog's pseudocode does this inside the pawn's
-    // own move-validation function (pawnMoves), but that function runs every time any pawn's
-    // moves are previewed or counted - not just when a double move is actually taken - so
-    // marking it there would flag every pawn that *could* double-move, not the one that just
-    // did. Doing it here, at the one point a move is actually committed, is the equivalent for
-    // this codebase's split between move validation and move execution.
-    // Second deviation: the blog's own prose says "mark said pawn", but its code marks the
-    // *skipped* square instead (needed so the capture check in pawnMoves can find it - see the
-    // note there). The pseudo-pin edge case below needs the marking on the pawn's own square
-    // too (traceSpots visits the piece, not the empty square behind it), so both get marked
+    // En Passant: If the pawn just made a double move, we can mark it as En Passantable for now,
+    // which will automatically be cleared if the opportunity is ignored
     if (piece.type === Type.PAWN && Math.abs(position.row - piece.row) === 2) {
         const skipped = piece.inFront();
         gameBoard.markings.get(skipped.row, skipped.column).add(Marking.EN_PASSANTABLE);
@@ -71,32 +76,36 @@ export function movePiece(piece: Piece, position: Position) {
 
     gameBoard.markings.get(position.row, position.column).add(Marking.LATEST_MOVE);
 
-    // Promotion: per the blog, check if the square right in front of the pawn's new position
-    // is still on the board - if not, it's reached the back rank. Pause here instead of
-    // running postMove; postMove only runs once promotePiece (promotion.ts) finishes the job,
-    // since the move isn't resolved until the player picks what to promote to
+    // Promotion: We can easily check whether the pawn has reached the back rank by seeing if the
+    // position in front of it is off the board. In that case, we switch to a promoting state, as
+    // it is mandatory for the current player to choose a promotion. This prevents the post-move
+    // code from running now. It will run once the player has promoted, on an updated board
     if (movedPiece.type === Type.PAWN && !movedPiece.inFront().onBoard()) {
         gameBoard.phase = Phase.PROMOTING;
         gameBoard.promotingPiece = movedPiece;
         return;
     }
 
-    postMove(piece);
+    postMove();
 }
 
-export function postMove(piece: Piece) {
+// The function that is called after a move was made, to prepare the board for the move of the
+// next player. This does most of the square marking.
+export function postMove() {
 
+    // For all pieces of the current color, scan what squares they are defending now
     gameBoard.phase = Phase.ATTACK;
     runValidation(getPiecesByColor(gameBoard.currentTurn));
 
+    // Count how many valid moves the pieces of the other color can make, combined
     gameBoard.availableMoves = 0;
     gameBoard.phase = Phase.COUNT_MOVES;
     runValidation(getPiecesByColor(otherColor(gameBoard.currentTurn)));
 
     if (checkGameOver()) return;
 
+    // Ready for the next move
     gameBoard.currentTurn = otherColor(gameBoard.currentTurn);
-
     gameBoard.phase = Phase.IDLE;
 }
 

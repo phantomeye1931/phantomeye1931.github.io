@@ -1,16 +1,19 @@
+import { Color, gameBoard, Phase, Piece } from "./implementation-details.ts";
+import { resetGameOver } from "./mate-detection.ts";
+import { postMove } from "./game-flow.ts";
 
 /* START SHOWN CODE */
-// Scroll + 🖱️ to pan sideways ->
+// Scroll + 🖱️ to pan sideways →
 
 export let TEST_DOUBLE_CHECK = [
-    ['n-w',  '',    '',    '',    '',    '',    '',    ''  ],
-    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
-    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
-    [ '',    '',   'q-w',  '',   'n-b',  '',   'k-b',  ''  ],
-    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
-    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
-    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
     [ '',    '',    '',    '',    '',    '',    '',   'k-w'],
+    [ '',   'k-b',  '',    '',    '',    '',   'r-b',  ''  ],
+    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
+    [ '',   'n-b',  '',    '',    '',    '',    '',    ''  ],
+    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
+    [ '',    '',    '',    '',    '',   'r-w',  '',    ''  ],
+    [ '',    '',    '',    '',    '',    '',   'b-w',  ''  ],
+    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
 ];
 
 export let TEST_NO_PAWNS = [
@@ -24,13 +27,14 @@ export let TEST_NO_PAWNS = [
     ['r-b', 'n-b', 'b-b', 'q-b', 'k-b', 'b-b', 'n-b', 'r-b'],
 ];
 
-// En Passant check demo: play f2-f4 (white pawn double move), which delivers check on the
-// black king at e5. Then play g4xf3 (black pawn, en passant) to resolve it
+// En Passant check demo: After double moving the white pawn, capturing via En Passant
+// would free the King from check, despite this not being a move to the position of the
+// origin of the check, nor a position in between the king and it
 export let TEST_EN_PASSANT_CHECK = [
     ['k-w',  '',    '',    '',    '',    '',    '',    ''  ],
+    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
+    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
     [ '',    '',    '',    '',    '',   'p-w',  '',    ''  ],
-    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
-    [ '',    '',    '',    '',    '',    '',    '',    ''  ],
     [ '',    '',    '',    '',    '',    '',    '',    ''  ],
     [ '',    '',    '',    '',    '',    '',   'p-b',  ''  ],
     [ '',    '',    '',    '',   'k-b',  '',    '',    ''  ],
@@ -39,10 +43,8 @@ export let TEST_EN_PASSANT_CHECK = [
     [ '',    '',    '',    '',    '',    '',    '',    ''  ],
 ];
 
-// En Passant pseudo-pin demo: rank 4 holds, in order, white rook (a4), white pawn (c2, about
-// to double-move to c4), black pawn (d4), black king (f4). Play c2-c4 - the black pawn on d4
-// should NOT get an en-passant capture to c3 offered (it would expose the king to the rook),
-// but its normal moves (d4-d3, d4-d2) should still be there
+// En Passant pseudo-pin demo. After double moving the white pawn, capturing via En Passant
+// would result in exposing the king, even though no pieces are pinned
 export let TEST_EN_PASSANT_PSEUDO_PIN = [
     [ '',    '',    '',    '',    '',    '',    '',   'k-w'],
     [ '',    '',   'p-w',  '',    '',    '',    '',    ''  ],
@@ -53,3 +55,31 @@ export let TEST_EN_PASSANT_PSEUDO_PIN = [
     [ '',    '',    '',    '',    '',    '',    '',    ''  ],
     [ '',    '',    '',    '',    '',    '',    '',    ''  ],
 ];
+
+// Loads a test configuration onto a fresh board, then runs the necessary computations
+export function loadConfiguration(config: string[][]) {
+    loadPosition(config);
+    resetGameOver();
+
+    // ATTACK phase belongs to whoever ISN'T about to move, compute
+    // Black's attack squares to let them influence white's move
+    gameBoard.currentTurn = Color.BLACK;
+
+    postMove();
+}
+
+// Replaces all parts of the board to swap it for a different position
+export function loadPosition(config: string[][]) {
+    for (let row = 1; row <= 8; row++)
+        for (let column = 1; column <= 8; column++) {
+            const cell = config[row - 1]?.[column - 1] ?? '';
+            gameBoard.pieces.set(row, column, Piece.parsePiece(cell === '' ? '' : `${cell}:${row}${column}`));
+            gameBoard.markings.set(row, column, new Set());
+        }
+
+    gameBoard.phase = Phase.VALIDATE_MOVES;
+    gameBoard.currentTurn = Color.WHITE;
+    gameBoard.checkCount = 0;
+    gameBoard.availableMoves = 0;
+    gameBoard.promotingPiece = null;
+}
