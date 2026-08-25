@@ -18,19 +18,26 @@ if (props.defaultButtons === null || props.defaultButtons) buttons.push(
 )
 
 buttons.push( ...props.extraButtons );
+
+const leftButtons = buttons.filter(button => !button.alignRight);
+const rightButtons = buttons.filter(button => button.alignRight);
 ---
 
 <div class="nav-bar" mobile-centered={ props.mobileCentered ?? false }>
-    <div class="buttons left">
-        { buttons.filter(button => !button.alignRight).map((button) => (
+    { leftButtons.length > 0 &&
+        <div class="buttons left">
+            { leftButtons.map((button) => (
+                        <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
+            ))}
+        </div>
+    }
+    { rightButtons.length > 0 &&
+        <div class="buttons right">
+            { rightButtons.map((button) => (
                     <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
-        ))}
-    </div>
-    <div class="buttons right">
-        { buttons.filter(button => button.alignRight).map((button) => (
-                <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
-        ))}
-    </div>
+            ))}
+        </div>
+    }
 </div>
 
 <script>
@@ -81,7 +88,7 @@ buttons.push( ...props.extraButtons );
         color: var(--col-nav-link-text);
         background-color: var(--col-nav-background);
         border: 1px solid transparent;
-        transition: border 150ms, color 150ms;
+        transition: border 200ms, color 150ms, background-color 200ms;
 
         font-size: 1.3em;
         letter-spacing: .03em;
@@ -133,7 +140,7 @@ buttons.push( ...props.extraButtons );
             background-color: var(--col-nav-background);
             border: none;
             border-bottom: 1px solid transparent;
-            transition: border-color 150ms, color 150ms;
+            transition: border-color 200ms, color 150ms, background-color 200ms;
 
             font-size: 0.95rem;
             letter-spacing: .03em;
