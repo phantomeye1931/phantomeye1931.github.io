@@ -1,4 +1,12 @@
-import { gameBoard, Phase, Marking, hasFriendlyPiece, hasEnemyPiece, type Piece } from './implementation-details.ts';
+import {
+    gameBoard,
+    Phase,
+    Marking,
+    hasFriendlyPiece,
+    hasEnemyPiece,
+    type Piece,
+    getKing, otherColor
+} from './implementation-details.ts';
 import { resetTraceState, traceState } from './_trace-state';
 import { validateSpot } from './validation';
 import { markPinIfFound } from './pins';
@@ -76,6 +84,11 @@ function traceSpots(move: Piece, direction: number[]) {
 
     // Recursive call, continue going in the same direction
     traceSpots(move.offset(direction[0], direction[1]), direction);
+
+    // Only mark squares between this piece and the king, not behind it
+    const king = getKing(otherColor(move.color));
+    if (king.manhattanDist(move.pieceRow, move.pieceColumn) < move.manhattanDist(move.pieceRow, move.pieceColumn)) return;
+
 
     // This will always run after the recursion has ended, at all positions of the ray,
     // mark as line of check if we have been confirmed to be the origin of a check

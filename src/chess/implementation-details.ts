@@ -24,6 +24,10 @@ export class Position {
     onBoard() {
         return 0 < this.row && this.row < 9 && 0 < this.column && this.column < 9;
     }
+
+    manhattanDist(row: number, column: number): number {
+        return Math.abs(this.row - row) + Math.abs(this.column - column);
+    }
 }
 
 // Enums for easy property access and comparison between pieces
