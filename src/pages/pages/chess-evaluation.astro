@@ -1,7 +1,8 @@
 ---
 import CenteredPage from "../../layouts/CenteredPage.astro";
 
-const title = "Chess Evaluation";
+const title = "Chess Validation";
+const description = "Chess static evaluation demo. Algorithm implementation based on this blog post.";
 ---
 
 <CenteredPage
@@ -14,26 +15,47 @@ const title = "Chess Evaluation";
             <div class="title">
                 <h1 class="heading">{ title }</h1>
             </div>
+
+            <p class="subtext">{ description }</p>
         </div>
 
         <div class="board">
             <div class="strip above">
-
                 <div class="status">
-                    <span class="player">White to play</span>
+                    <span class="player">White</span> to move
+                </div>
+
+                <div class="font-dotmatrix">
+                    <span class="chess-move-count">20 available moves</span>
                 </div>
             </div>
 
             <div class="playfield-wrapper">
                 <table id="playField"></table>
                 <div id="dragPiece" class="piece-drag hidden"></div>
+                <div id="promotionPopup" class="promotion-popup hidden"></div>
             </div>
 
+            <div class="highlights-title">Highlights - Click to enable:</div>
+
             <div class="strip below">
-                <!--<div class="credit">-->
-                <!--    by <a href="https://linktr.ee/phantomeye" target="_blank">PhantomEye</a>-->
-                <!--    & <a href="https://linktr.ee/serialsniper" target="_blank">SerialSniper</a>-->
-                <!--</div>-->
+                <div class="button font-dotmatrix">
+                    <a id="toggle-none">none</a>
+                    <div class="square" />
+                </div>
+                <div class="button font-dotmatrix">
+                    <a id="toggle-last-move">last move</a>
+                    <div class="square disabled" style="background-color: var(--highlight-recent);" />
+                </div>
+                <div class="button font-dotmatrix">
+                    <a id="toggle-attacked">attacks</a>
+                    <div class="square disabled" style="background-color: var(--highlight-attack);" />
+                </div>
+                <div class="button font-dotmatrix">
+                    <a id="toggle-checks">checks</a>
+                    <div class="square disabled" style="background-color: var(--highlight-check-line);" />
+                    <div class="square disabled" style="background-color: var(--highlight-check-origin);" />
+                </div>
             </div>
         </div>
     </div>
@@ -41,28 +63,26 @@ const title = "Chess Evaluation";
 </CenteredPage>
 
 <script>
-    // Game logic: board state and move rules, no DOM access
-
-    type Coordinate = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-    type PositionString = `${Coordinate}${Coordinate}`;
+    /* # Chess code # */
+    /* Implementation details */
 
     class Position {
         constructor(
-            public row: Coordinate,
-            public column: Coordinate,
+            public row: number,
+            public column: number,
         ) {};
 
         // Parse from a string, eg. "11"
-        static parse(str: PositionString) {
-            return new Position((str as any)[0], (str as any)[1]);
+        static parse(str: string) {
+            return new Position(Number((str as any)[0]), Number((str as any)[1]));
         }
 
-        toString(): PositionString {
+        toString(): string {
             return `${this.row}${this.column}`;
         }
 
-        toName(): string {
-            return ''; // TODO: Position -> eg. "a1" "e4"
+        onBoard() {
+            return 0 < this.row && this.row < 9 && 0 < this.column && this.column < 9;
         }
     }
 
@@ -78,6 +98,22 @@ const title = "Chess Evaluation";
     enum Color {
         WHITE = 'white',
         BLACK = 'black',
+    }
+
+    function otherColor(color: Color) {
+        return color == Color.WHITE ? Color.BLACK : Color.WHITE;
+    }
+
+    // Square marking kinds, doubles as the CSS class name applied to that square
+    enum Marking {
+        VALID = 'mark-valid',
+        ATTACKED = 'mark-attacked',
+        CHECK_LINE = 'mark-line-of-check',
+        CHECK_ORIGIN = 'mark-check-origin',
+        LATEST_MOVE = 'mark-last-move',
+        PINNED = 'mark-pinned',
+        EN_PASSANTABLE = 'mark-en-passantable',
+        PSEUDO_PINNED = 'mark-pseudo-pinned',
     }
 
     // For parsing eg. "p-w:11"
@@ -99,11 +135,20 @@ const title = "Chess Evaluation";
         // TODO: Extend implementation with a facing direction
         public type: Type;
         public color: Color;
+        public hasMoved: boolean;
 
-        constructor(type: Type, color: Color, row: Coordinate, column: Coordinate) {
+        // These two always represent the actual position of the piece we're working with
+        public pieceRow: number;
+        public pieceColumn: number;
+
+        constructor(type: Type, color: Color, row: number, column: number, pieceRow: number, pieceColumn: number, hasMoved: boolean) {
             super(row, column);
             this.type = type;
             this.color = color;
+            this.hasMoved = hasMoved;
+
+            this.pieceRow = pieceRow;
+            this.pieceColumn = pieceColumn;
         }
 
         // Parse from eg. "p-w:11"
@@ -112,11 +157,40 @@ const title = "Chess Evaluation";
 
             const [typeColor, position] = str.split(':');
             const [type, color] = typeColor.split('-');
-            const pos = Position.parse(position as PositionString);
+            const pos = Position.parse(position);
 
-            return new Piece(TYPE_CHARS[type], COLOR_CHARS[color], pos.row, pos.column);
+            return new Piece(TYPE_CHARS[type], COLOR_CHARS[color], pos.row, pos.column, pos.row, pos.column, false);
         }
 
+        move(row: number, column: number): Piece {
+            return new Piece(this.type, this.color, row, column, row, column, true);
+        }
+
+        offset(row: number, column: number): Piece {
+            return new Piece(this.type, this.color, row + this.row, column + this.column, this.pieceRow, this.pieceColumn, this.hasMoved);
+        }
+
+        inFront() {
+            return this.offset(this.color === Color.WHITE ? 1 : -1, 0);
+        }
+
+        behind() {
+            return this.offset(this.color === Color.WHITE ? -1 : 1, 0);
+        }
+
+        left() {
+            return this.offset(0, this.color === Color.WHITE ? 1 : -1);
+        }
+
+        right() {
+            return this.offset(0, this.color === Color.WHITE ? -1 : 1);
+        }
+
+        isOpponentKing(piece: Piece) {
+            return this.type === Type.KING && this.color !== piece.color;
+        }
+
+        // TODO: Move to DOM code
         // eg. "pawn-white", matches the background-image classes
         cssClass(): string {
             return `${this.type}-${this.color}`;
@@ -126,31 +200,607 @@ const title = "Chess Evaluation";
     // Starting position:
     // Row 1 = white's back rank
     // Row 8 = black's back rank
-    const STARTING_POSITION: string[][] = [
-        ['r-w:11', 'n-w:12', 'b-w:13', 'q-w:14', 'k-w:15', 'b-w:16', 'n-w:17', 'r-w:18'],
-        ['p-w:21', 'p-w:22', 'p-w:23', 'p-w:24', 'p-w:25', 'p-w:26', 'p-w:27', 'p-w:28'],
+    let STARTING_POSITION: string[][] = [
+        ['r-w', 'n-w', 'b-w', 'q-w', 'k-w', 'b-w', 'n-w', 'r-w'],
+        ['p-w', 'p-w', 'p-w', 'p-w', 'p-w', 'p-w', 'p-w', 'p-w'],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
-        ['p-b:71', 'p-b:72', 'p-b:73', 'p-b:74', 'p-b:75', 'p-b:76', 'p-b:77', 'p-b:78'],
-        ['r-b:81', 'n-b:82', 'b-b:83', 'q-b:84', 'k-b:85', 'b-b:86', 'n-b:87', 'r-b:88'],
+        ['p-b', 'p-b', 'p-b', 'p-b', 'p-b', 'p-b', 'p-b', 'p-b'],
+        ['r-b', 'n-b', 'b-b', 'q-b', 'k-b', 'b-b', 'n-b', 'r-b'],
     ];
+    // STARTING_POSITION = [
+    //     ['n-w', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', 'q-w', '', 'n-b', '', 'k-b', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', 'k-w'],
+    // ];
+    // STARTING_POSITION = [
+    //     ['r-w', 'n-w', 'b-w', 'q-w', 'k-w', 'b-w', 'n-w', 'r-w'],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['r-b', 'n-b', 'b-b', 'q-b', 'k-b', 'b-b', 'n-b', 'r-b'],
+    // ];
 
-    const GAME_BOARD: (Piece | null)[][] = STARTING_POSITION.map(row => row.map(s => Piece.parsePiece(s)));
+    // En Passant check demo: play f2-f4 (white pawn double move), which delivers check on the
+    // black king at e5. Then play g4xf3 (black pawn, en passant) to resolve it
+    // STARTING_POSITION = [
+    //     ['k-w', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', 'p-w', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', 'p-b', ''],
+    //     ['', '', '', '', 'k-b', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    // ];
 
-    // TODO: validate the move, resolve captures, update GAME_BOARD, check for checkmate
-    function move(piece: Piece, to: Position) {
+    // En Passant pseudo-pin demo: rank 4 holds, in order, white rook (a4), white pawn (c2, about
+    // to double-move to c4), black pawn (d4), black king (f4). Play c2-c4 - the black pawn on d4
+    // should NOT get an en-passant capture to c3 offered (it would expose the king to the rook),
+    // but its normal moves (d4-d3, d4-d2) should still be there
+    // STARTING_POSITION = [
+    //     ['', '', '', '', '', '', '', 'k-w'],
+    //     ['', '', 'p-w', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['r-w', '', '', 'p-b', '', 'k-b', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    // ];
+
+    // 1-indexed 2-dimensional matrix
+    class Matrix<T> {
+        constructor(
+            private values: T[][],
+        ) {}
+
+        getPos(position: Position) {
+            return this.values[position.row - 1][position.column - 1];
+        }
+
+        get(row: number, column: number) {
+            return this.values[row - 1][column - 1];
+        }
+
+        set(row: number, column: number, value: T) {
+            this.values[row - 1][column - 1] = value;
+        }
     }
 
-    // Astro compiles each <script> tag as its own module, this is the handoff to the web script below
-    (window as any).Chess = { Position, Piece, Type, Color, GAME_BOARD, move };
-</script>
+    enum Phase {
+        VALIDATE_MOVES,
+        ATTACK,
+        COUNT_MOVES,
+        PROMOTING,
+        IDLE,
+        OVER,
+    }
 
-<script>
-    // Web code: DOM rendering and input handling, talks to the game logic above via window.Chess
+    class Board {
+        public pieces: Matrix<Piece | null> = new Matrix(STARTING_POSITION.map((row, i) => row.map((s, j) => Piece.parsePiece(s == '' ? '' : `${s}:${i + 1}${j + 1}`))) );
 
-    const { Position, Piece, Type, Color, GAME_BOARD, move } = (window as any).Chess;
+        public markings: Matrix<Set<string>> = new Matrix(STARTING_POSITION.map(row => row.map(() => new Set<string>())) );
+
+        public phase: Phase = Phase.VALIDATE_MOVES;
+        public currentTurn: Color = Color.WHITE;
+
+        public checkCount: number = 0;
+        public availableMoves: number = 0;
+        public promotingPiece: Piece | null = null;
+
+        getPiece(position: Position): Piece | null {
+            return this.pieces.get(position.row, position.column);
+        }
+    }
+
+    const gameBoard = new Board();
+
+    // Check whether a certain position has a piece friendly to the current piece.
+    function hasFriendlyPiece(move: Piece) {
+        if (!move.onBoard()) return;
+        const piece = gameBoard.getPiece(move);
+
+        return piece != null && piece.color === move.color;
+    }
+
+    // Check whether a certain position has a piece offensive to the current piece.
+    function hasEnemyPiece(move: Piece) {
+        if (!move.onBoard()) return;
+        const piece = gameBoard.getPiece(move);
+
+        return piece != null && piece.color !== move.color;
+    }
+
+    // Check whether a certain position has a piece
+    function hasPiece(move: Piece) {
+        if (!move.onBoard()) return;
+        const piece = gameBoard.getPiece(move);
+
+        return piece != null;
+    }
+
+    // Check whether a certain position is marked en-passantable (see movePiece, which sets this
+    // for exactly one enemy turn whenever a pawn double-moves)
+    function isEnPassantable(move: Piece) {
+        if (!move.onBoard()) return false;
+
+        return gameBoard.markings.get(move.row, move.column).has(Marking.EN_PASSANTABLE);
+    }
+
+    // Returns the king of the given color
+    function getKing(color: Color): Piece {
+        return getPiecesByColor(color).find(p => p.type === Type.KING)!;
+    }
+
+    // Returns every piece of the given color still on the board
+    function getPiecesByColor(color: Color): Piece[] {
+        const pieces: Piece[] = [];
+
+        for (let row = 1; row <= 8; row++)
+            for (let column = 1; column <= 8; column++) {
+                const piece = gameBoard.getPiece(new Position(row, column));
+                if (piece != null && piece.color === color) pieces.push(piece);
+            }
+
+        return pieces;
+    }
+
+    // Clears certain markings from every square
+    function clearMarkings(markings: Marking[]) {
+        for (let row = 1; row < 9; row++)
+            for (let column = 1; column < 9; column++)
+                for (let marking of markings)
+                    gameBoard.markings.get(row, column).delete(marking);
+    }
+
+
+
+    /* Actually interesting functions */
+
+    function knightMoves(knight: Piece) {
+        const knightOffsets = [
+            [2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]
+        ];
+
+        for (let offset of knightOffsets) {
+            let move = knight.offset( offset[0], offset[1] );
+
+            if (move.onBoard() && !hasFriendlyPiece(move))
+                markSpot(move);
+        }
+    }
+
+
+    let checkOrigin = false;
+    let firstHit: null | Position = null;
+    let foundKing = false;
+    let passedEnPassantable = false;
+    // Four deviations from the blog's pin-detection pseudocode below, all needed to make this
+    // function pull double duty (attack/check marking AND pin lookahead) without breaking either:
+    // 1. The pseudocode gates markValid on `firstHit == null` using firstHit's value *after* this
+    //    square may have just set it, which skips marking the square that becomes firstHit itself
+    //    (including a king reached with a clear line, silently breaking check detection). Snapshot
+    //    the value from before this square instead
+    // 2. The pseudocode's "existing code" continuation only passed through the opponent king. Pin
+    //    detection needs the ray to also continue silently past the first enemy piece, so it can
+    //    reach a second piece (possibly the king) behind it. Only a friendly piece stops the ray now
+    // 3. The pseudocode's `if (hasEnemyKing(pos)) foundKing = true` runs unconditionally near the
+    //    top, but this version had it after the "second enemy piece" return, so in a real pin (king
+    //    is the *second* piece hit) the function returned one line before ever noticing. Moved the
+    //    king check back above that return, matching the pseudocode's ordering
+    // 4. En Passant pseudo-pin (blog's "Edge cases" section): during the attack pass, a piece
+    //    marked En-Passantable is transparent to pin-tracing, but only if it's the very first thing
+    //    the ray has hit (firstHit is still null). It and whatever captures it could both vanish
+    //    from this line in a single en-passant move, so we look straight through it for the king.
+    //    If something else was already hit first, this piece is a normal blocker - en passant has
+    //    nothing to do with it, and treating it as transparent unconditionally (regardless of what
+    //    came before) would falsely "pin" pieces that have nothing to do with the en-passant pair
+    function traceSpots(move: Piece, direction: number[]) {
+        if (!move.onBoard()) return;
+
+        const passable = gameBoard.phase === Phase.ATTACK && firstHit == null
+            && gameBoard.markings.get(move.row, move.column).has(Marking.EN_PASSANTABLE);
+        if (passable) passedEnPassantable = true;
+
+        if (hasFriendlyPiece(move) && gameBoard.phase !== Phase.ATTACK) return;
+
+        // Third deviation: the king check has to run before the "second enemy piece" return below,
+        // not after it. In a real pin the king IS the second piece hit (first piece = the pinned
+        // piece), so checking isOpponentKing only after that return meant foundKing could only ever
+        // become true when the king was the *first* piece hit, i.e. a direct check, never a pin
+        let piece = gameBoard.getPiece(move);
+        if (piece != null && piece.isOpponentKing(move)) foundKing = true;
+
+        const enemy = !passable && hasEnemyPiece(move);
+        if (enemy && firstHit != null) return;
+        const alreadyHadHit = firstHit != null;
+        if (enemy) firstHit = move;
+
+        if (!alreadyHadHit) markSpot(move);
+
+        if (piece != null && !enemy && !passable) return;
+
+        traceSpots(move.offset(direction[0], direction[1]), direction);
+
+        // This will always run after the recursion has ended,
+        // at all positions of the ray
+        if (checkOrigin) gameBoard.markings.get(move.row, move.column).add(Marking.CHECK_LINE);
+    }
+
+
+    // Only meaningful during Phase.ATTACK (computing what this piece pins against the opponent);
+    // without that guard it also fires (harmlessly, but pointlessly) while just validating this
+    // piece's own moves or counting the opponent's. Also excludes the king itself: a direct,
+    // unblocked check also leaves firstHit pointing at the king (it's the "first piece" hit) with
+    // foundKing true, which isn't a pin, just a check, so skip marking the king as pinned to itself.
+    // If the ray only found the king by looking through an En-Passantable piece first, the hit
+    // piece is pseudo-pinned rather than truly pinned - it can do everything except capture en
+    // passant, so it needs its own marking rather than reusing Marking.PINNED
+    function markPinIfFound() {
+        const hit: Position | null = firstHit as any; // TypeScript yearns for the cast
+        if (gameBoard.phase !== Phase.ATTACK || !foundKing || hit == null) return;
+
+        const hitPiece = gameBoard.getPiece(hit);
+        if (hitPiece == null || hitPiece.type === Type.KING) return;
+
+        gameBoard.markings.get(hit.row, hit.column).add(passedEnPassantable ? Marking.PSEUDO_PINNED : Marking.PINNED);
+    }
+
+    function rookMoves(rook: Piece) {
+        const rookDirections = [
+            [1, 0], [-1, 0], [0, 1], [0, -1]
+        ];
+
+        for (let direction of rookDirections) {
+            checkOrigin = false;
+            firstHit = null;
+            foundKing = false;
+            passedEnPassantable = false;
+            traceSpots(rook.offset(direction[0], direction[1]), direction);
+            markPinIfFound();
+        }
+    }
+
+
+    function bishopMoves(bishop: Piece) {
+        const bishopDirections = [
+            [1, 1], [-1, 1], [1, -1], [-1, -1]
+        ];
+
+        for (let direction of bishopDirections) {
+            checkOrigin = false;
+            firstHit = null;
+            foundKing = false;
+            passedEnPassantable = false;
+            traceSpots(bishop.offset(direction[0], direction[1]), direction);
+            markPinIfFound();
+        }
+    }
+
+
+    function queenMoves(queen: Piece) {
+        const queenDirections = [
+            [1, 1], [-1, 1], [1, -1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]
+        ];
+
+        for (let direction of queenDirections) {
+            checkOrigin = false;
+            firstHit = null;
+            foundKing = false;
+            passedEnPassantable = false;
+            traceSpots(queen.offset(direction[0], direction[1]), direction);
+            markPinIfFound();
+        }
+    }
+
+    function pawnMoves(pawn: Piece) {
+        if (gameBoard.phase === Phase.ATTACK) {
+            markSpot(pawn.inFront().left());
+            markSpot(pawn.inFront().right());
+        } else {
+            // Simple moves
+            if (!hasPiece(pawn.inFront())) markSpot(pawn.inFront()); // Single move
+            if (!hasPiece(pawn.inFront()) && !hasPiece(pawn.inFront().inFront()) && !pawn.hasMoved )
+                markSpot(pawn.inFront().inFront()); // Double move
+
+            if (hasEnemyPiece(pawn.inFront().left())) markSpot(pawn.inFront().left());
+            if (hasEnemyPiece(pawn.inFront().right())) markSpot(pawn.inFront().right());
+
+            // En Passant. Deviation from the blog: its pseudocode checks isEnPassantable(pos.left)
+            // (the adjacent square, i.e. where the enemy pawn is actually standing) but marks the
+            // *skipped* square en-passantable one snippet earlier (pos.inFront, not pos.inFront.inFront)
+            // - those are two different squares, so as literally written the check can never find its
+            // own marker. The skipped square is also exactly the destination square, so checking and
+            // marking the same square (pawn.inFront().left()/.right(), matching this file's existing
+            // diagonal-capture pattern above) is what actually finds it.
+            // En Passant pseudo-pin edge case: a pawn caught in that predicament may do anything
+            // except capture en passant, so the restriction is checked here rather than through the
+            // general pinned/moveLinesUpWithKing path in markSpot, which would wrongly restrict it
+            // to a line the way a real pin does
+            const pseudoPinned = gameBoard.markings.get(pawn.row, pawn.column).has(Marking.PSEUDO_PINNED);
+            if (!pseudoPinned && isEnPassantable(pawn.inFront().left())) markSpot(pawn.inFront().left());
+            if (!pseudoPinned && isEnPassantable(pawn.inFront().right())) markSpot(pawn.inFront().right());
+        }
+    }
+
+
+    // Locates the rook to castle with in the given column direction from the king: walks outward
+    // until the first piece and returns it only if it's a friendly, unmoved rook. Doing it this
+    // way also closes the blog's flagged "TODO: check if the rook is blocked" for free, since
+    // finding a rook here already proves nothing sits between the king and it
+    function findRookForCastle(king: Piece, direction: number): Piece | null {
+        let scan = king.offset(0, direction);
+        while (scan.onBoard()) {
+            const found = gameBoard.getPiece(scan);
+            if (found != null) return found.type === Type.ROOK && found.color === king.color && !found.hasMoved ? found : null;
+            scan = scan.offset(0, direction);
+        }
+        return null;
+    }
+
+    // Castling, following the blog's algorithm: the king can't have moved or be in check, the
+    // rook on this side can't have moved either, and the two squares the king crosses must be
+    // unattacked. Skipped during Phase.ATTACK - the castle destination isn't a square the king
+    // "attacks" in the normal sense, so computing it there would wrongly mark it as defended and
+    // block the enemy king from ever stepping there. The blog also separately checks that the two
+    // crossed squares aren't occupied, but findRookForCastle already guarantees that (it only
+    // returns a rook when nothing else was found on the way there), so that part's redundant here
+    function attemptCastle(king: Piece, direction: number) {
+        if (gameBoard.phase === Phase.ATTACK || king.hasMoved) return;
+        if (gameBoard.checkCount > 0) return; // In check
+
+        const rook = findRookForCastle(king, direction);
+        if (rook == null) return;
+
+        const first = king.offset(0, direction);
+        const second = king.offset(0, direction * 2);
+
+        if (gameBoard.markings.get(first.row, first.column).has(Marking.ATTACKED)) return;
+        if (gameBoard.markings.get(second.row, second.column).has(Marking.ATTACKED)) return;
+
+        markSpot(second);
+    }
+
+    function kingMoves(king: Piece) {
+        const kingAdjacentSquares = [
+            [1, 1], [-1, 1], [1, -1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]
+        ];
+
+        for (let square of kingAdjacentSquares) {
+            let move = king.offset(square[0], square[1]);
+
+            if (!move.onBoard() || hasFriendlyPiece(move) || gameBoard.markings.get(move.row, move.column).has(Marking.ATTACKED)) continue;
+            markSpot(move);
+        }
+
+        attemptCastle(king, 1);
+        attemptCastle(king, -1);
+    }
+
+
+
+    function selectPiece(piece: Piece) {
+        clearMarkings([Marking.VALID]);
+
+        gameBoard.phase = Phase.VALIDATE_MOVES;
+        runValidation([ piece ]);
+    }
+
+    function movePiece(piece: Piece, position: Position) {
+        const markings = gameBoard.markings.get(position.row, position.column);
+
+        // Validate move
+        if (!markings.has(Marking.VALID)) {
+            clearMarkings([Marking.VALID]);
+            return;
+        }
+
+        // clearMarkings mutates this same Set in place, so this has to be read before that call
+        const isEnPassantCapture = piece.type === Type.PAWN && markings.has(Marking.EN_PASSANTABLE);
+
+        gameBoard.checkCount = 0;
+        clearMarkings([Marking.VALID, Marking.ATTACKED, Marking.CHECK_LINE, Marking.CHECK_ORIGIN, Marking.LATEST_MOVE, Marking.PINNED, Marking.EN_PASSANTABLE, Marking.PSEUDO_PINNED]);
+
+        // En Passant capture: per the blog, "check if the new position is behind an En-Passantable
+        // piece, and if so, capture said piece." The captured pawn isn't on the destination square
+        // (that's the whole point - it's an empty square being moved into), it's one rank behind the
+        // destination, on the same rank the capturing pawn started from
+        if (isEnPassantCapture)
+            gameBoard.pieces.set(piece.row, position.column, null);
+
+        gameBoard.pieces.set(piece.row, piece.column, null); // Leave a void behind
+        const movedPiece = piece.move(position.row, position.column);
+        gameBoard.pieces.set(position.row, position.column, movedPiece);
+
+        // Castling: Detected here as the king making a double move. The matching rook (found the same way
+        // attemptCastle found it) hops to the square the king just crossed over
+        if (piece.type === Type.KING && Math.abs(position.column - piece.column) === 2) {
+            const direction = Math.sign(position.column - piece.column);
+            const rook = findRookForCastle(movedPiece, direction);
+            if (rook != null) {
+                gameBoard.pieces.set(rook.row, rook.column, null);
+                const rookDestination = movedPiece.offset(0, -direction);
+                gameBoard.pieces.set(rookDestination.row, rookDestination.column, rook.move(rookDestination.row, rookDestination.column));
+            }
+        }
+
+        // En Passant tracking: per the blog, "track which pawn has just moved two squares, mark
+        // said pawn as En-Passantable." Deviation: the blog's pseudocode does this inside the pawn's
+        // own move-validation function (pawnMoves), but that function runs every time any pawn's
+        // moves are previewed or counted - not just when a double move is actually taken - so
+        // marking it there would flag every pawn that *could* double-move, not the one that just
+        // did. Doing it here, at the one point a move is actually committed, is the equivalent for
+        // this codebase's split between move validation and move execution.
+        // Second deviation: the blog's own prose says "mark said pawn", but its code marks the
+        // *skipped* square instead (needed so the capture check in pawnMoves can find it - see the
+        // note there). The pseudo-pin edge case below needs the marking on the pawn's own square
+        // too (traceSpots visits the piece, not the empty square behind it), so both get marked
+        if (piece.type === Type.PAWN && Math.abs(position.row - piece.row) === 2) {
+            const skipped = piece.inFront();
+            gameBoard.markings.get(skipped.row, skipped.column).add(Marking.EN_PASSANTABLE);
+            gameBoard.markings.get(position.row, position.column).add(Marking.EN_PASSANTABLE);
+        }
+
+        gameBoard.markings.get(position.row, position.column).add(Marking.LATEST_MOVE);
+
+        // Promotion: per the blog, check if the square right in front of the pawn's new position
+        // is still on the board - if not, it's reached the back rank. Pause here instead of
+        // running postMove; postMove only runs once promotePiece below finishes the job, since
+        // the move isn't resolved until the player picks what to promote to
+        if (movedPiece.type === Type.PAWN && !movedPiece.inFront().onBoard()) {
+            gameBoard.phase = Phase.PROMOTING;
+            gameBoard.promotingPiece = movedPiece;
+            return;
+        }
+
+        postMove(piece);
+    }
+
+    // Finishes a pending promotion: swaps the pawn for the chosen piece type, then resumes the
+    // normal post-move flow (attack/count-moves/turn switch) that movePiece paused for it
+    function promotePiece(type: Type) {
+        const pawn = gameBoard.promotingPiece;
+        if (pawn == null) return;
+
+        const promoted = new Piece(type, pawn.color, pawn.row, pawn.column, pawn.row, pawn.column, true);
+        gameBoard.pieces.set(promoted.row, promoted.column, promoted);
+        gameBoard.promotingPiece = null;
+
+        postMove(promoted);
+    }
+
+    function postMove(piece: Piece) {
+
+        gameBoard.phase = Phase.ATTACK;
+        runValidation(getPiecesByColor(gameBoard.currentTurn));
+
+        gameBoard.availableMoves = 0;
+        gameBoard.phase = Phase.COUNT_MOVES;
+        runValidation(getPiecesByColor(otherColor(gameBoard.currentTurn)));
+
+        if (checkGameOver()) return;
+
+        gameBoard.currentTurn = otherColor(gameBoard.currentTurn);
+
+        gameBoard.phase = Phase.IDLE;
+    }
+
+    function markSpot(move: Piece) {
+        if (!move.onBoard()) return;
+
+        switch (gameBoard.phase) {
+            case Phase.VALIDATE_MOVES:
+            case Phase.COUNT_MOVES: {
+                const pinned = gameBoard.markings.get(move.pieceRow, move.pieceColumn).has(Marking.PINNED);
+
+                // Can't make this move because you're pinned!!
+                if (pinned && !moveLinesUpWithKing(move)) return;
+
+                // If there are 2 or more checks, this piece can't fix it and thus can't move
+                if (gameBoard.checkCount >= 2 && move.type !== Type.KING) return;
+
+                // If there's exactly 1 check, we may be able to stop it by capturing or blocking
+                if (gameBoard.checkCount === 1 && move.type !== Type.KING
+                    && !gameBoard.markings.get(move.row, move.column).has(Marking.CHECK_LINE)
+                    && !gameBoard.markings.get(move.row, move.column).has(Marking.CHECK_ORIGIN)) return;
+
+                if (gameBoard.phase === Phase.COUNT_MOVES) {
+                    gameBoard.availableMoves++;
+                } else {
+                    gameBoard.markings.get(move.row, move.column).add(Marking.VALID);
+                }
+
+                break;
+            }
+            case Phase.ATTACK:    {
+                gameBoard.markings.get(move.row, move.column).add(Marking.ATTACKED);
+
+                let piece = gameBoard.getPiece(move);
+                if (piece !== null && piece.isOpponentKing(move)) {
+                    gameBoard.checkCount++;
+                    checkOrigin = true;
+
+                    gameBoard.markings.get(move.pieceRow, move.pieceColumn).add(Marking.CHECK_ORIGIN);
+
+                    // En Passant check edge case: if a pawn is the piece giving check, capturing it
+                    // via en passant also resolves the check, but that move lands one square behind
+                    // it, not on its square - CHECK_LINE already means "moving here resolves the
+                    // check" to markSpot's filter below, so marking the square behind the checking
+                    // pawn with it as well (in addition to its own CHECK_ORIGIN) covers this without
+                    // needing a special case in the check-evasion filter itself
+                    if (move.type === Type.PAWN) {
+                        const checkingPawn = gameBoard.getPiece(new Position(move.pieceRow, move.pieceColumn));
+                        if (checkingPawn != null) {
+                            const behind = checkingPawn.behind();
+                            gameBoard.markings.get(behind.row, behind.column).add(Marking.CHECK_LINE);
+                        }
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+
+    // Checks whether the piece position, move and king positions line up
+    // This is the only way a pinned piece can move
+    function moveLinesUpWithKing(move: Piece) {
+        const king = getKing(move.color);
+
+        const toKingRow = king.row - move.pieceRow;
+        const toKingColumn = king.column - move.pieceColumn;
+        const toMoveRow = move.row - move.pieceRow;
+        const toMoveColumn = move.column - move.pieceColumn;
+
+        return toKingRow * toMoveColumn === toKingColumn * toMoveRow;
+    }
+
+    // Run the validation code for a set of pieces at the same time
+    function runValidation(pieces: Piece[]) {
+        for (let piece of pieces) {
+
+            if (piece.type === Type.KNIGHT)  knightMoves(piece);
+            if (piece.type === Type.ROOK)    rookMoves(piece);
+            if (piece.type === Type.BISHOP)  bishopMoves(piece);
+            if (piece.type === Type.QUEEN)   queenMoves(piece);
+            if (piece.type === Type.PAWN)    pawnMoves(piece);
+            if (piece.type === Type.KING)    kingMoves(piece);
+        }
+    }
+
+    let endMessage: string | null = null;
+    function checkGameOver(): boolean {
+        if (gameBoard.availableMoves > 0) return false;
+
+        gameBoard.phase = Phase.OVER;
+
+        if (gameBoard.checkCount == 0) {
+            endMessage = "Stalemate.";
+        } else {
+            endMessage = `${otherColor(gameBoard.currentTurn)} got Checkmated!`;
+        }
+        return true;
+    }
+
+
+
+
+
+
+
+
+    /* # Web-page code to make the interactable chess board # */
 
     let lastMove: any = null; // A Position, from the game logic script
 
@@ -180,36 +830,115 @@ const title = "Chess Evaluation";
         }
     }
 
-    let turnDisplay = $(".status"); // Gets the text element above the playing field
-
-    // Every class renderBoard() might put on a cell, so it can clear stale ones
     const PIECE_CLASSES = Object.values(Type)
         .flatMap((type: string) => Object.values(Color).map((color: string) => `${type}-${color}`));
 
-    // Draws every piece in GAME_BOARD onto the grid, clearing any piece already sat in a cell
+    // Draws every piece and marking from gameBoard onto the grid, clearing anything already there
     function renderBoard() {
         for (let row = 1; row <= 8; row++) {
             for (let column = 1; column <= 8; column++) {
-                const piece = GAME_BOARD[row - 1][column - 1];
-                const cell = $(`#${row}${column} > div`);
+                const piece = gameBoard.getPiece(new Position(row, column));
+                const markings = gameBoard.markings.get(row, column);
+                const td = $(`#${row}${column}`);
+                const cell = td.find("> div");
 
                 cell.removeClass(PIECE_CLASSES.join(' '));
                 if (piece != null) cell.addClass(piece.cssClass());
+
+                cell.find(".marking").remove();
+                for (let marking of markings) cell.append(`<div class="marking ${marking}"></div>`);
+
+                td.toggleClass("movable", piece != null && piece.color === gameBoard.currentTurn && gameBoard.phase !== Phase.PROMOTING);
             }
         }
+
+        $(".player").text(gameBoard.currentTurn === Color.WHITE ? "White" : "Black");
+        $(".chess-move-count").text(endMessage ?? String(gameBoard.availableMoves) + " available moves");
+
+        if (gameBoard.phase === Phase.PROMOTING && gameBoard.promotingPiece != null) {
+            showPromotionPopup(gameBoard.promotingPiece);
+        } else {
+            hidePromotionPopup();
+        }
+    }
+
+    const promotionPopup = $("#promotionPopup");
+    const PROMOTION_TYPES = [Type.QUEEN, Type.ROOK, Type.BISHOP, Type.KNIGHT];
+
+    // Builds the 4-option popup and places it centered on the promoting pawn's column
+    function showPromotionPopup(piece: any) {
+        const cell = $(`#${piece.row}${piece.column}`)[0];
+        const wrapper = $(".playfield-wrapper")[0];
+        if (cell == null || wrapper == null) return;
+
+        const cellRect = cell.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const below = piece.row === 8;
+
+        promotionPopup
+            .empty()
+            .toggleClass("above", !below)
+            .css({
+                left: cellRect.left - wrapperRect.left + cellRect.width / 2,
+                top: below ? cellRect.bottom - wrapperRect.top : cellRect.top - wrapperRect.top,
+            })
+            .removeClass("hidden");
+
+        for (let type of PROMOTION_TYPES) {
+            $("<div></div>")
+                .addClass(`option ${type}-${piece.color}`)
+                .on("click", () => {
+                    promotePiece(type);
+                    renderBoard();
+                })
+                .appendTo(promotionPopup);
+        }
+    }
+
+    function hidePromotionPopup() {
+        promotionPopup.addClass("hidden").empty();
     }
 
     renderBoard();
 
+    // Highlight visibility is mutually exclusive between these three and 'none'.
+    const HIGHLIGHT_OPTIONS = [
+        { buttonId: "toggle-last-move", bodyClass: "show-recent" },
+        { buttonId: "toggle-attacked", bodyClass: "show-attacked" },
+        { buttonId: "toggle-checks", bodyClass: "show-checks" },
+    ];
+
+    // Activates one highlight type (or none)
+    function selectHighlight(active: string | null) {
+        for (let option of HIGHLIGHT_OPTIONS) {
+            $("body").toggleClass(option.bodyClass, option.bodyClass === active);
+            $(`#${option.buttonId}`).parent().find(".square").toggleClass("disabled", option.bodyClass !== active);
+        }
+    }
+
+    for (let option of HIGHLIGHT_OPTIONS)
+        $(`#${option.buttonId}`).parent().on("click", () => selectHighlight(option.bodyClass));
+    $("#toggle-none").parent().on("click", () => selectHighlight(null));
+
+    selectHighlight(null); // Start on "none": only the always-on valid-move dots show
+
     // Picks the piece out of `cell` and starts it following the cursor
     function startDrag(cell: JQuery) {
+        if (gameBoard.phase === Phase.PROMOTING) return; // Nothing else is clickable mid-promotion
+        if (gameBoard.phase === Phase.OVER) return;
+
         const id = cell.attr("id") ?? '';
         const row = Number(id[0]), column = Number(id[1]);
-        const piece = GAME_BOARD[row - 1][column - 1];
-        if (piece == null) return;
+        const piece = gameBoard.getPiece(new Position(row, column));
+        if (piece == null || piece.color !== gameBoard.currentTurn) return;
 
         draggingPiece = piece;
         draggingOrigin = cell.find("div").addClass("hidden");
+
+        selectPiece(piece);
+        renderBoard();
+
+        $("body").addClass("dragging");
 
         const rect = cell[0].getBoundingClientRect();
         dragDiv
@@ -232,7 +961,7 @@ const title = "Chess Evaluation";
         const target = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)?.closest("td");
         if (target != null) {
             const id = target.id;
-            move(draggingPiece, new Position(Number(id[0]), Number(id[1])));
+            movePiece(draggingPiece, new Position(Number(id[0]), Number(id[1])));
         }
 
         renderBoard();
@@ -240,6 +969,7 @@ const title = "Chess Evaluation";
         dragDiv.addClass("hidden");
         draggingPiece = null;
         draggingOrigin = null;
+        $("body").removeClass("dragging");
     });
 
     // Remove certain classes from all cells
@@ -279,14 +1009,12 @@ const title = "Chess Evaluation";
 
 <style is:global>
     :root {
-        --highlight-hover:     color-mix(in srgb, var(--col-cmyk-magenta) 50%, var(--col-background));
-        --highlight-connected: color-mix(in srgb, var(--col-cmyk-cyan) 50%, var(--col-background));
-        --highlight-win:       color-mix(in srgb, var(--col-cmyk-green) 50%, var(--col-background));
-        --highlight-recent:    color-mix(in srgb, var(--col-cmyk-yellow) 70%, var(--col-background));
-
-        /* Combined colors */
-        --hl-hp: color-mix(in oklch, var(--highlight-hover), var(--highlight-recent));
-        --hl-hs: color-mix(in oklch, var(--highlight-hover), var(--highlight-connected));
+        --highlight-recent: #ffe059;
+        --highlight-attack: #ff5977;
+        --highlight-check-line: #59ff8e;
+        --highlight-check-origin: #59acff;
+        --highlight-valid: #c3c3be;
+        --highlight-pinned: #d18aff;
     }
 
     .game {
@@ -321,15 +1049,25 @@ const title = "Chess Evaluation";
         }
     }
 
+    .highlights-title {
+        width: 100%;
+        text-align: left;
+    }
+
     .strip {
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        width: 100%;
 
         padding-block: 0.6rem;
 
         &.above {
             align-items: flex-end;
+        }
+
+        &.below {
+            margin-bottom: 1rem;
         }
     }
 
@@ -344,15 +1082,17 @@ const title = "Chess Evaluation";
     }
 
     .board {
-        margin-inline: 3em;
+        margin-inline: 0em;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .playfield-wrapper {
         position: relative;
-        container-type: inline-size;
-        width: min(534px, 90vw);
 
-        --cell-size: clamp(28px, calc(12.5cqw - 6.75px), 60px);
+        --cell-size: min(60px, 11vw);
     }
 
     #playField {
@@ -362,13 +1102,22 @@ const title = "Chess Evaluation";
     }
 
     #playField > tr > td {
-        cursor: pointer;
-
         background-color: var(--col-background);
 
         &.darkSquare {
             background-color: var(--col-background-2) !important;
         }
+
+        /* renderBoard() only adds this to cells holding a piece whose color matches the current turn */
+        &.movable {
+            cursor: pointer;
+        }
+    }
+
+    /* Grabbing cursor everywhere while a piece is being dragged, overriding .movable's cursor:pointer */
+    body.dragging,
+    body.dragging #playField > tr > td {
+        cursor: grabbing !important;
     }
 
     /* Cell */
@@ -376,14 +1125,23 @@ const title = "Chess Evaluation";
         width: var(--cell-size);
         height: var(--cell-size);
 
-        background-position: 50% 50%;
-        background-size: 100%;
-        background-repeat: no-repeat;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: grid;
+        place-items: center;
         pointer-events: none;
+    }
+
+    #playField > tr > td > div::after,
+    #playField > tr > td > div > .marking {
+        grid-area: 1 / 1;
+    }
+
+    #playField > tr > td > div::after {
+        content: '';
+        width: 100%;
+        height: 100%;
+
+        background-position: 50% 50%;
+        background-repeat: no-repeat;
     }
 
     /* Follows the cursor while a piece is being dragged, teleported into place by JS */
@@ -397,15 +1155,123 @@ const title = "Chess Evaluation";
         width: var(--cell-size);
         height: var(--cell-size);
 
-        background-position: 50% 50%;
-        background-size: 100%;
-        background-repeat: no-repeat;
-
         pointer-events: none;
 
         &.hidden {
             display: none;
         }
+    }
+
+    .piece-drag::after {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 100%;
+
+        background-position: 50% 50%;
+        background-repeat: no-repeat;
+        background-size: 100%;
+    }
+
+    .promotion-popup {
+        position: absolute;
+        z-index: 20;
+
+        display: flex;
+        flex-direction: row;
+
+        border: solid 2px var(--col-border-1);
+        background-color: var(--col-background-2);
+
+        transform: translate(-50%, 0);
+
+        &.above {
+            transform: translate(-50%, -100%);
+        }
+
+        &.hidden {
+            display: none;
+        }
+
+        & > .option {
+            width: var(--cell-size);
+            height: var(--cell-size);
+
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+
+            &:hover {
+                opacity: 0.7;
+            }
+
+            &::after {
+                content: '';
+                width: 100%;
+                height: 100%;
+
+                background-position: 50% 50%;
+                background-repeat: no-repeat;
+            }
+        }
+    }
+
+    .highlights-title {
+        padding-block: 0.3rem 0;
+        font-weight: bold;
+        color: var(--col-text-2);
+    }
+
+    .button {
+        display: flex;
+        flex-direction: row;
+        gap: 0.4rem;
+        align-items: center;
+
+        border: 2px solid var(--col-border-2);
+        padding: 0.2rem 0.4rem;
+
+        cursor: pointer;
+        user-select: none;
+
+        & > a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        & > .square {
+            width: 0.8rem;
+            height: 0.8rem;
+            border: 1px solid var(--col-border-2);
+
+            &.disabled {
+                opacity: 0.3;
+            }
+        }
+
+        &:hover {
+            opacity: 0.7;
+        }
+    }
+
+    .mark-last-move,
+    .mark-attacked,
+    .mark-line-of-check,
+    .mark-check-origin {
+        display: none;
+    }
+
+    body.show-recent .mark-last-move { display: block; }
+    body.show-attacked .mark-attacked { display: block; }
+    body.show-checks .mark-line-of-check,
+    body.show-checks .mark-check-origin { display: block; }
+
+    .mark-en-passantable {
+        display: none;
+    }
+
+    .mark-pseudo-pinned {
+        display: none;
     }
 
     .credit {
@@ -419,20 +1285,65 @@ const title = "Chess Evaluation";
         }
     }
 
-    /* Piece icons, :not(.hidden) so a picked-up piece's cell keeps its box but loses the icon */
-    .pawn-white:not(.hidden)   { background-image: url("/pages/chess/pawn-white.svg"); }
-    .knight-white:not(.hidden) { background-image: url("/pages/chess/knight-white.svg"); }
-    .bishop-white:not(.hidden) { background-image: url("/pages/chess/bishop-white.svg"); }
-    .rook-white:not(.hidden)   { background-image: url("/pages/chess/rook-white.svg"); }
-    .queen-white:not(.hidden)  { background-image: url("/pages/chess/queen-white.svg"); }
-    .king-white:not(.hidden)   { background-image: url("/pages/chess/king-white.svg"); }
+    .pawn-white:not(.hidden)::after   { background-image: url("/pages/chess/pawn-white.svg"); background-size: 100%; }
+    .knight-white:not(.hidden)::after { background-image: url("/pages/chess/knight-white.svg"); background-size: 100%; }
+    .bishop-white:not(.hidden)::after { background-image: url("/pages/chess/bishop-white.svg"); background-size: 100%; }
+    .rook-white:not(.hidden)::after   { background-image: url("/pages/chess/rook-white.svg"); background-size: 100%; }
+    .queen-white:not(.hidden)::after  { background-image: url("/pages/chess/queen-white.svg"); background-size: 100%; }
+    .king-white:not(.hidden)::after   { background-image: url("/pages/chess/king-white.svg"); background-size: 100%; }
 
-    .pawn-black:not(.hidden)   { background-image: url("/pages/chess/pawn-black.svg"); }
-    .knight-black:not(.hidden) { background-image: url("/pages/chess/knight-black.svg"); }
-    .bishop-black:not(.hidden) { background-image: url("/pages/chess/bishop-black.svg"); }
-    .rook-black:not(.hidden)   { background-image: url("/pages/chess/rook-black.svg"); }
-    .queen-black:not(.hidden)  { background-image: url("/pages/chess/queen-black.svg"); }
-    .king-black:not(.hidden)   { background-image: url("/pages/chess/king-black.svg"); }
+    .mark-valid {
+        width: 40%;
+        height: 40%;
+        border-radius: 100vh;
+        background-color: var(--highlight-valid);
+    }
+
+    /* Attacked square: a translucent wash over the whole cell */
+    .mark-attacked {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-attack) r g b / 50%);
+    }
+
+    .mark-line-of-check {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-check-line) r g b / 50%);
+    }
+
+    .mark-last-move {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-recent) r g b / 50%);
+    }
+
+    .mark-check-origin {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-check-origin) r g b / 50%);
+    }
+
+    .mark-pinned {
+        width: 90%;
+        height: 90%;
+        border-radius: 15%;
+        outline: 3px solid var(--highlight-pinned);
+        outline-offset: -3px;
+    }
+
+    .mark-latest-move {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-recent) r g b / 50%);
+    }
+
+    .pawn-black:not(.hidden)::after   { background-image: url("/pages/chess/pawn-black.svg"); background-size: 100%; }
+    .knight-black:not(.hidden)::after { background-image: url("/pages/chess/knight-black.svg"); background-size: 100%; }
+    .bishop-black:not(.hidden)::after { background-image: url("/pages/chess/bishop-black.svg"); background-size: 100%; }
+    .rook-black:not(.hidden)::after   { background-image: url("/pages/chess/rook-black.svg"); background-size: 100%; }
+    .queen-black:not(.hidden)::after  { background-image: url("/pages/chess/queen-black.svg"); background-size: 100%; }
+    .king-black:not(.hidden)::after   { background-image: url("/pages/chess/king-black.svg"); background-size: 100%; }
 
     /* Put it up here because following classes have more priority */
     .highlightLastMove {
@@ -461,12 +1372,15 @@ const title = "Chess Evaluation";
     }
 
     @media (max-width: 600px) {
-        .game {
-            padding: 0 0.5em;
-        }
 
         .board {
-            margin-inline: 0.5em;
+            margin-inline: 0;
+        }
+
+        .strip.below {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
         }
     }
 </style>

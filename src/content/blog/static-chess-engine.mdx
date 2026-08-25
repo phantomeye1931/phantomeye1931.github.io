@@ -2,9 +2,10 @@
 title: 'Static Chess Engine'
 description: 'A small dive into chess programming to create a chess engine that can validate moves without looking into the future.'
 pubDate: 'Jan 22 2026'
+updatedDate: 'Aug 25 2026'
 ---
 import Wrapper from '../../components/simple/Wrapper.astro';
-import BusinessCard from '../../components/BusinessCard.astro';
+import BusinessCard from '../../components/items/BusinessCard.astro';
 
 <Wrapper classes="float right">
     ![](/weblog/chess/example-pin-moves.png)
@@ -57,7 +58,7 @@ function knightMoves() {
 
   for (offset in knightOffsets) {
     move = pos + offset
-    if (!hasFriendlyPiece(move) && move.onBoard)
+    if (move.onBoard() && !hasFriendlyPiece(move))
       markValid(move)
   }
 }
@@ -119,8 +120,8 @@ function pawnMoves(pos, dir) {
       && !hasBeenMoved(pos)
   ) markValid(pos.inFront.inFront)
 
-  if (hasEnemy(pos.inFront.left)) markValid(pos.inFront.left)
-  if (hasEnemy(pos.inFront.right)) markValid(pos.inFront.right)
+  if (hasEnemyPiece(pos.inFront.left)) markValid(pos.inFront.left)
+  if (hasEnemyPiece(pos.inFront.right)) markValid(pos.inFront.right)
 }
 ```
 ###### Pseudocode of pawn movement
@@ -198,6 +199,12 @@ function pawnMoves(pos, dir) {
 **But wait**! If we move to the spot we just validated in the En Passant case, we still have to capture the En-Passantable pawn. In our static system it's easiest to do this when the move is actually made. When the pawn moves, we can check if the new position is behind an En-Passantable piece, and if so, capture said piece.
 
 Don't worry, this isn't the end of our En Passant troubles, it will return to haunt us.
+
+> **Implementation note, added after actually building this:** two things in the pseudocode above needed correcting once I wired it into a real engine.
+>
+> First, `markEnPassantable(pos.inFront)` marks the *skipped* square, but the capture check reads `isEnPassantable(pos.left)` — the square directly beside the capturing pawn, which is the En-Passantable pawn's own landing square, not the skipped one. Those are two different squares, so as written the check can never find its own marker. Since the skipped square and the actual capture destination are the same square, the check and the mark need to be the same expression: `isEnPassantable(pos.left.inFront)`, not `isEnPassantable(pos.left)`.
+>
+> Second, `markEnPassantable(pos.inFront)` can't actually live inside `pawnMoves` if your move validation and move execution are separate functions (mine are). `pawnMoves` runs every time a pawn's moves are *previewed* — selecting a piece, counting the opponent's available moves — not just when a double move is actually taken. Marking there flags every pawn that *could* double-move, not the one that just did. The mark has to be set at the one point a move is actually committed, not during validation.
 
 ### Castling
 Castling is a special move in chess, where in specific conditions, the king and a rook can swap around. To be specific, the king can move two squares at once sideways, and the rook will move to the other side of the king.
@@ -392,6 +399,8 @@ So we have to create a special case for pawn moves in check so that it can also 
 
 > Depending on your implementation, this edge case might already be handled with, but it's good to keep in mind.
 
+> **Implementation note:** it wasn't handled automatically for me, and I don't think it can be without an explicit special case, at least not with the "mark squares once, filter against those marks later" approach the rest of this algorithm relies on. My check-evasion filter works by checking whether a candidate move's *destination* square carries a check-resolving mark (line-of-check or check-origin). For En Passant, the move's destination is the skipped square, but the checking piece sits one rank away from it - so the destination itself carries neither mark, and the filter rejects a move that would actually resolve the check. The fix: when marking a pawn as the origin of a check, also mark the square *behind* it (where an En Passant capture would land) as a line-of-check square. That reuses the exact same "moving here resolves the check" signal the filter already understands, just extended to cover the one square a capturing pawn actually lands on instead of the checking piece's own square.
+
 ### En Passant pseudo-pin
 While looking into further possible edge cases I might have left unhandled, I found **[this](https://chess.stackexchange.com/a/18397)** scenario, in which another obvious issue with En Passant is highlighted.
 
@@ -412,6 +421,14 @@ In the part of the ray where we already hit one piece, to potentially be marked 
 We can then mark the first piece we hit as **'En Passant pseudo-pinned'.**
 
 With that, we now know when one of our pawns managed to get itself in this predicament, and **we can specifically not allow it to capture via En Passant in the next move.**
+
+> **Implementation note:** three things worth knowing before you build this.
+>
+> First, "skip it and continue the trace" can't be unconditional. It only makes sense the *first* time the ray hits anything - if some unrelated piece was already sitting between the attacker and the En-Passantable pawn, that piece is a completely ordinary blocker with no relationship to En Passant at all, and letting the ray see through the En-Passantable pawn anyway would falsely flag that unrelated piece as pinned. I only let this passthrough happen when nothing has been hit yet on this ray.
+>
+> Second, the marking needs to sit on the pawn's own square, not the skipped square. My original "mark said pawn as En-Passantable" step actually marked the skipped square (needed so the capture-destination check can find it, as noted above) - but pin-tracing walks through actual pieces, and the pawn is standing on its landing square, not the empty square behind it. Marking only the skipped square meant the pin-tracer never recognized the pawn as En-Passantable at all, and just treated it as an ordinary blocker. I ended up marking both squares - the skipped one for capture validation, the pawn's own square for this.
+>
+> Third, don't reuse the regular 'pinned' marking for this. A genuinely pinned piece may only move along the line to its king; a pseudo-pinned piece may do *anything except* capture En Passant - reusing 'pinned' would incorrectly restrict all its other moves too. This needs its own marking, checked only at the point where an En Passant capture is being considered, not wired into the general move-restriction path pinned pieces go through.
 
 ## Checkmate & Stalemate detection
 **Mate and stalemate detection** is actually quite easy to implement in our current system.
