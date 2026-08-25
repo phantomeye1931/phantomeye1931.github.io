@@ -5,7 +5,6 @@ pubDate: 'Jan 22 2026'
 updatedDate: 'Aug 25 2026'
 ---
 import Wrapper from '../../components/simple/Wrapper.astro';
-import BusinessCard from '../../components/items/BusinessCard.astro';
 
 <Wrapper classes="float right">
     ![](/weblog/chess/example-pin-moves.png)
@@ -13,8 +12,8 @@ import BusinessCard from '../../components/items/BusinessCard.astro';
 
 - [The Why?](#the-why)
 - [Piece movement](#piece-movement)
-- [Special moves](#special-moves)
 - [In check](#in-check)
+- [Special moves](#special-moves)
 - [Pinned pieces](#pinned-pieces)
 - [Edge cases](#edge-cases)
 - [Checkmate & Stalemate detection](#checkmate--stalemate-detection)
@@ -59,11 +58,13 @@ function knightMoves() {
   for (offset in knightOffsets) {
     move = pos + offset
     if (move.onBoard() && !hasFriendlyPiece(move))
-      markValid(move)
+      validateSpot(move)
   }
 }
 ```
 ###### Pseudocode of knight movement
+
+> **Implementation note, added after actually building this:** the "only" condition above turned out not to be quite the only condition. During the attack-marking pass (see 'In check' below), a knight defending one of its own pieces still needs to mark that square, otherwise the enemy king is allowed to walk up and capture a piece that's actually defended, since nothing ever recorded the defense. The long-range pieces already get an exemption from the friendly-piece check while attack-marking (see the note in the next section) - the knight needs the exact same exemption, it just doesn't have a recursive trace to hang it off of: `if (hasFriendlyPiece(move) && phase !== ATTACK) return`, same as everywhere else.
 
 ### Long-range pieces
 The long-range pieces—the queen, bishop and rook—also have quite simple movement patterns. In certain directions, they can move any distance as long as there isn't a piece in between.
@@ -88,7 +89,7 @@ These long range moves can be evaluated quite easy. In all directions that these
 function traceSpots(pos, dir) {
   if (hasFriendlyPiece(pos)) return // <- Remember this line
 
-  markValid(pos) // Move or capture
+  validateSpot(pos) // Move or capture
 
   if (!hasPiece(pos.inFront))
     traceSpots(pos.inFront, dir)
@@ -110,18 +111,18 @@ Unlike other pieces, **the pawn is the only piece in normal chess that captures 
 
 We can validate the moves of a pawn as such:
 
-```ts
+```shell
 // Pseudocode
 function pawnMoves(pos, dir) {
   // Simple moves
-  if (!hasPiece(pos.inFront)) markValid(pos.inFront)
+  if (!hasPiece(pos.inFront)) validateSpot(pos.inFront)
   if (!hasPiece(pos.inFront)
       && !hasPiece(pos.inFront.inFront)
       && !hasBeenMoved(pos)
-  ) markValid(pos.inFront.inFront)
+  ) validateSpot(pos.inFront.inFront)
 
-  if (hasEnemyPiece(pos.inFront.left)) markValid(pos.inFront.left)
-  if (hasEnemyPiece(pos.inFront.right)) markValid(pos.inFront.right)
+  if (hasEnemyPiece(pos.inFront.left)) validateSpot(pos.inFront.left)
+  if (hasEnemyPiece(pos.inFront.right)) validateSpot(pos.inFront.right)
 }
 ```
 ###### Pseudocode of pawn movement
@@ -162,102 +163,6 @@ Luckily, the solution is really simple. In our recursive long-range piece functi
 
 Great! We now know pretty much how all pieces can move in normal chess! That's already the biggest part out of the way. That was easy, right? Let's move on to some less trivial considerations.
 
-## Special moves
-### En passant
-The **En Passant** rule was added to make our lives as developers difficult. It introduces a tricky exception to the movement of a pawn, where it can now capture pawns that just did a double move by jumping behind them. **For one turn only**, an opposing pawn may capture this piece as if it only moved forward one square.
-
-![Special move "En Passant"](/weblog/chess/en-passant.png)
-
-To detect these moves statically, we can:
-- Track which pawn has just moved two squares.
-- Mark said pawn as 'En-Passantable'.
-- An adjacent enemy pawn may treat the square behind the "En-Passantable" pawn as a valid capturing square.
-
-We can implement this by extending our implementation of pawn moves:
-
-```ts
-function pawnMoves(pos, dir) {
-  // ... existing code
-  
-  if (!hasPiece(pos.inFront)
-      && !hasPiece(pos.inFront.inFront)
-      && !hasBeenMoved(pos)
-  ) {
-    markValid(pos.inFront.inFront)
-    markEnPassantable(pos.inFront) // <-- new
-  }
-
-  // En Passant
-  if (isEnPassantable(pos.left)) markValid(pos.left.inFront)
-  if (isEnPassantable(pos.right)) markValid(pos.right.inFront)
-
-  // ... existing code
-}
-```
-###### Expansion of the pawn moveset to include 'En Passant'
-
-**But wait**! If we move to the spot we just validated in the En Passant case, we still have to capture the En-Passantable pawn. In our static system it's easiest to do this when the move is actually made. When the pawn moves, we can check if the new position is behind an En-Passantable piece, and if so, capture said piece.
-
-Don't worry, this isn't the end of our En Passant troubles, it will return to haunt us.
-
-> **Implementation note, added after actually building this:** two things in the pseudocode above needed correcting once I wired it into a real engine.
->
-> First, `markEnPassantable(pos.inFront)` marks the *skipped* square, but the capture check reads `isEnPassantable(pos.left)` — the square directly beside the capturing pawn, which is the En-Passantable pawn's own landing square, not the skipped one. Those are two different squares, so as written the check can never find its own marker. Since the skipped square and the actual capture destination are the same square, the check and the mark need to be the same expression: `isEnPassantable(pos.left.inFront)`, not `isEnPassantable(pos.left)`.
->
-> Second, `markEnPassantable(pos.inFront)` can't actually live inside `pawnMoves` if your move validation and move execution are separate functions (mine are). `pawnMoves` runs every time a pawn's moves are *previewed* — selecting a piece, counting the opponent's available moves — not just when a double move is actually taken. Marking there flags every pawn that *could* double-move, not the one that just did. The mark has to be set at the one point a move is actually committed, not during validation.
-
-### Castling
-Castling is a special move in chess, where in specific conditions, the king and a rook can swap around. To be specific, the king can move two squares at once sideways, and the rook will move to the other side of the king.
-
-<Wrapper classes="image-row">
-    !["Short Castling"](/weblog/chess/castling1.png)
-    !["Long Castling"](/weblog/chess/castling2.png)
-</Wrapper>
-
-The conditions that have to be met for castling to a side to be possible are:
-- The **king** has **not moved**.
-- The **rook** on that side has **not moved**.
-- The **king** is **not in check**.
-- The two squares the **king traverses** are **not attacked**, and **not occupied**.
-
-Given that we've marked what squares are attacked, this is pretty easy to implement.
-
-```ts
-function attemptCastle(pos, dir) {
-  if (isAttacked(pos) 
-      || hasBeenMoved(pos) 
-      || hasBeenMoved(pos.find(dir, ROOK))) {
-    return
-  }
-
-  if (hasPiece(pos.to(dir))) return
-  if (hasPiece(pos.to(dir).to(dir))) return
-
-  if (isAttacked(pos.to(dir))) return
-  if (isAttacked(pos.to(dir).to(dir))) return
-
-  // TODO: Check if the rook is blocked
-
-  markValid(pos.to(dir).to(dir))
-}
-```
-###### Pseudocode of castling-checking algorithm
-
-We have to do one final thing to make castling functional: when the castling move is made, the rook should move to the other side of the king. We can implement this by checking if the last move was a double king move, and if so, teleport the **nearest rook** (from the new king position) to the other side of the king.
-
-### Promotion
-Promotion is another fun rule in chess that usually comes into play in the final stages of a match. It allows a pawn that has reached the opposite edge of the board to 'promote' to one of the following pieces:
-- A **knight**
-- A **bishop**
-- A **rook**
-- A **queen**
-
-This is a move that's different from all others, as **it essentially requires 1 extra input**. Besides what piece you're moving and where you're moving it to, you also have to decide what piece to promote to, specifically after the pawn has moved.
-
-Luckily for us, **promotion is mandatory**, so we don't have to handle the case where a player decides not to promote.
-
-An easy way to handle this is to, after moving a pawn, check if the position right in front of it is still on the board. If it isn't, prompt the player to choose a promotion, and pause the game until that choice is made.
-
 ## In check
 Woah! Your opponent attacked your king. You're now in check, what do we do?
 
@@ -292,45 +197,146 @@ This is always a valid way to get out of check (assuming there is a safe adjacen
 Lucky for us, we already handled this logic and thus validated these moves with the normal king movement logic, so we can skip it here!
 
 ### Blocking the line of check
-Like we outlined above, this is not a valid option if there is more than 1 piece attacking the king, and this only applies if the attacking piece is one of the long-range pieces. Have fun trying to block check inflicted by a knight.
+Like we outlined above, we can only do this **if there's exactly 1 piece** checking the king, and this only applies if the attacking piece is one of the long-range pieces. Have fun trying to block check inflicted by a knight.
 
 So in this scenario, we can validate any *pseudo-valid* move if it blocks the "line of check". But how do we know that a move blocks this imaginary line? We should mark it beforehand again.
 
-When tracing squares for long-range pieces, we can take advantage of the recursion by adding a line to the algorithm, and the markValid function:
+When tracing squares for long-range pieces, we can take advantage of the recursion by adding a line to the algorithm, and the validateSpot function:
 
 ```ts
-function markValid(pos) {
+function validateSpot(pos) {
   // ... existing code
 
-  if (hasEnemyKing(pos)) {
-    checkOrigin = true
+  if (isOpponentKing(pos)) {
+    checkOrigin = true // We're attacking a king, so we are a check origin
     markCheckOrigin(pos)
-    // We can also increment a check counter here to
-    // use for invalidating non-king moves when it's over 1
+
+    // This is also a nice point to keep track of a variable to count
+    // how many pieces are checking the king
   }
 }
 
-checkOrigin = false // Whether the current piece is checking the king
+checkOrigin = false // Whether the current piece is checking the King
 function traceSpots(pos, dir) {
-  // ... existing code
+  // ... existing code ...
   traceSpots(pos.inFront, dir)
 
-  // This will always run after the recursion has ended,
-  // at all positions of the ray
-  if (checkOrigin) markLineOfCheck(pos)
+  // Only mark squares lines of check when they're between you and the King
+  if (opponentKing.distance(pos) < this.distance(pos)) return;
+
+  // This will always run after the recursion
+  // has ended, at all positions of the ray
+  if (checkOrigin) markLineOfCheck(pos) // New!
 }
 ```
 ###### Expanded long-range algorithm to mark "lines of check"
 
-Now we know exactly what squares make up the line of check, and we can validate any *pseudo-valid* move that steps onto this line.
+Now we know exactly what squares make up the line of check. We can use this pretty easily. When validating the move of a piece that isn't the king, we will only allow this move **if the move lands on a square marked as part of the line of check**.
 
 ### Capturing the attacking piece
-For this option, we can **remove king moves** from the equation, as we already validated all possible moves for the king, and we can again assume there is **only 1 piece attacking the king**.
+This option **also only applies to non-king pieces** (if the King can capture it, we have already validated this move in option 1), when there's exactly 1 piece checking. This makes it pretty similar to the case above, except instead of only validating moves that intersect the line of check, we validate moves that capture the checking piece.
 
-For any moves generated by our piece movement algorithms, we can **allow it if it captures the piece** that is responsible for putting the king in check. Quite simple. For **long-range pieces**, we know what square is the **origin of the check** from the modification we made to markValid() in exploring the previous option. For other pieces we can simply **mark its square as the origin** of the check if one of its attacking squares is the enemy king.
+For any moves generated by our piece movement algorithms, we can **allow it if it captures the piece** that is responsible for putting the king in check. Quite simple. For **long-range pieces**, we know what square is the **origin of the check** from the modification we made to validateSpot() in exploring the previous option. For other pieces we can simply **mark its square as the origin** of the check if one of its attacking squares is the enemy king.
+
+## Special moves
+### En passant
+The **En Passant** rule was added to make our lives as developers difficult. It introduces a tricky exception to the movement of a pawn, where it can now capture pawns that just did a double move by jumping behind them. **For one turn only**, an opposing pawn may capture this piece as if it only moved forward one square.
+
+![Special move "En Passant"](/weblog/chess/en-passant.png)
+
+To detect these moves statically, we can:
+- Track which pawn has just moved two squares.
+- Mark said pawn as 'En-Passantable'.
+- An adjacent enemy pawn may treat the square behind the "En-Passantable" pawn as a valid capturing square.
+
+We can implement this by extending our implementation of pawn moves:
+
+```ts
+function pawnMoves(pos, dir) {
+  // ... existing code
+
+  if (!hasPiece(pos.inFront)
+      && !hasPiece(pos.inFront.inFront)
+      && !hasBeenMoved(pos)
+  ) {
+    validateSpot(pos.inFront.inFront)
+    markEnPassantable(pos.inFront) // <-- new
+  }
+
+  // En Passant
+  if (isEnPassantable(pos.left)) validateSpot(pos.left.inFront)
+  if (isEnPassantable(pos.right)) validateSpot(pos.right.inFront)
+
+  // ... existing code
+}
+```
+###### Expansion of the pawn moveset to include 'En Passant'
+
+**But wait**! If we move to the spot we just validated in the En Passant case, we still have to capture the En-Passantable pawn. In our static system it's easiest to do this when the move is actually made. When the pawn moves, we can check if the new position is behind an En-Passantable piece, and if so, capture said piece.
+
+Don't worry, this isn't the end of our En Passant troubles, it will return to haunt us.
+
+> **Implementation note, added after actually building this:** two things in the pseudocode above needed correcting once I wired it into a real engine.
+>
+> First, `markEnPassantable(pos.inFront)` marks the *skipped* square, but the capture check reads `isEnPassantable(pos.left)` — the square directly beside the capturing pawn, which is the En-Passantable pawn's own landing square, not the skipped one. Those are two different squares, so as written the check can never find its own marker. Since the skipped square and the actual capture destination are the same square, the check and the mark need to be the same expression: `isEnPassantable(pos.left.inFront)`, not `isEnPassantable(pos.left)`.
+>
+> Second, `markEnPassantable(pos.inFront)` can't actually live inside `pawnMoves` if your move validation and move execution are separate functions (mine are). `pawnMoves` runs every time a pawn's moves are *previewed* — selecting a piece, counting the opponent's available moves — not just when a double move is actually taken. Marking there flags every pawn that *could* double-move, not the one that just did. The mark has to be set at the one point a move is actually committed, not during validation.
+
+### Castling
+Castling is a special move in chess, where in specific conditions, the king and a rook can swap around. To be specific, the king can move two squares at once sideways, and the rook will move to the other side of the king.
+
+<Wrapper classes="image-row">
+    !["Short Castling"](/weblog/chess/castling1.png)
+    !["Long Castling"](/weblog/chess/castling2.png)
+</Wrapper>
+
+The conditions that have to be met for castling to a side to be possible are:
+- The **king** has **not moved**.
+- The **rook** on that side has **not moved**.
+- The **king** is **not in check**.
+- The two squares the **king traverses** are **not attacked**, and **not occupied**.
+
+Given that we've marked what squares are attacked, this is pretty easy to implement.
+
+```ts
+function attemptCastle(pos, dir) {
+  if (isAttacked(pos)
+      || hasBeenMoved(pos)
+      || hasBeenMoved(pos.find(dir, ROOK))) {
+    return
+  }
+
+  if (hasPiece(pos.to(dir))) return
+  if (hasPiece(pos.to(dir).to(dir))) return
+
+  if (isAttacked(pos.to(dir))) return
+  if (isAttacked(pos.to(dir).to(dir))) return
+
+  validateSpot(pos.to(dir).to(dir))
+}
+```
+###### Pseudocode of castling-checking algorithm
+
+> Using a function like .find() in this case could be an easy way to also check there are no pieces blocking the way to the rook.
+
+We have to do one final thing to make castling functional: when the castling move is made, the rook should move to the other side of the king. We can implement this by checking if the last move was a double king move, and if so, teleport the **nearest rook** (from the new king position) to the other side of the king.
+
+### Promotion
+Promotion is another fun rule in chess that usually comes into play in the final stages of a match. It allows a pawn that has reached the opposite edge of the board to 'promote' to one of the following pieces:
+- A **knight**
+- A **bishop**
+- A **rook**
+- A **queen**
+
+This is a move that's different from all others, as **it essentially requires 1 extra input**. Besides what piece you're moving and where you're moving it to, you also have to decide what piece to promote to, specifically after the pawn has moved.
+
+Luckily for us, **promotion is mandatory**, so we don't have to handle the case where a player decides not to promote.
+
+An easy way to handle this is to, after moving a pawn, check if the position right in front of it is still on the board. If it isn't, prompt the player to choose a promotion, and pause the game until that choice is made.
+
 
 ## Pinned pieces
-Pinned pieces are the next chapter in the book of headaches. These pieces are special, because they are your king's last line of defense against long-range pieces of your opponent.
+Pinned pieces are the next chapter in the book of headaches. Just kidding, they're not that bad. So these pieces are special, because they are your king's last line of defense against long-range pieces of your opponent.
 
 In other words, pinned pieces are pieces that would have the potential to make a move that puts the king into check, which is of course not valid, so we have to take care of this.
 
@@ -355,9 +361,9 @@ function traceSpots(pos, dir) {
   if (hasEnemyPiece(pos) && firstHit != null) return // Second enemy piece
   if (hasEnemyPiece(pos)) firstHit = pos // First enemy piece
 
-  if (hasEnemyKing(pos)) foundKing = true // Remember the king was hit
+  if (isOpponentKing(pos)) foundKing = true // Remember the king was hit
 
-  if (firstHit == null) markValid(pos) // Move or capture
+  if (firstHit == null) validateSpot(pos) // Move or capture
 
   // ... existing code
 }
@@ -422,13 +428,7 @@ We can then mark the first piece we hit as **'En Passant pseudo-pinned'.**
 
 With that, we now know when one of our pawns managed to get itself in this predicament, and **we can specifically not allow it to capture via En Passant in the next move.**
 
-> **Implementation note:** three things worth knowing before you build this.
->
-> First, "skip it and continue the trace" can't be unconditional. It only makes sense the *first* time the ray hits anything - if some unrelated piece was already sitting between the attacker and the En-Passantable pawn, that piece is a completely ordinary blocker with no relationship to En Passant at all, and letting the ray see through the En-Passantable pawn anyway would falsely flag that unrelated piece as pinned. I only let this passthrough happen when nothing has been hit yet on this ray.
->
-> Second, the marking needs to sit on the pawn's own square, not the skipped square. My original "mark said pawn as En-Passantable" step actually marked the skipped square (needed so the capture-destination check can find it, as noted above) - but pin-tracing walks through actual pieces, and the pawn is standing on its landing square, not the empty square behind it. Marking only the skipped square meant the pin-tracer never recognized the pawn as En-Passantable at all, and just treated it as an ordinary blocker. I ended up marking both squares - the skipped one for capture validation, the pawn's own square for this.
->
-> Third, don't reuse the regular 'pinned' marking for this. A genuinely pinned piece may only move along the line to its king; a pseudo-pinned piece may do *anything except* capture En Passant - reusing 'pinned' would incorrectly restrict all its other moves too. This needs its own marking, checked only at the point where an En Passant capture is being considered, not wired into the general move-restriction path pinned pieces go through.
+> **Implementation note:** "skip it and continue the trace" can't be unconditional. It only makes sense the *first* time the ray hits anything - if some unrelated piece was already sitting between the attacker and the En-Passantable pawn, that piece is a completely ordinary blocker with no relationship to En Passant at all, and letting the ray see through the En-Passantable pawn anyway would falsely flag that unrelated piece as pinned. I only let this passthrough happen when nothing has been hit yet on this ray.
 
 ## Checkmate & Stalemate detection
 **Mate and stalemate detection** is actually quite easy to implement in our current system.
@@ -445,90 +445,191 @@ We can fix this, and greatly improve performance, by **only running this mate de
 
 > If we choose to mark all possible positions instead of just counting them, we can also re-use this to do a quicker look-up for the possible moves for any valid move. In that case, when selecting a piece to move, we already have all valid moves for it marked, so we can simply show them.
 
-## Concluded game flow
-# ⚠️ This section is still a WIP
-So with all of these puzzle pieces together, let's stitch together a game flow.
+## Game flow
+### Events and game phases
+So with all of these puzzle pieces together, we can finally stitch together a game flow and start bringing this Chess game to life!
 
-- At the start of the game, we don't have to do anything.
-- When a piece is selected, we run its validation logic to present the possible moves.
-- When a valid move square is selected, we do the following:
+It basically comes down to this:
 
-    1. Move the piece over, capture the piece that was at that location.
-    2. Perform special move logic:
+At the start of the game, we don't have to do anything.
+
+1. When a piece is selected, we run its validation logic to present the possible moves.
+2. When a valid move square is selected, we do the following:
+
+    - Move the piece over, capture the piece that was at that location.
+    - Perform special move logic:
         - En Passant
         - Castling
         - Promotion
 
 
-- After a move is made, we do the following:
-    1. Make sure to forget how we marked squares/pieces last round.
-    2. Compute what squares the last moved player is attacking.
-    3. Count how many valid moves the enemy of last moved player can make.
-    4. Determine if one of the players is in Checkmate or Stalemate.
-    5. Switch whose turn it is.
+3. After a move is made, we do the following:
+    - Make sure to forget how we marked squares/pieces last round.
+    - Check if the just-moved piece will be En Passantable next move.
+    - If a pawn just reached the back rank, **stop here, and pause** until they have picked a promotion and the piece has been transformed.
 
-To keep track of what phase we're in, it's useful to keep track of a global 'gameState' variable.
+4. Post-move stuff:
+    - Compute what squares the last moved player is attacking.
+    - Count how many valid moves the enemy of last moved player can make.
+    - Determine if one of the players is in Checkmate or Stalemate.
+    - Switch whose turn it is.
+
+There. That's it.
+
+To keep track of what phase we're in, it's useful to keep track of a global 'game phase' variable. I use the following phases:
+- Validating moves
+- Checking attack squares
+- Counting valid moves (Very similar behavior to the first phase)
+- Promoting (Waiting for a player to promote)
+- Idle
+- Game Over (Someone won, or a draw)
+
+### Putting it together
+The functions described by the above 4 events are pretty basic. Though a few of the other functions in this blog are a bit more complex. They grew a rule at a time across this post, which is nice for following along but leaves you without a single place that shows the whole thing. Here they are complete, everything above included:
+
+Starting off with pawn movement, including En Passant and the edge case handling.
 
 ```ts
-function select(piece) {
-  gameState = PIECE_SELECTED
-  piece.runValidation()
-}
-```
-###### Pseudocode for piece selection stage
-```ts
-function move(piece, location) {
-  gameState = PIECE_MOVING
-  piece.moveTo(location)
-
-  // Castling
-  if (piece.isKing() && location.distance >= 2)
-      castle(location)
-
-  // En passant
-  if (isEnPassantable(piece.behind))
-      capture(piece.behind)
-
-  // Promotion
-  if (!isOnBoard(piece.infront)) {
-    promote(piece)
-    gameState = PIECE_PROMOTING
+function pawnMoves(pos) {
+  if (phase == ATTACK) {
+    // Always defends both diagonals, regardless of what's actually standing on them
+    validateSpot(pos.inFront.left)
+    validateSpot(pos.inFront.right)
+    return
   }
 
-  // If the player still has to choose
-  // what to promote to, we can stop here
-  if (gameState != PIECE_PROMOTING) postMove()
+  // Simple moves
+  if (!hasPiece(pos.inFront)) validateSpot(pos.inFront)
+  if (!hasPiece(pos.inFront) && !hasPiece(pos.inFront.inFront) && !hasBeenMoved(pos))
+    validateSpot(pos.inFront.inFront)
+
+  // Diagonal captures
+  if (hasEnemyPiece(pos.inFront.left)) validateSpot(pos.inFront.left)
+  if (hasEnemyPiece(pos.inFront.right)) validateSpot(pos.inFront.right)
+
+  // En Passant, entirely skipped if we're 'Pseudo-pinned'
+  pseudoPinned = isMarked(pos, PSEUDO_PINNED)
+  if (!pseudoPinned && isEnPassantable(pos.inFront.left)) validateSpot(pos.inFront.left)
+  if (!pseudoPinned && isEnPassantable(pos.inFront.right)) validateSpot(pos.inFront.right)
 }
 ```
-###### Pseudocode for piece moving stage
+###### The final pawn movement function
+
+Now let's go over the function that's used for the long-ranged pieces as well, as this function has a lot of different impotant parts.
+
+> These trace variables are for keeping track of the info in that specific trace, and thus must be reset in between each call
 
 ```ts
-function postMove() {
-  // Scanning attacks
-  gameState = SCANNING_ATTACKS
-  getPieces(currentTurn).runValidation()
+// Reset before every one of a piece's traces
+firstHit = null
+foundKing = false
+checkOrigin = false
+passedEnPassantable = false
 
-  // Scanning valid moves
-  gameState = COUNTING_MOVES
-  getPieces(currentTurn.opposite).runValidation()
+function traceSpots(pos, dir) {
+  // Treat an as-yet-uncaptured En-Passantable pawn as if it wasn't there, but only on the
+  // very first thing this ray hits - an ordinary blocker further down the ray still blocks
+  passingThrough = phase == ATTACK && firstHit == null && isEnPassantable(pos)
+  if (passingThrough) passedEnPassantable = true
 
-  // Determine game state
-  determineGameState()
+  // Friendly pieces still block movement, but not attack-marking (see 'In check')
+  if (hasFriendlyPiece(pos) && phase != ATTACK) return
 
-  // Switch turns
-  currentTurn = currentTurn.opposite
+  if (isOpponentKing(pos)) foundKing = true
 
-  gameState = IDLE
+  // Stop on the second enemy piece hit, unless we're passing through an En-Passantable one
+  isEnemy = !passingThrough && hasEnemyPiece(pos)
+  if (isEnemy && firstHit != null) return
+
+  alreadyHitSomething = firstHit != null
+  if (isEnemy) firstHit = pos
+
+  if (!alreadyHitSomething) validateSpot(pos) // Move or capture
+
+  // Anything solid that isn't an enemy (or an En-Passantable pawn) stops the ray here
+  if (hasPiece(pos) && !isEnemy && !passingThrough) return
+
+  traceSpots(pos.inFront, dir)
+
+  // Only mark squares between us and the King, not behind it
+  if (opponentKing.distance(pos) < this.distance(pos)) return
+
+  if (checkOrigin) markLineOfCheck(pos)
+}
+
+// After tracing one direction to its end:
+if (phase == ATTACK && foundKing && firstHit != null)
+  markAsPinned(firstHit, passedEnPassantable ? PSEUDO_PINNED : PINNED)
+```
+###### The full long-range trace function, used by Rooks, Bishops and Queens
+
+There's one more function that never got its own code block, even though it's arguably the most important one: the validation function. Every movement function in this post calls it on every pseudo-valid square it finds, but it's the one that actually decides whether that move survives. Tying together checks for being in check, and pinned pieces.
+
+One thing worth knowing before reading it: a "move" here isn't just a destination square. It's a piece-shaped object that remembers both the square it's testing 'pos' *and* the square the piece actually started on 'pos.origin'. This matters below, since a pin is checked against the piece's own square, not the square it's trying to move to.
+
+```ts
+function validateSpot(pos) {
+  if (!pos.onBoard()) return
+
+  if (phase == VALIDATE_MOVES || phase == COUNT_MOVES) {
+    // Pinned pieces may only move along the line to their own king (see 'Pinned pieces').
+    // Checked against the piece's own square, not the destination we're testing
+    pinned = isMarked(pos.origin, PINNED)
+    if (pinned && !moveLinesUpWithKing(pos)) return
+
+    // Double check: nothing but the king itself can move at all (see 'In check')
+    if (checkCount >= 2 && pos.type != KING) return
+
+    // Single check: only a move that blocks the line of check, or captures the checker, survives
+    if (checkCount == 1 && pos.type != KING
+        && !isMarked(pos, CHECK_LINE) && !isMarked(pos, CHECK_ORIGIN)) return
+
+    // Everything above just filters pseudo-valid moves down to actually-valid ones.
+    // What we do with a move that survives depends on why we're computing it at all
+    if (phase == COUNT_MOVES) availableMoves++
+    else markValid(pos)
+  }
+
+  if (phase == ATTACK) {
+    // Mark this square as defended / attacked
+    markAttacked(pos)
+
+    if (pos.has(opponentKing)) {
+      numberOfChecks++
+      checkOrigin = true // From traceSpots(), will trace back
+
+      markCheckOrigin(pos)
+
+      // Edge case Nr.1
+      if (pos.type == PAWN) {
+        markLineOfCheck(pos.origin.behind)
+      }
+    }
+  }
 }
 ```
-###### Pseudocode for post-move stage
+###### The full final validation function, for all 3 involved phases.
+
+## Try the demo
+
+<Wrapper classes="float right">
+    ![Chess Validation Demo](/weblog/chess/screenshot-demo.png)
+</Wrapper>
+
+Now I genuinely would be surprised if you immediately wrapped your head around all this, so, if you're thinking of implementing this algorithm, trying it hands-on, and looking at the code in total might help.
+
+I've implemented the algorithm in its own typescript environment, so you can take a real and interactive look at this algorithm in action.
+
+You will be able to see the markings update live as you move the pieces and read the source code as you go.
+
+Take a look here:
+
+# [Chess Validation Demo](/pages/chess-evaluation)
+
+> This page is still relatively new. If you have any feedback or thoughts, I would love to hear them.
+
 
 ## Conclusion
 Thanks for reading!
 
-If this blog was any use to you, or you have any thoughts, please contact me! I would love to hear about your projects.
-
-
-<Wrapper classes="right" style="display:flex;justify-content: center;margin-top:4rem">
-    <BusinessCard />
-</Wrapper>
+If this blog was any use to you, or you have any thoughts, please shoot me a message! I would love to hear about your projects.
