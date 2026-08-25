@@ -43,18 +43,18 @@ html {
     }
 }
 
-.heading .description {
+.header .description {
     text-align: justify;
     margin: 0.5rem 0;
 }
 
-.heading .top {
+.header .top {
     display: flex;
     justify-content: space-between;
     width: 100%;
 }
 
-.heading .title {
+.header .title {
     font-family: "Type right!", sans-serif;
     font-weight: bold;
     font-size: 2.6rem;
@@ -62,7 +62,7 @@ html {
     margin-top: 0.7rem;
 }
 
-.heading .date {
+.header .date {
     font-weight: bold;
     align-self: flex-end;
     font-family: "Doto", monospace;
@@ -229,12 +229,11 @@ pre.astro-code {
         background-color: transparent !important;
     }
 
-    & > pre {
-        overflow: auto;
-
-        & > code {
-            width: max-content;
-        }
+    & > code {
+        display: block;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch; /* Smooth swipe on iOS */
     }
 
     /* Perforation strip */
@@ -316,13 +315,13 @@ pre.astro-code {
     font-size: 1.5em;
 
     display: block;
-    inline-size: 0;
-    min-inline-size: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: 3rem;
 
     word-wrap: break-word;
     overflow-wrap: break-word;
 
-    margin-left: 3rem;
     margin-top: -1rem;
 }
 
