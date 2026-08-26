@@ -78,7 +78,9 @@ function traceSpots(move: Piece, direction: number[]) {
     // If we hadn't hit anything before, we hit the current move now
     if (enemy) traceState.firstHit = move;
 
-    if (!alreadyHadHit) validateSpot(move);
+    // Validate up through the first hit as normal, but during Phase.ATTACK keep going past it if
+    // that hit was the opponent king, so squares directly behind the king still get marked ATTACKED
+    if (!alreadyHadHit || (traceState.foundKing && gameBoard.phase === Phase.ATTACK)) validateSpot(move);
 
     if (piece != null && !enemy && !enPassantable) return;
 

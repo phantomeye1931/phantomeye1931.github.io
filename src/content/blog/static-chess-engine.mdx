@@ -542,7 +542,9 @@ function traceSpots(pos, dir) {
   alreadyHitSomething = firstHit != null
   if (isEnemy) firstHit = pos
 
-  if (!alreadyHitSomething) validateSpot(pos) // Move or capture
+  // Validate up through the first hit as normal, but during Phase.ATTACK keep going past it if
+  // that hit was the opponent king, so squares directly behind the king still get marked ATTACKED
+  if (!alreadyHitSomething || (foundKing && phase == ATTACK)) validateSpot(pos) // Move or capture
 
   // Anything solid that isn't an enemy (or an En-Passantable pawn) stops the ray here
   if (hasPiece(pos) && !isEnemy && !passingThrough) return
