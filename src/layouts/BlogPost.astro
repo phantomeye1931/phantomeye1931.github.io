@@ -25,7 +25,7 @@ const headerButtons: Button[] = [
 ];
 ---
 
-<Page title={props.title} description={props.description} opts={{ background: true, buttons: true, extraButtons: headerButtons, bgSticky: true }}>
+<Page title={props.title} description={props.description} navButtons={{ extraButtons: headerButtons }} background={{ sticky: true }}>
 	<article>
 		<div class="paper" style={ getPageStyle(props.description) }>
 			<ShapePaperClip class="paperclip"/>

@@ -1,0 +1,39 @@
+---
+interface Props {
+    url: string;
+}
+
+const props = Astro.props;
+
+import codeIcon from '/svg/icons/link.svg?raw';
+---
+
+<a href={ props.url } class="link" >
+    <Fragment set:html={ codeIcon } />
+    <slot />
+</a>
+
+<style>
+:global(svg) {
+    --col-svg: currentColor;
+    vertical-align: -0.15em;
+
+    stroke: currentColor;
+    stroke-width: 1px;
+}
+
+.link {
+    display: block;
+    margin-block: 1em;
+
+    color: var(--col-text-1);
+    font-size: 1.618rem;
+    font-weight: bold;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--col-cmyk-cyan);
+        text-decoration: underline;
+    }
+}
+</style>

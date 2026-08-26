@@ -1,27 +1,20 @@
 ---
 import BaseHead from "../components/BaseHead.astro";
 
-import ThemeManager from "../components/util/ThemeManager.astro";
-import HalftoneBackground, {BackgroundVariant} from "../components/HalftoneBackground.astro";
-import HeaderButtons from "../components/HeaderButtons.astro";
-import type {Button} from "../utils/types.ts";
+import HalftoneBackground, {type BackgroundOpts} from "../components/HalftoneBackground.astro";
+import HeaderButtons, {type NavButtonOpts} from "../components/HeaderButtons.astro";
 
-export interface PageProps {
-    opts: {
-        background: boolean,
-        bgVariant?: BackgroundVariant,
-        bgFlip?: boolean,
-        bgSticky?: boolean,
-
-        buttons: boolean,
-        extraButtons?: Button[],
-        mobileCentered?: boolean,
-    },
+type Props = {
     title: string,
     description: string,
-}
 
-const props = Astro.props as PageProps;
+    navButtons?: NavButtonOpts
+    background?: BackgroundOpts
+};
+
+export type PageProps = Props;
+
+const props = Astro.props as Props;
 ---
 
 <!doctype html>
@@ -29,16 +22,22 @@ const props = Astro.props as PageProps;
     <head>
         <title>{props.title}</title>
         <BaseHead title={props.title} description={props.description} />
-        <ThemeManager />
     </head>
     <body>
         <main>
             <div class="page-wrapper">
-                { props.opts.background
-                    ? (<HalftoneBackground variant={ props.opts.bgVariant } flip={ props.opts.bgFlip ?? false } sticky={ props.opts.bgSticky ?? false }/>)
-                    : '' }
+                { props.background ? (
+                        <HalftoneBackground
+                                variant={ props.background.variant }
+                                sticky ={ props.background.sticky ?? false } />
+                ) : '' }
                 <div class="page-contents">
-                    { props.opts.buttons ? <HeaderButtons extraButtons={ props.opts.extraButtons ?? [] } mobileCentered={ props.opts.mobileCentered ?? false }/> : '' }
+                    { props.navButtons ?
+                            <HeaderButtons
+                                    extraButtons  ={ props.navButtons.extraButtons   ?? [] }
+                                    dockingButtons={ props.navButtons.dockingButtons }
+                                    mobileCentered={ props.navButtons.mobileCentered ?? false }/>
+                    : '' }
                     <slot />
                 </div>
             </div>
@@ -52,6 +51,11 @@ const props = Astro.props as PageProps;
 html {
     scroll-behavior: smooth;
     background-color: var(--col-background-dark);
+
+
+    & :global(*) {
+        transition: border var(--theme-transition), color var(--theme-transition), background-color var(--theme-transition);
+    }
 }
 
 .overlay {
@@ -73,6 +77,10 @@ html {
 
 .page-wrapper {
     background-color: var(--col-background);
+
+
+
+
     position: absolute;
     min-height: 100svh;
     width: 100%;

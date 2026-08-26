@@ -1,32 +1,71 @@
 ---
 import type {Button} from "../utils/types.ts";
-const buttons: Button[] = [
-    { alignRight: true, label: "</>", url: "https://github.com/phantomeye1931/phantomeye1931.github.io"},
-    { alignRight: true, label: "sync",  url: "javascript:void(0)", behavior: "toggle-dark-mode"},
-]
 
 interface Props {
+    defaultButtons?: boolean,
     extraButtons: Button[],
     mobileCentered?: boolean,
+    dockingButtons?: boolean,
 }
+
+export type NavButtonOpts = Props;
+
 const props = Astro.props;
+
+const buttons: Button[] = [];
+
+function isExternal(url: string) {
+    try {
+        return new URL(url, Astro.url).hostname !== Astro.url.hostname;
+    } catch {
+        return false;
+    }
+}
+
+if (props.defaultButtons ?? true) buttons.push(
+    { alignRight: true, label: "", behavior: "toggle-dark-mode"},
+)
+
 buttons.push( ...props.extraButtons );
+
+import codeIcon from '/svg/icons/code.svg?raw';
+
+if (props.defaultButtons ?? true) buttons.push(
+    { alignRight: true, label: codeIcon, url: "https://github.com/phantomeye1931/phantomeye1931.github.io"},
+)
+
+const leftButtons = buttons.filter(button => !button.alignRight);
+const rightButtons = buttons.filter(button => button.alignRight);
+
+const showLeft = leftButtons.length > 0;
+const showRight = rightButtons.length > 0;
 ---
 
 <div class="nav-bar" mobile-centered={ props.mobileCentered ?? false }>
-    <div class="buttons left">
-        { buttons.filter(button => !button.alignRight).map((button) => (
-                    <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
+    { showLeft ? <div class=`buttons left ${props.dockingButtons ? '' : 'floating'}`>
+        { leftButtons.map((button) => (
+                <a href={button.url} class=`link font-mono ${button.behavior ?? "javascript:void(0)"}` target={isExternal(button.url) ? "_blank" : undefined} >
+                    <!-- [ + The actual link label, allows HTML + ] -->
+                    <span class="bk">[</span><Fragment set:html={button.label} /><span class="bk">]</span>
+                </a>
         ))}
-    </div>
-    <div class="buttons right">
-        { buttons.filter(button => button.alignRight).map((button) => (
-                <a href={button.url} class=`link font-mono ${button.behavior}` ><span class="bk">[</span>{button.label}<span class="bk">]</span></a>
-        ))}
-    </div>
+    </div> : ''}
+    { showRight ? <div class=`buttons right ${props.dockingButtons ? '' : 'floating'}`>
+        { rightButtons.map((button) =>
+                <a href={button.url} class=`link font-mono ${button.behavior ?? "javascript:void(0)"}` target={isExternal(button.url) ? "_blank" : undefined} >
+                    <!-- [ + The actual link label, allows HTML + ] -->
+                    <span class="bk">[</span><Fragment set:html={button.label} /><span class="bk">]</span>
+                </a>
+        )}
+    </div> : ''}
 </div>
 
 <script>
+    import { cycleColorSchemes, getDisplayedTheme, Theme } from "../scripts/theme";
+
+    import moonIcon from '/svg/icons/moon.svg?raw';
+    import sunIcon from '/svg/icons/sun.svg?raw';
+
     const $buttonsDiv = $(".buttons, .nav-bar");
 
     window.addEventListener("scroll", () => {
@@ -34,15 +73,22 @@ buttons.push( ...props.extraButtons );
     });
 
     // Function to update the label text
-    function setModeLabel($el: JQuery, mode: any) {
-        $el.html(`<span class="bk">[</span>${mode}<span class="bk">]</span>`);
+    function updateThemeButton($el: JQuery, mode: Theme) {
+        let text: string;
+        switch (mode) {
+            case Theme.DARK: text = `${sunIcon}`; break;
+            case Theme.LIGHT: text = `${moonIcon}`; break;
+        }
+
+        $el.html(`<span class="bk">[</span>${text}<span class="bk">]</span>`);
     }
 
-    const toggleLink = $("a.toggle-dark-mode");
-    setModeLabel(toggleLink, (window as any).getColorScheme()); // Initial update
+    let $themeToggleButton = $("a.toggle-dark-mode");
+    updateThemeButton($themeToggleButton, getDisplayedTheme());
 
-    toggleLink.on("click", function() {
-        setModeLabel($(this), (window as any).cycleColorScheme());
+    $themeToggleButton.on("click", function() {
+        cycleColorSchemes()
+        updateThemeButton($(this), getDisplayedTheme());
     });
 </script>
 
@@ -59,6 +105,18 @@ buttons.push( ...props.extraButtons );
         right: 0;
     }
 
+    :global(svg) {
+        --col-svg: var(--col-text-1);
+
+        width: 1em;
+        height: 1em;
+
+        /* Align with text baseline naturally */
+        vertical-align: -0.125em;
+
+        flex-shrink: 0;
+    }
+
     .buttons {
         position: fixed;
         box-sizing: border-box;
@@ -72,9 +130,8 @@ buttons.push( ...props.extraButtons );
         flex-wrap: wrap;
 
         color: var(--col-nav-link-text);
-        background-color: var(--col-nav-background);
         border: 1px solid transparent;
-        transition: border 150ms, color 150ms;
+        transition: border var(--theme-transition), color var(--theme-transition), background-color var(--theme-transition);
 
         font-size: 1.3em;
         letter-spacing: .03em;
@@ -97,7 +154,6 @@ buttons.push( ...props.extraButtons );
 
             &:hover {
                 color: var(--col-nav-link-text);
-                text-decoration: underline;
 
                 .bk {
                     color: var(--col-nav-link-hover);
@@ -106,7 +162,9 @@ buttons.push( ...props.extraButtons );
         }
     }
 
-    .is-scrolled {
+    .is-scrolled,
+    .floating {
+        background-color: var(--col-nav-background);
         border: 1px solid var(--col-nav-border);
     }
 
@@ -117,16 +175,14 @@ buttons.push( ...props.extraButtons );
             justify-content: space-between;
             align-items: flex-start;
 
-            position: sticky;
-            top: 0;
-            z-index: 2000;
+            position: fixed;
+            inset: 0 0 auto 0;
+            z-index: 10;
             box-sizing: border-box;
 
-            color: var(--col-nav-link-text);
             background-color: var(--col-nav-background);
             border: none;
             border-bottom: 1px solid transparent;
-            transition: border-color 150ms, color 150ms;
 
             font-size: 0.95rem;
             letter-spacing: .03em;
@@ -138,7 +194,6 @@ buttons.push( ...props.extraButtons );
                 border-bottom-color: var(--col-nav-border);
             }
 
-            /* combine left + right buttons into one flat row, evenly spaced */
             &[mobile-centered="true"] {
                 justify-content: space-evenly;
 
@@ -155,7 +210,7 @@ buttons.push( ...props.extraButtons );
             padding: 0;
             border: none;
             background: none;
-            font-size: 1em; /* cancel the desktop 1.3em multiplier */
+            font-size: 1em;
             flex-wrap: nowrap;
             gap: .5rem;
         }
