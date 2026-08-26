@@ -279,10 +279,6 @@ function pawnMoves(pos, dir) {
 Don't worry, this isn't the end of our En Passant troubles, it will return to haunt us.
 
 > **Implementation note, added after actually building this:** two things in the pseudocode above needed correcting once I wired it into a real engine.
->
-> First, `markEnPassantable(pos.inFront)` marks the *skipped* square, but the capture check reads `isEnPassantable(pos.left)` — the square directly beside the capturing pawn, which is the En-Passantable pawn's own landing square, not the skipped one. Those are two different squares, so as written the check can never find its own marker. Since the skipped square and the actual capture destination are the same square, the check and the mark need to be the same expression: `isEnPassantable(pos.left.inFront)`, not `isEnPassantable(pos.left)`.
->
-> Second, `markEnPassantable(pos.inFront)` can't actually live inside `pawnMoves` if your move validation and move execution are separate functions (mine are). `pawnMoves` runs every time a pawn's moves are *previewed* — selecting a piece, counting the opponent's available moves — not just when a double move is actually taken. Marking there flags every pawn that *could* double-move, not the one that just did. The mark has to be set at the one point a move is actually committed, not during validation.
 
 ### Castling
 Castling is a special move in chess, where in specific conditions, the king and a rook can swap around. To be specific, the king can move two squares at once sideways, and the rook will move to the other side of the king.
