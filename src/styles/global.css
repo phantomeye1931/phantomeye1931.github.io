@@ -49,14 +49,17 @@
 	--drop-shadow: drop-shadow(0 10px 5px var(--col-drop-shadow));
 	--page-padding: 2.5rem;
 	--bezier-transition: cubic-bezier(0.16, 1, 0.3, 1);
+
+	--theme-transition: 0.3s ease;
 }
 
 [color-scheme='dark'] {
 	/* dark stock: paper/ink roles swap rather than just dimming, same as the
 	   halftone canvas's multiply/screen switch */
-	--col-background:     #1c1712;
+	--col-background: #231f22;
 	--col-background-dark: #191410;
-	--col-background-2:   #332f28;
+	--col-background-2: #191519;
+
 	--col-text-1:       #ece4d4;
 	--col-text-2:       #c2bfb2;
 	--col-text-3:       #9d9a8f;

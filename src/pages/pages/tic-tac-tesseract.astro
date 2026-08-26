@@ -160,6 +160,9 @@ const version = 2.1;
 </CenteredPage>
 
 <script>
+    import svgX from '/pages/tic-tac-tesseract/game/cross.svg?raw';
+    import svgO from '/pages/tic-tac-tesseract/game/circle.svg?raw';
+
     const urlParams = new URLSearchParams(window.location.search);
     let hardMode = urlParams.get("hard") != null;
 
@@ -224,6 +227,8 @@ const version = 2.1;
                 ? `<span class="player">player ${symbol}</span> won!`
                 : (`<span class="player">player ${symbol}</span>\'s turn`);
             turnDisplay.html(statusText);
+
+            renderPieces();
         }
     });
 
@@ -474,6 +479,26 @@ const version = 2.1;
         playFieldElement.removeClass("ended");
     }
 
+    function renderPieces() {
+        for (let w = 0; w < 4; w++)
+            for (let z = 0; z < 4; z++)
+                for (let y = 0; y < 4; y++)
+                    for (let x = 0; x < 4; x++) {
+                        let cell = $(`#${x}${y}${z}${w} > div`);
+
+                        if (cell.hasClass('x')) {
+                            cell.html(svgX);
+                            continue;
+                        }
+                        if (cell.hasClass('o')) {
+                            cell.html(svgO);
+                            continue;
+                        }
+
+                        cell.remove("svg");
+                    }
+    }
+
     let hardModeToggle = $("#hardModeToggle");
 
     // Toggles whether move hints are shown
@@ -493,14 +518,26 @@ const version = 2.1;
 <style is:global>
     :root {
         --highlight-grayscale: #929aa3;
-        --highlight-hover:     color-mix(in srgb, var(--col-cmyk-magenta) 50%, var(--col-background));
-        --highlight-connected: color-mix(in srgb, var(--col-cmyk-cyan) 50%, var(--col-background));
-        --highlight-win:       color-mix(in srgb, var(--col-cmyk-green) 50%, var(--col-background));
-        --highlight-recent:    color-mix(in srgb, var(--col-cmyk-yellow) 70%, var(--col-background));
+        --highlight-hover:     #d4779a;
+        --highlight-connected: #70b6c2;
+        --highlight-win:       #53e164;
+        --highlight-recent:    #dcc050;
 
         /* Combined colors */
-        --hl-hp: color-mix(in oklch, var(--highlight-hover), var(--highlight-recent));
-        --hl-hs: color-mix(in oklch, var(--highlight-hover), var(--highlight-connected));
+        --highlight-recent-hover: #d3bcdc;
+        --highlight-recent-connected: #a9d6a7;
+    }
+
+    [color-scheme='dark'] {
+        --highlight-grayscale: #6e757c;
+        --highlight-hover: #803f6d;
+        --highlight-connected: #3a6271;
+        --highlight-win: #2c8854;
+        --highlight-recent: #6c4e14;
+
+        /* Combined colors */
+        --highlight-recent-hover: #856191;
+        --highlight-recent-connected: #6b816d;
     }
 
     .game {
@@ -724,16 +761,10 @@ const version = 2.1;
     }
 
     /* Game icons */
-    .none {
-        background-image: url("/pages/tic-tac-tesseract/game/empty.svg");
-    }
-
-    .x {
-        background-image: url("/pages/tic-tac-tesseract/game/cross.svg");
-    }
-
-    .o {
-        background-image: url("/pages/tic-tac-tesseract/game/circle.svg");
+    svg {
+        width: 80%;
+        height: 80%;
+        --4dttt-icon-fill: var(--col-text-2);
     }
 
     /* Put it up here because following classes have more priority */
@@ -760,11 +791,11 @@ const version = 2.1;
 
     /* Combined highlights */
     .highlightLastMove.highlightSecondary {
-        background-color: var(--hl-hs) !important;
+        background-color: var(--highlight-recent-connected) !important;
     }
 
     .highlightLastMove.highlight {
-        background-color: var(--hl-hp) !important;
+        background-color: var(--highlight-recent-hover) !important;
     }
 
     @media (max-width: 600px) {

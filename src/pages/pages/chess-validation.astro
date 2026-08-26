@@ -40,7 +40,7 @@ const UNINTERESTING_SECTIONS = [
 
 <CenteredPage
         title={ title }
-        description="Chess evaluation demo"
+        description="Chess validation demo"
         opts={{ background: true, buttons: true }}
 >
     <div class="game">
@@ -49,13 +49,13 @@ const UNINTERESTING_SECTIONS = [
                 <h1 class="heading">{ title }</h1>
             </div>
 
-            <p class="subtext"> Chess static evaluation demo. Algorithm implementation based on <a href="/blog/static-chess-engine">this blog post</a>. </p>
+            <p class="subtext"> Chess static validaton demo. Algorithm implementation based on <a href="/blog/static-chess-engine">this blog post</a>. </p>
         </div>
 
         <div class="board">
             <div class="strip above">
                 <div class="button font-dotmatrix">
-                    <a onclick="togglePanel('algorithmPanel');">view live code</a>
+                    <a onclick="togglePanel('algorithmPanel');" class="live-code-button">view live code</a>
                 </div>
 
                 <div class="status-group">
@@ -396,7 +396,7 @@ const UNINTERESTING_SECTIONS = [
         --highlight-attack: #ff5977;
         --highlight-check-line: #59ff8e;
         --highlight-check-origin: #59acff;
-        --highlight-valid: #c3c3be;
+        --highlight-valid: rgba(166, 166, 158, 0.6);
         --highlight-pinned: #d18aff;
     }
 
@@ -871,11 +871,11 @@ const UNINTERESTING_SECTIONS = [
 
     /* Combined highlights */
     .highlightLastMove.highlightSecondary {
-        background-color: var(--hl-hs) !important;
+        background-color: var(--highlight-recent-connected) !important;
     }
 
     .highlightLastMove.highlight {
-        background-color: var(--hl-hp) !important;
+        background-color: var(--highlight-recent-hover) !important;
     }
 
     @media (max-width: 600px) {

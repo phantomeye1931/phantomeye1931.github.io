@@ -1,14 +1,18 @@
 ---
+import { undefined } from "astro/zod";
 import Page, {type PageProps} from "./Page.astro";
+import type {NavButtonOpts} from "../components/HeaderButtons.astro";
 
-let props = Astro.props as PageProps;
+type Props = PageProps;
 
-props.opts.extraButtons = [
-    { alignRight: false, url: "/", label: "HOME" }
-];
+let props = Astro.props as Props;
+
+const extraButtons = [
+    {alignRight: false, url: "/", label: "HOME"}
+]
 ---
 
-<Page opts={ props.opts } description={ props.description } title={ props.title }>
+<Page title={ props.title } description={ props.description } background={{ sticky: false }} navButtons={{ extraButtons } } >
     <div class="wrapper">
         <slot/>
     </div>

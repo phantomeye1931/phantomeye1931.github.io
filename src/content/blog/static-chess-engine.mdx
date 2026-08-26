@@ -5,6 +5,7 @@ pubDate: 'Jan 22 2026'
 updatedDate: 'Aug 25 2026'
 ---
 import Wrapper from '../../components/simple/Wrapper.astro';
+import BlogLink from '../../components/blog/BlogLink.astro';
 
 <Wrapper classes="float right">
     ![](/weblog/chess/example-pin-moves.png)
@@ -16,8 +17,9 @@ import Wrapper from '../../components/simple/Wrapper.astro';
 - [Special moves](#special-moves)
 - [Pinned pieces](#pinned-pieces)
 - [Edge cases](#edge-cases)
-- [Checkmate & Stalemate detection](#checkmate--stalemate-detection)
-- [Concluded game flow](#concluded-game-flow)
+- [Checkmate & Stalemate detection](#mate--stalemate-detection)
+- [Concluded game flow](#game-flow)
+- [Try the demo](#try-the-demo)
 
 ## The why?
 I've long been fascinated with the game of chess, and I've wanted to make my own chess engine for a while. In combination with another project idea, I decided I wanted a **playable chess board in vanilla Minecraft**, so you could play chess with your friends in everyone's favorite sandbox game.
@@ -430,7 +432,7 @@ With that, we now know when one of our pawns managed to get itself in this predi
 
 > **Implementation note:** "skip it and continue the trace" can't be unconditional. It only makes sense the *first* time the ray hits anything - if some unrelated piece was already sitting between the attacker and the En-Passantable pawn, that piece is a completely ordinary blocker with no relationship to En Passant at all, and letting the ray see through the En-Passantable pawn anyway would falsely flag that unrelated piece as pinned. I only let this passthrough happen when nothing has been hit yet on this ray.
 
-## Checkmate & Stalemate detection
+## Mate & Stalemate detection
 **Mate and stalemate detection** is actually quite easy to implement in our current system.
 
 We already have a way of finding the **valid moves for all pieces**, so we can simply run this for all pieces and **count how many valid moves** there are for each side.
@@ -624,7 +626,7 @@ You will be able to see the markings update live as you move the pieces and read
 
 Take a look here:
 
-# [Chess Validation Demo](/pages/chess-evaluation)
+<BlogLink url="/pages/chess-validation">Chess Validation Demo</BlogLink>
 
 > This page is still relatively new. If you have any feedback or thoughts, I would love to hear them.
 

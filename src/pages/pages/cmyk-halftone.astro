@@ -72,6 +72,13 @@ import Page from "../../layouts/Page.astro";
                     </label>
                 </div>
 
+                <div class="control checkbox-control">
+                    <label for="transparent-toggle">
+                        <input type="checkbox" id="transparent-toggle" />
+                        Transparent (No background color)
+                    </label>
+                </div>
+
                 <div class="control">
                     <label for="out-width">Width (px)</label>
                     <input type="number" id="out-width" min="64" max="7680" step="1" value="1920" />
@@ -152,6 +159,7 @@ import Page from "../../layouts/Page.astro";
     const $channelsPanel = document.getElementById("channels-panel") as HTMLDivElement;
     const $gradientToggle = document.getElementById("gradient-toggle") as HTMLInputElement;
     const $bottomFadeToggle = document.getElementById("bottom-fade-toggle") as HTMLInputElement;
+    const $transparentToggle = document.getElementById("transparent-toggle") as HTMLInputElement;
     const $mobilePresetBtn = document.getElementById("mobile-preset-btn") as HTMLButtonElement;
     const $loopToggle = document.getElementById("loop-toggle") as HTMLInputElement;
     const $width = document.getElementById("out-width") as HTMLInputElement;
@@ -205,6 +213,7 @@ import Page from "../../layouts/Page.astro";
     const previewEffect = createHalftoneEffect($previewCanvas, {
         fill: !$gradientToggle.checked,
         bottomFade: $bottomFadeToggle.checked,
+        transparent: $transparentToggle.checked,
     });
     previewEffect.resolveColors();
 
@@ -473,6 +482,7 @@ import Page from "../../layouts/Page.astro";
         const duration = clampFloat($duration.value, 0.1, 120, 6);
         const gradient = $gradientToggle.checked;
         const bottomFade = $bottomFadeToggle.checked;
+        const transparent = $transparentToggle.checked;
         const loopMode = $loopToggle.checked;
         const format = $format.value === "jpeg" ? "jpeg" : "png";
         const quality = Number($quality.value);
@@ -505,7 +515,7 @@ import Page from "../../layouts/Page.astro";
         // entirely decoupled from the live preview canvas above, seeded with
         // the same ink colors and blobs the user has been editing there
         const offCanvas = document.createElement("canvas");
-        const effect = createHalftoneEffect(offCanvas, { fill: !gradient, bottomFade });
+        const effect = createHalftoneEffect(offCanvas, { fill: !gradient, bottomFade, transparent });
         effect.resolveColors();
         previewEffect.channels.forEach((srcCh) => {
             const destCh = effect.channels.find((c) => c.id === srcCh.id);
