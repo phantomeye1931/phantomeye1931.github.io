@@ -14,8 +14,8 @@ const variant = props.variant ?? BackgroundVariant.Fill;
 ---
 
 <div class="halftone-wrapper" aria-hidden="true" sticky={ props.sticky } data-variant={variant}>
-    <video class="halftone-video light" muted loop playsinline autoplay preload="auto" disableRemotePlayback></video>
-    <video class="halftone-video dark"  muted loop playsinline autoplay preload="auto" disableRemotePlayback></video>
+    <video class="halftone-video light" muted loop playsinline disableRemotePlayback></video>
+    <video class="halftone-video dark"  muted loop playsinline disableRemotePlayback></video>
 </div>
 
 <!-- Hide the site until the halftone videos are loaded, for max 4 seconds -->
@@ -81,7 +81,9 @@ const variant = props.variant ?? BackgroundVariant.Fill;
 
     function sourcesFor(key: string): string {
         const base = `/backgrounds/${key}`;
-        return `<source src="${base}.mp4" type="video/mp4" />`;
+        // AV1 first (~55% smaller, same quality); browser falls back to H.264 if it can't play it
+        return `<source src="${base}.av1.mp4" type="video/mp4; codecs=av01.0.05M.08" />`
+             + `<source src="${base}.mp4" type="video/mp4" />`;
     }
 
     function applyTheme(variant: BackgroundVariant) {
@@ -95,8 +97,8 @@ const variant = props.variant ?? BackgroundVariant.Fill;
         $video_light.html(sourcesFor(`light-${variant}`));
         $video_dark.html(sourcesFor(`dark-${variant}`));
 
-        reloadVideo($video_light);
-        reloadVideo($video_dark);
+        loadActive($active);
+        deferLoad($standby, $active);
 
         currentVariant = variant;
 
@@ -111,12 +113,25 @@ const variant = props.variant ?? BackgroundVariant.Fill;
         }
     }
 
-    // Forces browser to load the new <source> tags
-    function reloadVideo($video: JQuery) {
+    // Loads and plays the visible video immediately, full bandwidth to it
+    function loadActive($video: JQuery) {
         const el = $video[0] as HTMLVideoElement | undefined;
-        if (el) {
+        if (!el) return;
+        el.preload = "auto";
+        el.autoplay = true;
+        el.load();
+        el.play().catch(() => {});
+    }
+
+    // Holds off loading the hidden video until the active one is ready, so they don't split bandwidth
+    function deferLoad($video: JQuery, $waitFor: JQuery) {
+        const el = $video[0] as HTMLVideoElement | undefined;
+        if (!el) return;
+        el.autoplay = false;
+        $waitFor.one("canplaythrough error", () => {
+            el.preload = "auto";
             el.load();
-        }
+        });
     }
 </script>
 
