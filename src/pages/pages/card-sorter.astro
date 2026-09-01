@@ -1,0 +1,343 @@
+---
+import Page from "../../layouts/Page.astro";
+
+const title = "Local Card Organizer";
+import codeIcon from '/svg/icons/link.svg?raw';
+---
+
+<Page
+        title={ title }
+        description="Chess validation demo"
+        background={{ sticky: true }}
+        navButtons={{ extraButtons: [] }}
+>
+    <div class="wrapper">
+        <div class="header">
+            <div class="title">
+                <h1 class="heading">{ title }</h1>
+            </div>
+        </div>
+
+        <div class="board" id="board"></div>
+    </div>
+</Page>
+
+
+<template id="column-template">
+    <div class="column">
+        <h2 class="column-name"></h2>
+        <div class="column-cards"></div>
+        <div class="column-add-card font-dotmatrix">
+            <Fragment set:html={ codeIcon } />
+            New card
+        </div>
+    </div>
+</template>
+
+<template id="card-template">
+    <div class="card">
+        <div class="card-header">
+            <textarea class="card-title" aria-label="Card title" rows="1" placeholder="Card Name" spellcheck="false"></textarea>
+            <div class="card-tags"></div>
+        </div>
+        <textarea class="card-description" aria-label="Card Description" rows="1" placeholder="Description" spellcheck="false"></textarea>
+        <div class="card-id font-dotmatrix">??</div>
+    </div>
+</template>
+
+<template id="tag-template">
+    <span class="tag"></span>
+</template>
+
+<style is:global >
+    .wrapper {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+
+        height: 100svh;
+
+    }
+
+    .board {
+        display: flex;
+        align-items: flex-start;
+        overflow-x: scroll;
+
+        gap: 1rem;
+
+        padding: 1rem;
+        flex: 1;
+        min-height: 0;
+        max-height: 100%;
+    }
+
+    .column {
+        display: flex;
+        flex-direction: column;
+        background-color: var(--col-background);
+
+        flex: 1 0 300px; /* grow: 1, shrink: 0, basis: 300px */
+        max-width: 400px;
+
+        max-height: 100%;
+        min-height: 0;
+        box-sizing: border-box;
+        overflow-y: scroll;
+
+        padding: 0.5rem;
+        gap: 0.5rem;
+
+        .column-cards {
+            display: contents;
+        }
+
+        .column-add-card {
+            border: 1px solid var(--col-border-3);
+            padding: 0.5rem 1rem;
+
+            cursor: pointer;
+
+            &:hover {
+                background-color: var(--col-background-2);
+            }
+        }
+    }
+
+    textarea {
+        all: unset;
+        field-sizing: content;
+        /*resize: none;*/
+
+        cursor: text !important;
+    }
+
+    .card {
+        position: relative;
+
+        background-color: var(--col-background);
+        border: 1px solid var(--col-border-2);
+        padding: 0.5rem 1rem;
+
+        cursor: grab;
+
+        .card-header {
+            .card-title {
+                font-weight: bold;
+                font-size: 1.2rem;
+            }
+
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .card-description {
+            color: var(--col-text-2);
+        }
+
+        .card-id {
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+
+            color: var(--col-text-3);
+        }
+    }
+
+    .tag {
+        --tag-color: #e68c41; /* Gets overridden by the render, this is a fallback. */
+        background-color: var(--tag-color);
+        padding: 0.2rem 0.4rem;
+
+        font-size: 0.8rem;
+        color: white;
+    }
+
+
+</style>
+
+<script>
+    // # DOM Interaction
+
+    // Text areas
+    $(document).on("keydown", "textarea", (e) => {
+        // Save on Enter (without Shift)
+        if (e.key === 'Enter' && !e.shiftKey) { // TODO: If this is a title and the description is empty, switch to it
+            e.preventDefault();
+            e.target.blur();
+        }
+
+        // Cancel/blur on Escape
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.target.blur();
+        }
+    });
+
+    $(document).on("click", ".column-add-card", (e) => {
+        const columnID = $(e.target).parent().data().id;
+        addCard(columnID);
+    });
+
+
+    // ## Internal
+    type Column = {
+        id: string,
+        name: string,
+        cards: Card[],
+    }
+
+    type Tag = {
+        id: string,
+        label: string,
+        color: string,
+    }
+
+    type Card = {
+        numId: number,
+        title: string,
+        description: string,
+        tags: Tag[],
+    }
+
+    type Board = {
+        id: string,
+        displayName: string,
+
+        columns: Column[],
+        tags: Tag[],
+        cards: Card[],
+    }
+
+    let currentBoard: Board | null;
+    let currentCardId = -1;
+
+    function updateCardId(newId: number) {
+        if (newId > currentCardId) currentCardId = newId;
+    }
+
+    function addCard(columnId: string) {
+        if (!currentBoard) throw Error("No current board!");
+
+        let column = currentBoard.columns.find(col => col.id == columnId);
+        if (!column) throw Error("Card added to column that couldn't be found!");
+
+        const newCard = {
+            numId: ++currentCardId,
+            title: "",
+            description: "",
+            tags: [],
+        };
+
+        column.cards.push(newCard);
+
+        renderBoard();
+        // TODO: Focus the card name
+    }
+
+    function loadDemoContent() {
+        currentBoard = {
+            displayName: "Template Board",
+            id: "template-board",
+
+            columns: [],
+            tags: [],
+            cards: [],
+        }
+
+        currentBoard.tags = [{
+            id: "important",
+            label: "important",
+            color: "bada55",
+        }, {
+            id: "creation",
+            label: "creation",
+            color: "0e5683",
+        }]
+
+        currentBoard.columns = [{
+            id: "todo",
+            name: "TO-DO",
+            cards: [{
+                numId: 0,
+                title: "Demo card 1",
+                description: "This is a hip description.\nDrag me around!",
+                tags: [currentBoard.tags[0]]
+            }],
+        }, {
+            id: "in-progress",
+            name: "In Progress",
+            cards: [{
+                numId: 1,
+                title: "Demo card 2",
+                description: "This is being worked on.\nSo productive!",
+                tags: [currentBoard.tags[1]]
+            }],
+        }, {
+            id: "done",
+            name: "Done!",
+            cards: [],
+        }, {
+            id: "done",
+            name: "Done!",
+            cards: [],
+        }];
+    }
+
+    function cloneTemplate(id: string): JQuery {
+        return $((document.getElementById(id) as HTMLTemplateElement).content.cloneNode(true)).children();
+    }
+
+    function renderTag(tag: Tag): JQuery {
+        const $tag = cloneTemplate("tag-template");
+        $tag.text(tag.label);
+        $tag.css("--tag-color", "#" + tag.color);
+
+        return $tag;
+    }
+
+    function renderCard(card: Card): JQuery {
+        updateCardId(card.numId);
+
+        const $card = cloneTemplate("card-template");
+        $card.data({id: card.numId});
+        $card.find(".card-title").text(card.title);
+        $card.find(".card-description").text(card.description);
+        $card.find(".card-id").text("#" + card.numId);
+
+        const $tags = $card.find(".card-tags");
+        for (const tag of card.tags) {
+            $tags.append(renderTag(tag));
+        }
+
+        return $card;
+    }
+
+    function renderColumn(column: Column): JQuery {
+        const $column = cloneTemplate("column-template");
+        $column.data({id: column.id});
+        $column.find(".column-name").text(column.name);
+
+        const $cards = $column.find(".column-cards");
+        for (const card of column.cards) {
+            $cards.append(renderCard(card));
+        }
+
+        return $column;
+    }
+
+    function renderBoard() {
+        const $board = $("#board").empty();
+
+        if (!currentBoard) return;
+
+        for (const column of currentBoard.columns) {
+            $board.append(renderColumn(column));
+        }
+    }
+
+    loadDemoContent();
+    renderBoard();
+</script>
+
