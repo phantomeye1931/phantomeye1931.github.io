@@ -1,23 +1,21 @@
 ---
-export enum BackgroundVariant {
-    Fill = 'fill',
-    Gradient = 'gradient',
-    HeroBand = 'hero-band',
-}
+import { BackgroundVariant } from "../utils/types.ts";
 
 interface Props {
     sticky: boolean,
     variant?: BackgroundVariant,
-    flip?: boolean,
 }
+
+export type BackgroundOpts = Props;
 
 const props = Astro.props;
 
 const variant = props.variant ?? BackgroundVariant.Fill;
 ---
 
-<div class="bg-grid halftone-wrapper" aria-hidden="true" sticky={ props.sticky } flip={ props.flip ?? false } data-variant={variant}>
-    <video class="halftone-video" muted loop playsinline preload="auto" disableRemotePlayback></video>
+<div class="halftone-wrapper" aria-hidden="true" sticky={ props.sticky } data-variant={variant}>
+    <video class="halftone-video light" muted loop playsinline autoplay preload="auto" disableRemotePlayback></video>
+    <video class="halftone-video dark"  muted loop playsinline autoplay preload="auto" disableRemotePlayback></video>
 </div>
 
 <!-- Hide the site until the halftone videos are loaded, for max 4 seconds -->
@@ -26,139 +24,104 @@ const variant = props.variant ?? BackgroundVariant.Fill;
 
 <script is:inline>
     setTimeout(() => {
-        document.querySelector('.halftone-veil')?.classList.add('is-hidden');
+        $('.halftone-veil').addClass('is-hidden');
     }, 4000);
 </script>
 
 <script>
-    const $wrapper = document.querySelector<HTMLDivElement>(".halftone-wrapper");
-    const $video = document.querySelector<HTMLVideoElement>(".halftone-video");
-    const $veil = document.querySelector<HTMLDivElement>(".halftone-veil");
+    const someMap = {
+        Pending: "PENDING",
+        Approved: "APPROVED",
+        Rejected: "REJECTED",
+    } as const;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!$wrapper || !$video) return;
+    type Keys = keyof typeof someMap;
 
-        const wrapperVariant = $wrapper.dataset.variant === 'gradient' ? 'gradient' : 'fill';
-        const heroBand = $wrapper.dataset.variant === 'hero-band';
+    function getACertainValue(key: Keys) {
+        return someMap[key];
+    }
+
+    import { getDisplayedTheme, onThemeChange, Theme } from "../scripts/theme.ts";
+    import { BackgroundVariant } from "../utils/types.ts";
+
+    const $wrapper = $(".halftone-wrapper");
+    const $video_light = $(".halftone-video.light");
+    const $video_dark = $(".halftone-video.dark");
+
+    const $veil = $(".halftone-veil");
+
+    const desiredVariant = $wrapper.data().variant as BackgroundVariant;
+    let currentVariant: BackgroundVariant | null = null;
+
+    onThemeChange(() => applyTheme(currentVariant ?? BackgroundVariant.Fill));
+
+    const MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
+    MOBILE_QUERY.addEventListener("change", updateVideos);
+
+    let veiled = true;
+    updateVideos();
+
+    function updateVideos() {
+        let newVariant = desiredVariant
 
         // Hero-band only overrides the video source below 640px. Above that it renders as a plain gradient
-        const baseVariant = heroBand ? 'gradient' : wrapperVariant;
         const MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
-        function currentVariant() {
-            return (heroBand && MOBILE_QUERY.matches) ? 'mobile' : baseVariant;
+        if (MOBILE_QUERY.matches && currentVariant != BackgroundVariant.MobileGradient) {
+            newVariant = BackgroundVariant.MobileGradient;
         }
 
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        function isDarkScheme(): boolean {
-            return document.documentElement.getAttribute('color-scheme') === 'dark';
+        if (newVariant != currentVariant) {
+            applyTheme(newVariant);
         }
+    }
 
-        function clearVeil() {
-            $veil?.classList.add('is-hidden');
+    function clearVeil() {
+        $veil.addClass('is-hidden');
+    }
+
+    function sourcesFor(key: string): string {
+        const base = `/backgrounds/${key}`;
+        return `<source src="${base}.mp4" type="video/mp4" />`;
+    }
+
+    function applyTheme(variant: BackgroundVariant) {
+        const darkTheme = getDisplayedTheme() == Theme.DARK;
+        let $active = darkTheme ? $video_dark : $video_light;
+        let $standby = darkTheme ? $video_light: $video_dark;
+
+        $active.addClass("shown");
+        $standby.removeClass("shown");
+
+        $video_light.html(sourcesFor(`light-${variant}`));
+        $video_dark.html(sourcesFor(`dark-${variant}`));
+
+        reloadVideo($video_light);
+        reloadVideo($video_dark);
+
+        currentVariant = variant;
+
+        // Veil stuff
+        if (veiled) {
+            veiled = false;
+            $active.on('error', clearVeil);
+            $active.on('canplaythrough', clearVeil);
+
+            const element = $active[0] as HTMLVideoElement;
+            if (element.readyState >= 4) clearVeil();
         }
+    }
 
-        let firstLoad = true;
-
-        function sourcesFor(key: string): string {
-            const base = `/backgrounds/${key}`;
-            return `
-                <source src="${base}.webm" type="video/webm" />
-                <source src="${base}.mp4" type="video/mp4" />
-            `;
+    // Forces browser to load the new <source> tags
+    function reloadVideo($video: JQuery) {
+        const el = $video[0] as HTMLVideoElement | undefined;
+        if (el) {
+            el.load();
         }
-
-        function oppositeKey(key: string): string {
-            return key.startsWith('dark-') ? key.replace('dark-', 'light-') : key.replace('light-', 'dark-');
-        }
-
-        // $active is the visible video, $standby is the dark mode version
-        let $active = $video!;
-        let $standby: HTMLVideoElement | null = null;
-
-        function ensureStandby(): HTMLVideoElement {
-            if ($standby) return $standby;
-            const v = document.createElement('video');
-            v.className = 'halftone-video';
-            v.muted = true;
-            v.loop = true;
-            v.playsInline = true;
-            v.preload = 'auto';
-            v.disableRemotePlayback = true;
-            v.setAttribute('aria-hidden', 'true');
-            v.style.opacity = '0';
-            $wrapper!.appendChild(v);
-            $standby = v;
-            return v;
-        }
-
-        function warm(key: string) {
-            const v = ensureStandby();
-            if (v.dataset.key !== key) {
-                v.dataset.key = key;
-                v.innerHTML = sourcesFor(key);
-                v.load();
-            }
-            v.play().catch(() => {});
-        }
-
-        // Wait for the page's own load event so this never competes with the initial render
-        function schedulePreload(key: string) {
-            if (document.readyState === 'complete') warm(key);
-            else window.addEventListener('load', () => warm(key), { once: true });
-        }
-
-        function swapTo(key: string) {
-            if ($standby && $standby.dataset.key === key && $standby.readyState >= 2) {
-                const incoming = $standby, outgoing = $active;
-                if (reduceMotion) incoming.pause(); // Freeze on the frame it's already showing
-                else incoming.play().catch(() => {}); // Reassert in case it stalled while hidden
-                incoming.style.opacity = '1';
-                outgoing.style.opacity = '0';
-                $active = incoming;
-                $standby = outgoing; // Recycled below via warm() for the next toggle
-            } else {
-                $active.dataset.key = key;
-                $active.innerHTML = sourcesFor(key);
-                $active.load();
-                if (!reduceMotion) $active.play().catch(() => {});
-            }
-        }
-
-        function applyTheme() {
-            const theme = isDarkScheme() ? 'dark' : 'light';
-            const key = `${theme}-${currentVariant()}`;
-            if ($active.dataset.key === key) return; // avoid an unnecessary reload/restart
-
-            swapTo(key);
-
-            if (firstLoad) {
-                firstLoad = false;
-                $active.addEventListener('error', clearVeil, { once: true });
-
-                if (reduceMotion) {
-                    if ($active.readyState >= 2) clearVeil();
-                    else $active.addEventListener('loadeddata', clearVeil, { once: true });
-                } else {
-                    if ($active.readyState >= 4) clearVeil();
-                    else $active.addEventListener('canplaythrough', clearVeil, { once: true });
-                }
-            }
-
-            schedulePreload(oppositeKey(key));
-        }
-
-        applyTheme();
-
-        new MutationObserver(applyTheme)
-            .observe(document.documentElement, { attributes: true, attributeFilter: ['color-scheme'] });
-
-        if (heroBand) MOBILE_QUERY.addEventListener('change', applyTheme);
-    });
+    }
 </script>
 
 <style>
-.bg-grid {
+.halftone-wrapper {
     position: fixed;
     inset: 0;
     width: 100%;
@@ -171,15 +134,11 @@ const variant = props.variant ?? BackgroundVariant.Fill;
         height: 100svh;
     }
 
-    &[data-variant="hero-band"][sticky="false"] {
+    &[sticky="false"] {
         @media (max-width: 640px) {
             height: 60svh;
             min-height: 0;
         }
-    }
-
-    @media print {
-        display: none !important;
     }
 }
 
@@ -196,10 +155,6 @@ const variant = props.variant ?? BackgroundVariant.Fill;
         opacity: 0;
         pointer-events: none;
     }
-
-    @media print {
-        display: none !important;
-    }
 }
 
 video.halftone-video {
@@ -209,10 +164,12 @@ video.halftone-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 0.3s ease; /* Crossfade between the active/standby pair on theme swap */
-}
 
-.bg-grid[flip="true"] video.halftone-video {
-    transform: scaleX(-1);
+    opacity: 0;
+    transition: opacity var(--theme-transition);
+
+    &.shown {
+        opacity: 1;
+    }
 }
 </style>

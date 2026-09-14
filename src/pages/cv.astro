@@ -1,8 +1,8 @@
 ---
 // CV.astro
 import Page from "../layouts/Page.astro";
-import { BackgroundVariant } from "../components/HalftoneBackground.astro";
-import { SITE_DESCRIPTION, SITE_TITLE } from "../consts.ts";
+import { SITE_TITLE } from "../consts.ts";
+import {BackgroundVariant} from "../utils/types.ts";
 
 const personal = {
     name: "Armand de Vries",
@@ -17,7 +17,8 @@ const personal = {
     ]
 };
 
-const content = {
+type ContentValue = { [key: string]: string | string[] }
+const content: { [key: string]: ContentValue} = {
     nl: {
         phone: "Telefoon",
         title: "Computing Science Student & Full-Stack Ontwikkelaar",
@@ -57,7 +58,7 @@ const content = {
 };
 ---
 
-<Page title={SITE_TITLE + " CV"} description={"Armand de Vries Curriculum Vitae"} opts={{ background: true, bgVariant: BackgroundVariant.Gradient, bgFlip: true, bgSticky: false, buttons: false }}>
+<Page title={SITE_TITLE + " CV"} description={"Armand de Vries Curriculum Vitae"} background={{ variant: BackgroundVariant.Gradient, sticky: false }} }}>
     <div class="lang-switch-wrapper no-print">
         <button class="print-btn" onclick="window.print()" title="Print to PDF">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -90,7 +91,8 @@ const content = {
                 </div>
 
                 <section class="sidebar-section no-translate contact-info morph-container">
-                    {Object.keys(content).map((lang) => (
+                    {
+                        Object.keys(content).map((lang) => (
                         <div class={`morph-layer layer-${lang}`} data-layer={lang}>
                             <p>
                                 <strong>Website:</strong><br />

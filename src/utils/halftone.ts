@@ -199,6 +199,7 @@ export interface HalftoneOptions {
     fill?: boolean;
     // full-width blob spread like `fill`, but fades out near the bottom instead of the right
     bottomFade?: boolean;
+    transparent?: boolean;
 }
 
 export interface HalftoneEffect {
@@ -215,6 +216,8 @@ export interface HalftoneEffect {
     /** Re-reads the CMYK ink CSS custom properties off `document.documentElement` for
      *  every channel that doesn't have an explicit colorOverride. Call once up front,
      *  and again any time the [color-scheme] attribute changes. */
+    setTransparent(bottomFade: boolean): void;
+    /** Sets whether the canvas has a transparent or filled background. */
     resolveColors(): void;
     /** Sets (or, with `null`, clears) an explicit color for one channel, bypassing its
      *  CSS custom property. Takes effect immediately, no rebuild needed. */
@@ -233,7 +236,12 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
 
     let FILL = options.fill ?? false;
     let BOTTOM_FADE = options.bottomFade ?? false;
+    let TRANSPARENT = options.transparent ?? false;
     function fullWidthMode() { return FILL || BOTTOM_FADE; }
+
+    let lightBackground: null | string = null;
+    let darkBackground: null | string = null;
+
     const channels = makeChannels();
 
     let W = 0, H = 0, scale = 1;
@@ -371,8 +379,31 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
         buildGrids();
     }
 
+    function setTransparent(transparent: boolean) {
+        TRANSPARENT = transparent;
+    }
+
+    function getBackground(isDark: boolean) {
+        if (isDark) {
+            if (darkBackground === null) {
+                darkBackground = getComputedStyle(document.documentElement).getPropertyValue("--col-background").trim();
+            }
+        } else {
+            if (lightBackground === null) {
+                lightBackground = getComputedStyle(document.documentElement).getPropertyValue("--col-background").trim();
+            }
+        }
+
+        return isDark ? darkBackground : lightBackground;
+    }
+
     function drawFrame(t: number, isDark: boolean) {
-        ctx!.clearRect(0, 0, W, H);
+        if (TRANSPARENT) {
+            ctx!.clearRect(0, 0, W, H);
+        } else {
+            ctx!.fillStyle = getBackground(isDark)!;
+            ctx!.fillRect(0, 0, W, H);
+        }
         ctx!.globalCompositeOperation = isDark ? 'screen' : 'multiply';
 
         const maxR = CONFIG.DOT_SPACING * scale * CONFIG.DOT_RADIUS_SCALE;
@@ -383,6 +414,7 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
             const centers = currentCenters(ch.blobs, t);
             ctx!.fillStyle = ch.resolved;
             ctx!.globalAlpha = ch.alpha;
+
             const { gx, gy, gwx, gwy, gsf } = ch;
             for (let i = 0; i < gx.length; i++) {
                 let d = fieldAt(gwx[i], gwy[i], centers) * gsf[i];
@@ -401,5 +433,5 @@ export function createHalftoneEffect(canvas: HTMLCanvasElement, options: Halfton
         ctx!.globalCompositeOperation = 'source-over';
     }
 
-    return { resize, setFill, setBottomFade, resolveColors, setChannelColor, drawFrame, channels };
+    return { resize, setFill, setBottomFade, setTransparent, resolveColors, setChannelColor, drawFrame, channels };
 }

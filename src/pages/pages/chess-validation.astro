@@ -1,0 +1,893 @@
+---
+import CenteredPage from "../../layouts/CenteredPage.astro";
+import SidePanel from "../../components/SidePanel.astro";
+import { Code } from "astro:components";
+
+import longRangeTracingSource from "../../chess/long-range-tracing.ts?raw";
+
+import movementSource from "../../chess/movement.ts?raw";
+import validationSource from "../../chess/validation.ts?raw";
+import specialMovesSource from "../../chess/special-moves.ts?raw";
+import pinsSource from "../../chess/pins.ts?raw";
+import mateDetectionSource from "../../chess/mate-detection.ts?raw";
+import gameFlowSource from "../../chess/game-flow.ts?raw";
+
+import boardSource from "../../chess/implementation-details.ts?raw";
+import testConfigurationsSource from "../../chess/test-configurations.ts?raw";
+
+const title = "Chess Validation";
+
+// One entry per file under src/chess/ that's actually algorithm (not DOM/rendering plumbing) -
+// each raw-imported straight from the file that also runs it, so this panel can never drift out
+// of sync with the real implementation the way a copy-pasted snippet would
+const divider = '/* START SHOWN CODE */\n';
+
+const INTERESTING_SECTIONS = [
+    { title: "Piece movement", source: movementSource.split(divider)[1] },
+    { title: "↳ Long-range movement", source: longRangeTracingSource.split(divider)[1] },
+    { title: "Special Moves", source: specialMovesSource.split(divider)[1] },
+    { title: "Pinned Pieces", source: pinsSource.split(divider)[1] },
+    { title: "Mate & Stalemate detection", source: mateDetectionSource.split(divider)[1] },
+    { title: "Move Validation", source: validationSource.split(divider)[1] },
+    { title: "Game flow", source: gameFlowSource.split(divider)[1] },
+];
+
+const UNINTERESTING_SECTIONS = [
+    { title: "Implementation Details / API", source: boardSource.split(divider)[1] },
+    { title: "Test Configurations", source: testConfigurationsSource.split(divider)[1] },
+];
+---
+
+<CenteredPage
+        title={ title }
+        description="Chess validation demo"
+        opts={{ background: true, buttons: true }}
+>
+    <div class="game">
+        <div class="header">
+            <div class="title">
+                <h1 class="heading">{ title }</h1>
+            </div>
+
+            <p class="subtext"> Chess static validaton demo. Algorithm implementation based on <a href="/blog/static-chess-engine">this blog post</a>. </p>
+        </div>
+
+        <div class="board">
+            <div class="strip above">
+                <div class="button font-dotmatrix">
+                    <a onclick="togglePanel('algorithmPanel');" class="live-code-button">view live code</a>
+                </div>
+
+                <div class="status-group">
+                    <div class="status">
+                        <span class="player">White</span> to move
+                    </div>
+
+                    <div class="font-dotmatrix">
+                        <span class="chess-move-count">20 available moves</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="playfield-wrapper">
+                <table id="playField"></table>
+                <div id="dragPiece" class="piece-drag hidden"></div>
+                <div id="promotionPopup" class="promotion-popup hidden"></div>
+            </div>
+
+            <div class="highlights-title">Highlights - Click to enable:</div>
+
+            <div class="strip below">
+                <div class="button highlight-button font-dotmatrix">
+                    <a id="toggle-none">none</a>
+                    <div class="square" />
+                </div>
+                <div class="button highlight-button font-dotmatrix">
+                    <a id="toggle-last-move">last move</a>
+                    <div class="square disabled" style="background-color: var(--highlight-recent);" />
+                </div>
+                <div class="button highlight-button font-dotmatrix">
+                    <a id="toggle-attacked">attacks</a>
+                    <div class="square disabled" style="background-color: var(--highlight-attack);" />
+                </div>
+                <div class="button highlight-button font-dotmatrix">
+                    <a id="toggle-checks">checks</a>
+                    <div class="square disabled" style="background-color: var(--highlight-check-line);" />
+                    <div class="square disabled" style="background-color: var(--highlight-check-origin);" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <SidePanel id="algorithmPanel" title="Live Page code" width="min(34rem, 90vw)">
+        <p class="algorithm-intro">
+            The code behind this demo, read alongside <a href="/blog/static-chess-engine">the associating blog post</a>.
+            <br><br>
+            The code is not entirely ordered in the same way as the blog post, so I recommend you finish reading it first.
+        </p>
+
+        <div class="divider"><span class="text font-dotmatrix">Chess logic</span></div>
+
+        <div class="sections-wrapper">
+            {INTERESTING_SECTIONS.map(section => (
+                    <details class="algorithm-section">
+                        <summary class="font-dotmatrix">{section.title}</summary>
+                        <Code code={section.source} lang="ts" themes={{ light: "github-dark", dark: "github-dark" }} defaultColor={false} />
+                    </details>
+            ))}
+        </div>
+
+        <div class="divider"><span class="text font-dotmatrix">Not so interesting</span></div>
+
+        <div class="sections-wrapper">
+            {UNINTERESTING_SECTIONS.map(section => (
+                    <details class="algorithm-section">
+                        <summary class="font-dotmatrix">{section.title}</summary>
+                        <Code code={section.source} lang="ts" themes={{ light: "github-dark", dark: "github-dark" }} defaultColor={false} />
+                    </details>
+            ))}
+        </div>
+
+        <br>
+        <div class="divider"><span class="text font-dotmatrix">Load a Test Configuration</span></div>
+
+        <div class="buttons-wrapper">
+            <div class="config-button font-dotmatrix" data-config="normalGame">Normal Setup</div>
+            <div class="config-button font-dotmatrix" data-config="castling">Castling</div>
+            <div class="config-button font-dotmatrix" data-config="doubleCheck">Double Check</div>
+            <div class="config-button font-dotmatrix" data-config="noPawns">No Pawns</div>
+            <div class="config-button font-dotmatrix" data-config="enPassantCheck">En Passant Check</div>
+            <div class="config-button font-dotmatrix" data-config="enPassantPseudoPin">En Passant Pseudo-pin</div>
+        </div>
+
+    </SidePanel>
+
+</CenteredPage>
+
+<script>
+    import {gameBoard, Position, Type, Color, Phase, type Piece} from "../../chess/implementation-details.ts";
+    import { selectPiece, movePiece } from "../../chess/game-flow";
+    import { endMessage } from "../../chess/mate-detection";
+    import { promotePiece } from "../../chess/special-moves";
+    import { TEST_DOUBLE_CHECK, TEST_NO_PAWNS, TEST_EN_PASSANT_CHECK, TEST_EN_PASSANT_PSEUDO_PIN,
+            TEST_KINGS_AND_ROOKS, TEST_NORMAL_BOARD, loadConfiguration } from "../../chess/test-configurations";
+
+    /* # Web-page code to make the interactable chess board # */
+
+    let lastMove: any = null; // A Position, from the game logic script
+
+    let draggingPiece: any = null; // The Piece currently being dragged, or null
+    let draggingOrigin: JQuery | null = null; // The cell div the dragged piece was picked up from
+    const dragDiv = $("#dragPiece");
+
+    // Generates the playing field, rank 8 first so white's back rank (row 1) ends up at the bottom
+    for (let w = 7; w >= 0; w--) {
+        let row = $("<tr></tr>").appendTo("#playField").on("mouseleave", function() {
+            removeClasses('highlights');
+            highlightLastMove();
+        });
+
+        for (let z = 0; z < 8; z++) {
+            let cell = $("<td><div></div></td>")
+                .appendTo(row)
+                .attr("id", `${w + 1}${z + 1}`)
+                .addClass(w % 2 !== z % 2 ? 'lightSquare' : 'darkSquare')
+                .on("mouseenter", function() {
+                    removeClasses('highlights');
+                    highlightLastMove();
+                })
+                .on("mousedown", function() {
+                    startDrag($(this));
+                });
+        }
+    }
+
+    const PIECE_CLASSES = Object.values(Type)
+        .flatMap((type: string) => Object.values(Color).map((color: string) => `${type}-${color}`));
+
+
+    // eg. "pawn-white", matches the background-image classes
+    function pieceCSSClass(piece: Piece): string {
+        return `${piece.type}-${piece.color}`;
+    }
+
+    // Draws every piece and marking from gameBoard onto the grid, clearing anything already there
+    function renderBoard() {
+        for (let row = 1; row <= 8; row++) {
+            for (let column = 1; column <= 8; column++) {
+                const piece = gameBoard.getPiece(new Position(row, column));
+                const markings = gameBoard.markings.get(row, column);
+                const td = $(`#${row}${column}`);
+                const cell = td.find("> div");
+
+                cell.removeClass(PIECE_CLASSES.join(' '));
+                if (piece != null) cell.addClass(pieceCSSClass(piece));
+
+                cell.find(".marking").remove();
+                for (let marking of markings) cell.append(`<div class="marking ${marking}"></div>`);
+
+                td.toggleClass("movable", piece != null && piece.color === gameBoard.currentTurn && gameBoard.phase !== Phase.PROMOTING);
+            }
+        }
+
+        $(".status").html(endMessage ? '' : `<span class="player">${ gameBoard.currentTurn === Color.WHITE ? "White" : "Black" }</span> to move`);
+        $(".chess-move-count").text(endMessage ?? String(gameBoard.availableMoves) + " available moves");
+
+        if (gameBoard.phase === Phase.PROMOTING && gameBoard.promotingPiece != null) {
+            showPromotionPopup(gameBoard.promotingPiece);
+        } else {
+            hidePromotionPopup();
+        }
+    }
+
+    const promotionPopup = $("#promotionPopup");
+    const PROMOTION_TYPES = [Type.QUEEN, Type.ROOK, Type.BISHOP, Type.KNIGHT];
+
+    // Builds the 4-option popup and places it centered on the promoting pawn's column
+    function showPromotionPopup(piece: any) {
+        const cell = $(`#${piece.row}${piece.column}`)[0];
+        const wrapper = $(".playfield-wrapper")[0];
+        if (cell == null || wrapper == null) return;
+
+        const cellRect = cell.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const below = piece.row === 8;
+
+        promotionPopup
+            .empty()
+            .toggleClass("above", !below)
+            .css({
+                left: cellRect.left - wrapperRect.left + cellRect.width / 2,
+                top: below ? cellRect.bottom - wrapperRect.top : cellRect.top - wrapperRect.top,
+            })
+            .removeClass("hidden");
+
+        for (let type of PROMOTION_TYPES) {
+            $("<div></div>")
+                .addClass(`option ${type}-${piece.color}`)
+                .on("click", () => {
+                    promotePiece(type);
+                    renderBoard();
+                })
+                .appendTo(promotionPopup);
+        }
+    }
+
+    function hidePromotionPopup() {
+        promotionPopup.addClass("hidden").empty();
+    }
+
+    renderBoard();
+
+    // Maps each config button's data-config attribute to the board layout it should load
+    const TEST_CONFIGURATIONS: Record<string, string[][]> = {
+        normalGame: TEST_NORMAL_BOARD,
+        castling: TEST_KINGS_AND_ROOKS,
+        doubleCheck: TEST_DOUBLE_CHECK,
+        noPawns: TEST_NO_PAWNS,
+        enPassantCheck: TEST_EN_PASSANT_CHECK,
+        enPassantPseudoPin: TEST_EN_PASSANT_PSEUDO_PIN,
+    };
+
+    $(".config-button").on("click", function() {
+        const config = TEST_CONFIGURATIONS[$(this).attr("data-config") ?? ''];
+        if (config == null) return;
+
+        loadConfiguration(config);
+
+        // The loaded position has no history of its own - clear leftover UI state (last-move
+        // highlight, hover highlights) from whatever position was on the board before
+        lastMove = null;
+        removeClasses('lastMove');
+        removeClasses('highlights');
+
+        renderBoard();
+    });
+
+    // Highlight visibility is mutually exclusive between these three and 'none'.
+    const HIGHLIGHT_OPTIONS = [
+        { buttonId: "toggle-last-move", bodyClass: "show-recent" },
+        { buttonId: "toggle-attacked", bodyClass: "show-attacked" },
+        { buttonId: "toggle-checks", bodyClass: "show-checks" },
+        { buttonId: "toggle-none", bodyClass: null },
+    ];
+
+    // Activates one highlight type (or none)
+    function selectHighlight(active: string | null) {
+        for (let option of HIGHLIGHT_OPTIONS) {
+            if (option.bodyClass) $("body").toggleClass(option.bodyClass, option.bodyClass === active);
+            $(`#${option.buttonId}`).parent().toggleClass("disabled", option.bodyClass !== active);
+        }
+    }
+
+    for (let option of HIGHLIGHT_OPTIONS)
+        $(`#${option.buttonId}`).parent().on("click", () => selectHighlight(option.bodyClass));
+
+    selectHighlight(null); // Start on "none": only the always-on valid-move dots show
+
+    // Picks the piece out of `cell` and starts it following the cursor
+    function startDrag(cell: JQuery) {
+        if (gameBoard.phase === Phase.PROMOTING) return; // Nothing else is clickable mid-promotion
+        if (gameBoard.phase === Phase.OVER) return;
+
+        const id = cell.attr("id") ?? '';
+        const row = Number(id[0]), column = Number(id[1]);
+        const piece = gameBoard.getPiece(new Position(row, column));
+        if (piece == null || piece.color !== gameBoard.currentTurn) return;
+
+        draggingPiece = piece;
+        draggingOrigin = cell.find("div").addClass("hidden");
+
+        selectPiece(piece);
+        renderBoard();
+
+        $("body").addClass("dragging");
+
+        const rect = cell[0].getBoundingClientRect();
+        dragDiv
+            .removeClass(PIECE_CLASSES.join(' '))
+            .addClass(pieceCSSClass(piece))
+            .removeClass("hidden")
+            .css({ left: rect.left + rect.width / 2, top: rect.top + rect.height / 2 });
+    }
+
+    // Follows the cursor while a piece is being dragged
+    $(document).on("mousemove", function(event) {
+        if (draggingPiece == null) return;
+        dragDiv.css({ left: event.clientX, top: event.clientY });
+    });
+
+    // Drops the piece on release, hands the move off to the game logic, then resets the drag state
+    $(document).on("mouseup", function(event) {
+        if (draggingPiece == null) return;
+
+        const target = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)?.closest("td");
+        if (target != null) {
+            const id = target.id;
+            movePiece(draggingPiece, new Position(Number(id[0]), Number(id[1])));
+        }
+
+        renderBoard();
+        draggingOrigin?.removeClass("hidden");
+        dragDiv.addClass("hidden");
+        draggingPiece = null;
+        draggingOrigin = null;
+        $("body").removeClass("dragging");
+    });
+
+    // Remove certain classes from all cells
+    function removeClasses(classes: 'lastMove' | 'highlights') {
+        for (let w = 0; w < 8; w++)
+            for (let z = 0; z < 8; z++) {
+                let cell = $(`#${w + 1}${z + 1} > div`);
+
+                switch (classes) {
+                    case 'lastMove':
+                        cell.removeClass("highlightLastMove");
+                        break;
+                    case 'highlights':
+                        cell
+                            .removeClass("highlight")
+                            .removeClass("highlightSecondary");
+                        break;
+                }
+            }
+    }
+
+    // Highlights the last move made
+    function highlightLastMove() {
+        if (lastMove != null) {
+            removeClasses('lastMove')
+            addClass(lastMove, "highlightLastMove");
+        }
+    }
+
+    // Adds a class to an element
+    function addClass(coordinates: any, cssClass: string) {
+        if (coordinates != null) {
+            $(`#${coordinates.toString()} > div`).addClass(cssClass);
+        }
+    }
+</script>
+
+<style is:global>
+    :root {
+        --highlight-recent: #ffe059;
+        --highlight-attack: #ff5977;
+        --highlight-check-line: #59ff8e;
+        --highlight-check-origin: #59acff;
+        --highlight-valid: rgba(166, 166, 158, 0.6);
+        --highlight-pinned: #d18aff;
+    }
+
+    .game {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+
+        padding: 0 2em;
+
+        background-color: var(--col-background);
+    }
+
+    .header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        max-width: 30rem;
+        padding-bottom: 1rem;
+
+        & > .title {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+
+            margin-bottom: -2.5rem;
+        }
+
+        & > .subtext {
+            color: var(--col-text-2);
+            margin-bottom: 4px;
+        }
+
+        & a {
+            color: var(--col-cmyk-cyan);
+        }
+    }
+
+    .highlights-title {
+        width: 100%;
+        text-align: left;
+    }
+
+    .strip {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+
+        padding-block: 0.6rem;
+
+        &.above {
+            align-items: flex-end;
+        }
+
+        &.below {
+            margin-bottom: 1rem;
+        }
+    }
+
+    .status-group {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 1rem;
+    }
+
+    .status {
+        color: var(--col-text-2);
+        text-align: right;
+
+        & > .player {
+            font-weight: bold;
+            color: var(--col-cmyk-magenta);
+        }
+    }
+
+    .board {
+        margin-inline: 0em;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Panel chrome (open/close, scrolling, sticky/mobile-fullscreen) lives in SidePanel.astro -
+       this is just the algorithm panel's own content styling */
+    .algorithm-intro {
+        color: var(--col-text-2);
+        margin: 0 0 0.75rem;
+
+        & > a {
+            color: var(--col-cmyk-magenta);
+        }
+    }
+
+    .sections-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2em;
+    }
+
+    .algorithm-section {
+        min-width: 0;
+        border: 2px solid var(--col-border-2);
+
+        & > summary {
+            padding: 0.5rem 0.7rem;
+            cursor: pointer;
+            user-select: none;
+
+            &:hover {
+                opacity: 0.7;
+            }
+        }
+
+        &[open] > summary {
+            border-bottom: 2px solid var(--col-border-2);
+        }
+    }
+
+    .divider {
+        margin-inline: auto;
+        display: flex;
+        padding-block: 0.5rem;
+        width: 97%;
+        gap: 0.5rem;
+
+        color: var(--col-text-2);
+        align-items: center;
+
+        .text {
+            flex-shrink: 0;
+        }
+
+        &::after {
+            content: '';
+            background-color: var(--col-border-2);
+            height: 2px;
+            width: 100vw;
+        }
+    }
+
+    .buttons-wrapper {
+        display: grid;
+        gap: 0.2em;
+
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .config-button {
+        border: 2px solid var(--col-border-2);
+        padding-block: 0.5rem;
+
+        padding: 0.5rem 0.7rem;
+
+        cursor: pointer;
+        user-select: none;
+
+        &:hover {
+            opacity: 0.7;
+        }
+    }
+
+    .algorithm-section pre.astro-code {
+        margin: 0;
+        padding: 0.75rem 1rem;
+
+        overflow-x: auto;
+        white-space: pre !important;
+        word-wrap: normal !important;
+
+        font-family: "Space Mono", monospace;
+        font-size: 0.8rem;
+        line-height: 1.5;
+
+        background-color: var(--col-background-black) !important;
+    }
+
+    .algorithm-section pre.astro-code,
+    .algorithm-section pre.astro-code span {
+        color: var(--shiki-dark) !important;
+    }
+
+    /*html[color-scheme='dark'] .algorithm-section pre.astro-code,*/
+    /*html[color-scheme='dark'] .algorithm-section pre.astro-code span {*/
+    /*    color: var(--shiki-dark) !important;*/
+    /*}*/
+
+    .playfield-wrapper {
+        position: relative;
+
+        --cell-size: min(60px, 11vw);
+    }
+
+    #playField {
+        border: solid 2px var(--col-border-1);
+        border-spacing: 0;
+        user-select: none;
+    }
+
+    #playField > tr > td {
+        background-color: var(--col-background);
+
+        &.darkSquare {
+            background-color: var(--col-background-2) !important;
+        }
+
+        /* renderBoard() only adds this to cells holding a piece whose color matches the current turn */
+        &.movable {
+            cursor: pointer;
+        }
+    }
+
+    /* Grabbing cursor everywhere while a piece is being dragged, overriding .movable's cursor:pointer */
+    body.dragging,
+    body.dragging #playField > tr > td {
+        cursor: grabbing !important;
+    }
+
+    /* Cell */
+    #playField > tr > td > div {
+        width: var(--cell-size);
+        height: var(--cell-size);
+
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+    }
+
+    #playField > tr > td > div::after,
+    #playField > tr > td > div > .marking {
+        grid-area: 1 / 1;
+    }
+
+    #playField > tr > td > div::after {
+        content: '';
+        width: 100%;
+        height: 100%;
+
+        background-position: 50% 50%;
+        background-repeat: no-repeat;
+    }
+
+    /* Follows the cursor while a piece is being dragged, teleported into place by JS */
+    .piece-drag {
+        position: fixed;
+        top: 0;
+        left: 0;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+
+        width: var(--cell-size);
+        height: var(--cell-size);
+
+        pointer-events: none;
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    .piece-drag::after {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 100%;
+
+        background-position: 50% 50%;
+        background-repeat: no-repeat;
+        background-size: 100%;
+    }
+
+    .promotion-popup {
+        position: absolute;
+        z-index: 20;
+
+        display: flex;
+        flex-direction: row;
+
+        border: solid 2px var(--col-border-1);
+        background-color: var(--col-background-2);
+
+        transform: translate(-50%, 0);
+
+        &.above {
+            transform: translate(-50%, -100%);
+        }
+
+        &.hidden {
+            display: none;
+        }
+
+        & > .option {
+            width: var(--cell-size);
+            height: var(--cell-size);
+
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+
+            &:hover {
+                opacity: 0.7;
+            }
+
+            &::after {
+                content: '';
+                width: 100%;
+                height: 100%;
+
+                background-position: 50% 50%;
+                background-repeat: no-repeat;
+            }
+        }
+    }
+
+    .highlights-title {
+        padding-block: 0.3rem 0;
+        font-weight: bold;
+        color: var(--col-text-2);
+    }
+
+    .button {
+        display: flex;
+        flex-direction: row;
+        gap: 0.4rem;
+        align-items: center;
+
+        border: 2px solid var(--col-border-2);
+        padding: 0.2rem 0.4rem;
+
+        cursor: pointer;
+        user-select: none;
+
+        & > a {
+            color: inherit;
+            text-decoration: none;
+        }
+    }
+
+    .highlight-button {
+
+        & > .square {
+            width: 0.8rem;
+            height: 0.8rem;
+            border: 1px solid var(--col-border-2);
+
+            opacity: 0.7;
+        }
+
+        &.disabled {
+            opacity: 0.7;
+
+            & > .square {
+                opacity: 0.3;
+            }
+        }
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    .mark-last-move,
+    .mark-attacked,
+    .mark-line-of-check,
+    .mark-check-origin {
+        display: none;
+    }
+
+    body.show-recent .mark-last-move { display: block; }
+    body.show-attacked .mark-attacked { display: block; }
+    body.show-checks .mark-line-of-check,
+    body.show-checks .mark-check-origin { display: block; }
+
+    .mark-en-passantable {
+        display: none;
+    }
+
+    .mark-pseudo-pinned {
+        display: none;
+    }
+
+    .credit {
+        opacity: 0.7;
+        color: var(--col-cmyk-cyan);
+
+        & > a {
+            color: var(--col-text-2);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    }
+
+    .pawn-white:not(.hidden)::after   { background-image: url("/pages/chess/pawn-white.svg"); background-size: 100%; }
+    .knight-white:not(.hidden)::after { background-image: url("/pages/chess/knight-white.svg"); background-size: 100%; }
+    .bishop-white:not(.hidden)::after { background-image: url("/pages/chess/bishop-white.svg"); background-size: 100%; }
+    .rook-white:not(.hidden)::after   { background-image: url("/pages/chess/rook-white.svg"); background-size: 100%; }
+    .queen-white:not(.hidden)::after  { background-image: url("/pages/chess/queen-white.svg"); background-size: 100%; }
+    .king-white:not(.hidden)::after   { background-image: url("/pages/chess/king-white.svg"); background-size: 100%; }
+
+    .mark-valid {
+        width: 40%;
+        height: 40%;
+        border-radius: 100vh;
+        background-color: var(--highlight-valid);
+    }
+
+    /* Attacked square: a translucent wash over the whole cell */
+    .mark-attacked {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-attack) r g b / 50%);
+    }
+
+    .mark-line-of-check {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-check-line) r g b / 50%);
+    }
+
+    .mark-last-move {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-recent) r g b / 50%);
+    }
+
+    .mark-check-origin {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-check-origin) r g b / 50%);
+    }
+
+    .mark-pinned {
+        width: 90%;
+        height: 90%;
+        border-radius: 15%;
+        outline: 3px solid var(--highlight-pinned);
+        outline-offset: -3px;
+    }
+
+    .mark-latest-move {
+        width: 100%;
+        height: 100%;
+        background-color: rgb(from var(--highlight-recent) r g b / 50%);
+    }
+
+    .pawn-black:not(.hidden)::after   { background-image: url("/pages/chess/pawn-black.svg"); background-size: 100%; }
+    .knight-black:not(.hidden)::after { background-image: url("/pages/chess/knight-black.svg"); background-size: 100%; }
+    .bishop-black:not(.hidden)::after { background-image: url("/pages/chess/bishop-black.svg"); background-size: 100%; }
+    .rook-black:not(.hidden)::after   { background-image: url("/pages/chess/rook-black.svg"); background-size: 100%; }
+    .queen-black:not(.hidden)::after  { background-image: url("/pages/chess/queen-black.svg"); background-size: 100%; }
+    .king-black:not(.hidden)::after   { background-image: url("/pages/chess/king-black.svg"); background-size: 100%; }
+
+    /* Put it up here because following classes have more priority */
+    .highlightLastMove {
+        background-color: var(--highlight-recent) !important;
+    }
+
+    .highlight {
+        background-color: var(--highlight-hover) !important;
+    }
+
+    .highlightSecondary {
+        background-color: var(--highlight-connected) !important;
+    }
+
+    .highlightWinning {
+        background-color: var(--highlight-win) !important;
+    }
+
+    /* Combined highlights */
+    .highlightLastMove.highlightSecondary {
+        background-color: var(--highlight-recent-connected) !important;
+    }
+
+    .highlightLastMove.highlight {
+        background-color: var(--highlight-recent-hover) !important;
+    }
+
+    @media (max-width: 600px) {
+
+        .board {
+            margin-inline: 0;
+        }
+
+        .strip.below {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+    }
+</style>

@@ -24,7 +24,7 @@ const headerButtons: Button[] = [
 ];
 ---
 
-<Page title={ title } description={ description } opts={{ background: false, buttons: true, noTheme: true, mobileCentered: true, extraButtons: headerButtons, defaultButtons: false }} >
+<Page title={ title } description={ description } noTheme={true} navButtons={{ mobileCentered: true, extraButtons: headerButtons, defaultButtons: false }} >
 	<HeroSection />
 	<IntroSection />
 	<WallSection />

@@ -198,6 +198,10 @@ pre.astro-code {
 }
 
 .code-block {
+    text-shadow:
+            0 1px 1px rgba(255, 255, 255, 0.7),
+            0 1px 1px rgba(0, 0, 0, 0.5);
+
     position: relative;
     max-height: fit-content;
     background: linear-gradient(
@@ -229,12 +233,11 @@ pre.astro-code {
         background-color: transparent !important;
     }
 
-    & > pre {
-        overflow: auto;
-
-        & > code {
-            width: max-content;
-        }
+    & > code {
+        display: block;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch; /* Smooth swipe on iOS */
     }
 
     /* Perforation strip */
@@ -316,13 +319,13 @@ pre.astro-code {
     font-size: 1.5em;
 
     display: block;
-    inline-size: 0;
-    min-inline-size: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: 3rem;
 
     word-wrap: break-word;
     overflow-wrap: break-word;
 
-    margin-left: 3rem;
     margin-top: -1rem;
 }
 

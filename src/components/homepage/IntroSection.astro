@@ -1,5 +1,9 @@
+---
+import Photo from "./Photo.astro";
+---
 <div class="section-wrapper">
     <div class="section about">
+        <Photo />
         <div class="title">About</div>
         Hi! I'm Armand! <strong>Full-stack developer</strong> based in <strong>the Netherlands</strong>.
         <br><br>
@@ -48,6 +52,10 @@
     scale: 105%;
 }
 
+.section {
+    overflow: visible;
+}
+
 .section-wrapper {
     display: flex;
     justify-content: space-evenly;
@@ -61,7 +69,7 @@
     }
 
     & .about {
-        flex: 2;
+        flex: 3;
     }
 
     & .experience {

@@ -1,16 +1,16 @@
 ---
-import Page, {type Props as PageProps} from "./Page.astro";
+import Page, {type PageProps} from "./Page.astro";
 
-export interface Props extends PageProps {}
+type Props = PageProps;
 
-let props = Astro.props;
+let props = Astro.props as Props;
 
-props.opts.extraButtons = [
-    { alignRight: false, url: "/", label: "HOME" }
-];
+const extraButtons = [
+    {alignRight: false, url: "/", label: "HOME"}
+]
 ---
 
-<Page opts={ props.opts } description={ props.description } title={ props.title }>
+<Page title={ props.title } description={ props.description } background={{ sticky: false }} navButtons={{ extraButtons } } >
     <div class="wrapper">
         <slot/>
     </div>

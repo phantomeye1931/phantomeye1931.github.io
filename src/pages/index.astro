@@ -10,7 +10,7 @@ import {SITE_DESCRIPTION, SITE_TITLE} from "../consts.ts";
 import ContactSection from "../components/homepage/ContactSection.astro";
 import GitSection from "../components/homepage/GitSection.astro";
 import type {Button} from "../utils/types.ts";
-import {BackgroundVariant} from "../components/HalftoneBackground.astro";
+import { BackgroundVariant } from "../utils/types.ts";
 
 const headerButtons: Button[] = [
 	{ alignRight: true, label: "WEBLOG", url: "/#weblog"},
@@ -18,7 +18,10 @@ const headerButtons: Button[] = [
 	{ alignRight: true, label: "ART",  url: "/#art"},
 ];
 ---
-<Page title={SITE_TITLE} description={SITE_DESCRIPTION} opts={{ background: true, buttons: true, extraButtons: headerButtons, bgVariant: BackgroundVariant.HeroBand, mobileCentered: true }}>
+<Page title={SITE_TITLE}
+	  description={SITE_DESCRIPTION}
+	  background={{ variant: BackgroundVariant.Gradient }}
+	  navButtons={{ extraButtons: headerButtons, mobileCentered: true, dockingButtons: true }} >
 	<HeroSection />
 
 	<div class="parts">
