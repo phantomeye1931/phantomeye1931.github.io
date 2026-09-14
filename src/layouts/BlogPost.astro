@@ -17,14 +17,17 @@ interface LocalProps {
 
 const props = Astro.props as LocalProps;
 
-const headerButtons: Button[] = [{ alignRight: true, label: "BACK TO TOP", url: "#"}];
+const headerButtons: Button[] = [
+	{ alignRight: false, url: "/", label: "HOME" },
+	{ alignRight: true, label: "BACK TO TOP", url: "#"}
+];
 ---
 
 <Page title={props.title} description={props.description} opts={{ background: true, buttons: true, extraButtons: headerButtons, bgSticky: true }}>
 	<article>
 		<div class="paper" style={ getPageStyle(props.description) }>
 			<ShapePaperClip class="paperclip"/>
-			<div class="heading">
+			<div class="header">
 				<a href="/#weblog" class="back-link">[x] Close</a>
 				<div class="top">
 					<div class="title">{ props.title }</div>
