@@ -4,6 +4,7 @@
 // Currently hosted at armand.dev/phantomeye; intended to move behind phantomeye.art
 // once that domain is routed here (GitHub Pages hosting is a temporary arrangement).
 import HeroSection from "../components/phantomeye/HeroSection.astro";
+import IntroSection from "../components/phantomeye/IntroSection.astro";
 import WallSection from "../components/phantomeye/WallSection.astro";
 import MinecraftSkinSection from "../components/phantomeye/MinecraftSkinSection.astro";
 import SpriteSection from "../components/phantomeye/SpriteSection.astro";
@@ -25,6 +26,7 @@ const headerButtons: Button[] = [
 
 <Page title={ title } description={ description } opts={{ background: false, buttons: true, noTheme: true, mobileCentered: true, extraButtons: headerButtons, defaultButtons: false }} >
 	<HeroSection />
+	<IntroSection />
 	<WallSection />
 	<MinecraftSkinSection />
 	<SpriteSection />
@@ -48,18 +50,18 @@ const headerButtons: Button[] = [
 		src: url("/fonts/Unbounded-Bold.woff2") format("woff2");
 	}
 	@font-face {
-		font-family: "IBM Plex Mono";
+		font-family: "Atkinson Hyperlegible";
 		font-style: normal;
 		font-weight: 400;
 		font-display: swap;
-		src: url("/fonts/IBMPlexMono-Regular.woff2") format("woff2");
+		src: url("/fonts/atkinson-regular.woff") format("woff");
 	}
 	@font-face {
-		font-family: "IBM Plex Mono";
+		font-family: "Atkinson Hyperlegible";
 		font-style: normal;
-		font-weight: 600;
+		font-weight: 700;
 		font-display: swap;
-		src: url("/fonts/IBMPlexMono-SemiBold.woff2") format("woff2");
+		src: url("/fonts/atkinson-bold.woff") format("woff");
 	}
 
 	body {
@@ -71,7 +73,6 @@ const headerButtons: Button[] = [
 		--pe-white: #ffffff;
 		--pe-white-soft: rgba(255, 255, 255, 0.74);
 		--pe-white-faint: rgba(255, 255, 255, 0.42);
-		--pe-hairline: rgba(255, 255, 255, 0.24);
 
 		--pe-void: #12131f;
 		--pe-void-raised: #1b1d30;
@@ -80,7 +81,7 @@ const headerButtons: Button[] = [
 		--pe-muted-dim: #6d6980;
 
 		--pe-font-display: "Unbounded", "Arial Black", ui-sans-serif, sans-serif;
-		--pe-font-mono: "IBM Plex Mono", "Space Mono", ui-monospace, "Courier New", monospace;
+		--pe-font-body: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
 
 		--col-background:      var(--pe-void);
 		--col-nav-background:  var(--pe-blue);
@@ -92,7 +93,7 @@ const headerButtons: Button[] = [
 		margin: 0;
 		padding: 0;
 		background: var(--pe-void);
-		font-family: var(--pe-font-mono), serif;
+		font-family: var(--pe-font-body), sans-serif;
 
 		color: var(--pe-white);
 		-webkit-font-smoothing: antialiased;

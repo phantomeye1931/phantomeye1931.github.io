@@ -1,0 +1,60 @@
+---
+import GalleryHeader from "./GalleryHeader.astro";
+---
+
+<section class="intro-section" id="about">
+	<div class="intro-wrapper">
+		<GalleryHeader text="About" />
+
+		<div class="intro-card">
+			<img class="intro-photo" src="/phantomeye/pfp-transparent.png" alt="PhantomEye pixel-art avatar, a blue flame head above a suit and tie" loading="lazy" />
+			<p class="intro-text">
+				Hello! I'm <b>PhantomEye</b>, a developer and pixel artist based in The Netherlands :)
+				<br><br>
+				This site is a small showcase of some of the art I've made over the years.
+				I'm available for commissions! You can best reach me at <b>@phantomeye</b> on Discord or at <b>hello@armand.dev</b>
+			</p>
+		</div>
+	</div>
+</section>
+
+<style>
+	.intro-section {
+		background: var(--pe-void);
+		padding-top: 4rem;
+	}
+
+	.intro-wrapper {
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 0 clamp(18px, 3.5vw, 48px);
+	}
+
+	.intro-card {
+		display: flex;
+		align-items: center;
+		gap: clamp(24px, 4vw, 48px);
+	}
+
+	.intro-photo {
+		width: clamp(140px, 18vw, 220px);
+		height: clamp(140px, 18vw, 220px);
+		flex-shrink: 0;
+		object-fit: contain;
+	}
+
+	.intro-text {
+		margin: 0;
+		max-width: 60ch;
+		color: var(--pe-white-soft);
+		font-size: clamp(1rem, 1.6vw, 1.15rem);
+		line-height: 1.6;
+	}
+
+	@media (max-width: 640px) {
+		.intro-card {
+			flex-direction: column;
+			text-align: center;
+		}
+	}
+</style>

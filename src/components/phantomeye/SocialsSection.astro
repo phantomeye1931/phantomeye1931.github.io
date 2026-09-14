@@ -7,7 +7,13 @@ interface Social {
 	url: string;
 }
 
-// Discord invite is still a placeholder until Armand sends a real one.
+const ICONS: Record<string, string> = {
+	Discord: "M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z",
+	GitHub: "M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12",
+	Modrinth: "M12.252.004a11.78 11.768 0 0 0-8.92 3.73 11 10.999 0 0 0-2.17 3.11 11.37 11.359 0 0 0-1.16 5.169c0 1.42.17 2.5.6 3.77.24.759.77 1.899 1.17 2.529a12.3 12.298 0 0 0 8.85 5.639c.44.05 2.54.07 2.76.02.2-.04.22.1-.26-1.7l-.36-1.37-1.01-.06a8.5 8.489 0 0 1-5.18-1.8 5.34 5.34 0 0 1-1.3-1.26c0-.05.34-.28.74-.5a37.572 37.545 0 0 1 2.88-1.629c.03 0 .5.45 1.06.98l1 .97 2.07-.43 2.06-.43 1.47-1.47c.8-.8 1.48-1.5 1.48-1.52 0-.09-.42-1.63-.46-1.7-.04-.06-.2-.03-1.02.18-.53.13-1.2.3-1.45.4l-.48.15-.53.53-.53.53-.93.1-.93.07-.52-.5a2.7 2.7 0 0 1-.96-1.7l-.13-.6.43-.57c.68-.9.68-.9 1.46-1.1.4-.1.65-.2.83-.33.13-.099.65-.579 1.14-1.069l.9-.9-.7-.7-.7-.7-1.95.54c-1.07.3-1.96.53-1.97.53-.03 0-2.23 2.48-2.63 2.97l-.29.35.28 1.03c.16.56.3 1.16.31 1.34l.03.3-.34.23c-.37.23-2.22 1.3-2.84 1.63-.36.2-.37.2-.44.1-.08-.1-.23-.6-.32-1.03-.18-.86-.17-2.75.02-3.73a8.84 8.839 0 0 1 7.9-6.93c.43-.03.77-.08.78-.1.06-.17.5-2.999.47-3.039-.01-.02-.1-.02-.2-.03Zm3.68.67c-.2 0-.3.1-.37.38-.06.23-.46 2.42-.46 2.52 0 .04.1.11.22.16a8.51 8.499 0 0 1 2.99 2 8.38 8.379 0 0 1 2.16 3.449 6.9 6.9 0 0 1 .4 2.8c0 1.07 0 1.27-.1 1.73a9.37 9.369 0 0 1-1.76 3.769c-.32.4-.98 1.06-1.37 1.38-.38.32-1.54 1.1-1.7 1.14-.1.03-.1.06-.07.26.03.18.64 2.56.7 2.78l.06.06a12.07 12.058 0 0 0 7.27-9.4c.13-.77.13-2.58 0-3.4a11.96 11.948 0 0 0-5.73-8.578c-.7-.42-2.05-1.06-2.25-1.06Z",
+	Sketchfab: "M11.3 0A11.983 11.983 0 0 0 .037 11a13.656 13.656 0 0 0 0 2 11.983 11.983 0 0 0 11.29 11h1.346a12.045 12.045 0 0 0 11.3-11.36 13.836 13.836 0 0 0 0-1.7A12.049 12.049 0 0 0 12.674 0zM15 6.51l2.99 1.74s-6.064 3.24-6.084 3.24S5.812 8.27 5.8 8.26l2.994-1.77 2.992-1.76zm-6.476 5.126L11 13v5.92l-2.527-1.4-2.46-1.43v-5.76zm9.461 1.572v2.924L15.5 17.574 13 19.017v-6.024l2.489-1.345 2.5-1.355z",
+};
+
 const discord: Social = { label: "Discord", handle: "@phantomeye", url: "#" };
 
 const socials: Social[] = [
@@ -21,18 +27,24 @@ const socials: Social[] = [
 	<div class="socials-wrapper">
 		<GalleryHeader text="Elsewhere" />
 
-		<div class="socials-grid">
-			<a class="social-card discord-card" href={ discord.url } target="_blank" rel="noopener">
-				<span class="social-label font-mono">{ discord.label }</span>
-				<span class="social-handle">{ discord.handle }</span>
-				<span class="social-cta font-mono"><span class="bk">[</span>Best way to reach me<span class="bk">]</span></span>
-			</a>
+		<a class="social-card discord-card" href={ discord.url } target="_blank" rel="noopener">
+			<span class="social-label">{ discord.label }</span>
+			<span class="social-handle">
+				<svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={ ICONS[discord.label] } /></svg>
+				{ discord.handle }
+			</span>
+			<span class="social-cta">Best way to reach me</span>
+		</a>
 
+		<div class="socials-grid">
 			{ socials.map((social) => (
 				<a class="social-card" href={ social.url } target="_blank" rel="noopener">
-					<span class="social-label font-mono">{ social.label }</span>
-					<span class="social-handle">{ social.handle }</span>
-					<span class="social-cta font-mono"><span class="bk">[</span>Visit &rarr;<span class="bk">]</span></span>
+					<span class="social-label">{ social.label }</span>
+					<span class="social-handle">
+						<svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={ ICONS[social.label] } /></svg>
+						{ social.handle }
+					</span>
+					<span class="social-cta">Take a look</span>
 				</a>
 			)) }
 		</div>
@@ -51,6 +63,7 @@ const socials: Social[] = [
 	}
 
 	.socials-grid {
+		margin-top: 1rem;
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 		gap: 1rem;
@@ -67,6 +80,7 @@ const socials: Social[] = [
 
 		transition: border-color 150ms;
 	}
+
 	.social-card:hover {
 		border-color: var(--pe-blue-tint);
 	}
@@ -77,30 +91,51 @@ const socials: Social[] = [
 		text-transform: uppercase;
 		color: var(--pe-white-faint);
 	}
+
 	.social-handle {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45em;
+
 		font-family: var(--pe-font-display), sans-serif;
 		font-weight: 600;
 		font-size: 1.2rem;
 		color: var(--pe-white);
 	}
+
+	.social-icon {
+		width: 0.85em;
+		height: 0.85em;
+		flex-shrink: 0;
+	}
+
 	.social-cta {
 		margin-top: 0.4em;
 		font-size: 0.8rem;
 		color: var(--pe-white-soft);
 	}
-	.social-cta .bk {
-		color: var(--pe-white-faint);
+
+	.social-cta::after {
+		content: "\2192";
+		display: inline-block;
+		margin-left: 0.4em;
+		transition: transform 150ms;
 	}
+
 	.social-card:hover .social-cta {
-		color: var(--pe-white);
+		color: var(--pe-blue-tint);
+	}
+
+	.social-card:hover .social-cta::after {
+		transform: translateX(0.2em);
 	}
 
 	.discord-card {
-		grid-column: 1 / -1;
-		background: linear-gradient(135deg, var(--pe-blue-deeper), var(--pe-void-raised) 70%);
+		background: var(--pe-blue-deeper);
 		border-color: var(--pe-blue-tint);
 		padding: 1.8em 1.6em;
 	}
+
 	.discord-card .social-handle {
 		font-size: 1.7rem;
 	}

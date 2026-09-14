@@ -1,5 +1,4 @@
 ---
-import {padZero} from "../../utils/strings.ts";
 import GalleryHeader from "./GalleryHeader.astro";
 
 interface Piece {
@@ -27,10 +26,7 @@ const pieces: Piece[] = [];
 								<img src={ piece.image } alt={ piece.alt } loading="lazy" />
 							</div>
 							<figcaption>
-								<div class="details-row">
-									<span class="pe-cap-num">Nr. { padZero(pieces.length - i, 3) }</span>
-									<span class="pe-cap-medium">2D Art</span>
-								</div>
+								<span class="pe-cap-medium">2D Art</span>
 								<span class="pe-cap-title">{ piece.title } <span class="description font-dotmatrix">{ piece.description }</span> </span>
 							</figcaption>
 						</figure>
@@ -92,29 +88,19 @@ const pieces: Piece[] = [];
 		display: contents;
 	}
 
-	.sprite-item .details-row {
-		grid-row: 2;
-		display: flex;
-		flex-direction: row;
-		width: 100%;
-		justify-content: space-between;
-		padding: 0.75em 0.2em 0;
-	}
-
 	.sprite-item .description {
 		padding-left: 0.5em;
 		font-size: 0.8em;
 		color: var(--pe-white-soft);
 	}
 
-	.pe-cap-num,
 	.pe-cap-medium {
-		font-family: var(--pe-font-mono), serif;
+		grid-row: 2;
 		color: var(--pe-muted-dim);
-		display: block;
+		padding: 0.75em 0.2em 0;
 
-		font-size: 0.68rem;
-		letter-spacing: 0.05em;
+		font-size: 0.72rem;
+		letter-spacing: 0.03em;
 	}
 
 	.pe-cap-title {
@@ -134,9 +120,10 @@ const pieces: Piece[] = [];
 	}
 
 	.placeholder-label {
-		font-family: var(--pe-font-mono), serif;
-		font-size: 0.7rem;
-		letter-spacing: 0.12em;
+		font-family: var(--pe-font-display), sans-serif;
+		font-weight: 600;
+		font-size: 0.78rem;
+		letter-spacing: 0.04em;
 		text-transform: uppercase;
 		color: var(--pe-white-faint);
 	}

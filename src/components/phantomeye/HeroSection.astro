@@ -10,18 +10,11 @@
 
 	<div class="pe-identity">
 		<h1 class="pe-name font-phont">Phantom<br />Eye</h1>
-		<span class="pe-tag-code"
-			><span class="pe-hash">#</span><span class="pe-num">1931</span><span class="pe-cursor"
-			></span></span
-		>
+		<span class="pe-tag-code">#1931</span>
 		<div class="pe-roles">
 			Pixel Artist <br>
 			Low Poly Modeler <br>
 			Developer
-		</div>
-		<div class="pe-colophon">
-			<span class="pe-ring"></span>
-			<span class="pe-label">0&deg; fov &middot; orthographic</span>
 		</div>
 	</div>
 </div>
@@ -93,35 +86,13 @@
 	}
 
 	.pe-tag-code {
-		margin-top: 0.7em;
-		display: inline-flex;
-		align-items: center;
-		gap: 0.45em;
-		padding: 0.4em 0.7em;
-		border: 1px solid var(--pe-hairline);
-		background: rgba(0, 0, 0, 0.14);
-		font-family: var(--pe-font-mono);
-		font-size: clamp(0.82rem, 1.3vw, 0.95rem);
-		letter-spacing: 0.02em;
-	}
-	.pe-tag-code .pe-hash {
-		color: var(--pe-white-faint);
-	}
-	.pe-tag-code .pe-num {
-		color: var(--pe-white);
+		margin-top: 0.6em;
+		display: block;
+		font-family: var(--pe-font-display);
 		font-weight: 600;
-	}
-	.pe-tag-code .pe-cursor {
-		width: 0.5em;
-		height: 1em;
-		background: var(--pe-white);
-		display: inline-block;
-		animation: pe-blink 1.1s steps(1) infinite;
-	}
-	@keyframes pe-blink {
-		50% {
-			opacity: 0;
-		}
+		font-size: clamp(0.8rem, 1.2vw, 0.9rem);
+		letter-spacing: 0.02em;
+		color: var(--pe-blue-tint);
 	}
 
 	.pe-roles {
@@ -133,35 +104,6 @@
 		color: var(--pe-white-soft);
 	}
 
-	.pe-colophon {
-		margin-top: 1.5em;
-		display: flex;
-		align-items: center;
-		gap: 0.6em;
-	}
-	.pe-colophon .pe-ring {
-		width: 16px;
-		height: 16px;
-		border-radius: 50%;
-		border: 1.4px solid var(--pe-white-soft);
-		flex-shrink: 0;
-	}
-	.pe-colophon .pe-ring::after {
-		content: "";
-		display: block;
-		width: 6px;
-		height: 6px;
-		margin: 4px auto 0;
-		border-radius: 50%;
-		background: var(--pe-white-soft);
-	}
-	.pe-colophon .pe-label {
-		font-size: 0.7rem;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: var(--pe-white-faint);
-	}
-
 	@media (max-width: 640px) {
 		.pe-guardian-wrap {
 			width: 150vw;
@@ -171,11 +113,6 @@
 		}
 	}
 
-	@media (prefers-reduced-motion: reduce) {
-		.pe-tag-code .pe-cursor {
-			animation: none;
-		}
-	}
 </style>
 
 <script>

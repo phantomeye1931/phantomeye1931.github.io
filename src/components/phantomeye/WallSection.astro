@@ -1,5 +1,4 @@
 ---
-import {padZero} from "../../utils/strings.ts";
 import GalleryHeader from "./GalleryHeader.astro";
 
 interface Piece {
@@ -68,6 +67,7 @@ const pieces: Piece[] = [
 		title: "Hornet",
 		description: "(Hollow Knight)",
 		image: "/phantomeye/renders/hornet.jpg",
+		sketchfabLink: "https://sketchfab.com/3d-models/hornet-hollow-knight-5a83454b46da4d7e92fa4d0550386bdf",
 		alt: "Low-poly pixelated model of Hornet from Hollow Knight spinning her needle to make circles of thread",
 	},
 	{
@@ -78,7 +78,6 @@ const pieces: Piece[] = [
 	{
 		title: "Radiance",
 		description: "(Hollow Knight)",
-		sketchfabLink: "https://sketchfab.com/3d-models/hornet-hollow-knight-5a83454b46da4d7e92fa4d0550386bdf",
 		image: "/phantomeye/renders/radiance.png",
 		alt: "Low-poly pixelated model of The Radiance from Hollow Knight, shining bright on a dark background of void",
 	},
@@ -134,10 +133,7 @@ const pieces: Piece[] = [
 							{piece.image.toLowerCase().endsWith('.gif') && <canvas class="gif-freeze" />}
 						</div>
 						<figcaption>
-							<div class="details-row">
-								<span class="pe-cap-num">Nr. { padZero(pieces.length - i, 3) }</span>
-								<span class="pe-cap-medium">3D Render</span>
-							</div>
+							<span class="pe-cap-medium">3D Render</span>
 							<span class="pe-cap-title">{ piece.title } <span class="description font-dotmatrix">{ piece.description }</span> </span>
 						</figcaption>
 					</figure>
@@ -150,11 +146,7 @@ const pieces: Piece[] = [
 <div class="pe-lightbox">
 	<div class="pe-lightbox-card">
 		<div class="pe-lightbox-head">
-			<span class="pe-lightbox-meta">
-				<span class="pe-cap-num"></span>
-				<span class="pe-lightbox-dot">&middot;</span>
-				<span class="pe-cap-medium"></span>
-			</span>
+			<span class="pe-cap-medium"></span>
 			<button type="button" class="pe-lightbox-close" aria-label="Close">&times;</button>
 		</div>
 
@@ -167,9 +159,7 @@ const pieces: Piece[] = [
 				<span class="pe-lightbox-title-text"></span>
 				<span class="description font-dotmatrix pe-lightbox-description"></span>
 			</span>
-			<a class="pe-lightbox-link" target="_blank" rel="noopener" hidden>
-				<span class="bk">[</span>View on Sketchfab &rarr;<span class="bk">]</span>
-			</a>
+			<a class="pe-lightbox-link" target="_blank" rel="noopener" hidden>View on Sketchfab &rarr;</a>
 		</div>
 	</div>
 </div>
@@ -195,7 +185,6 @@ const pieces: Piece[] = [
 	// capped by the z-index:1 stacking context that .page-contents wraps this component in
 	if (lightbox) document.body.appendChild(lightbox);
 	const lightboxImg = lightbox?.querySelector<HTMLImageElement>(".pe-lightbox-image img");
-	const lightboxNum = lightbox?.querySelector(".pe-cap-num");
 	const lightboxMedium = lightbox?.querySelector(".pe-cap-medium");
 	const lightboxTitle = lightbox?.querySelector(".pe-lightbox-title-text");
 	const lightboxDescription = lightbox?.querySelector(".pe-lightbox-description");
@@ -207,7 +196,6 @@ const pieces: Piece[] = [
 			lightboxImg.src = img.src;
 			lightboxImg.alt = img.alt;
 		}
-		if (lightboxNum) lightboxNum.textContent = card.querySelector(".pe-cap-num")?.textContent ?? "";
 		if (lightboxMedium) lightboxMedium.textContent = card.querySelector(".pe-cap-medium")?.textContent ?? "";
 		if (lightboxTitle) lightboxTitle.textContent = card.querySelector(".pe-cap-title")?.childNodes[0]?.textContent?.trim() ?? "";
 		if (lightboxDescription) lightboxDescription.textContent = card.querySelector(".description")?.textContent ?? "";
@@ -268,16 +256,18 @@ const pieces: Piece[] = [
 
 	.render-item {
 		display: grid;
-		grid-row: span 3; /* image / details-row / title */
+		grid-row: span 3; /* image / medium tag / title */
 		grid-template-rows: subgrid;
 
 		border: 1px solid var(--pe-void-hair);
 		background: var(--pe-void-raised);
 		padding: 8px 8px 0;
 		margin: 0;
+		transition: border-color 150ms;
 
 		&:hover {
 			cursor: pointer;
+			border-color: var(--pe-blue-tint);
 		}
 	}
 
@@ -285,7 +275,7 @@ const pieces: Piece[] = [
 		grid-row: 1;
 		position: relative;
 		overflow: hidden;
-		background: deeppink;
+		background: var(--pe-void);
 	}
 
 	.render-item img {
@@ -315,16 +305,7 @@ const pieces: Piece[] = [
 	}
 
 	figcaption {
-		display: contents; /* lets .details-row and .pe-cap-title sit directly in the subgrid, each on their own row */
-	}
-
-	.render-item .details-row {
-		grid-row: 2;
-		display: flex;
-		flex-direction: row;
-		width: 100%;
-		justify-content: space-between;
-		padding: 0.75em 0.2em 0;
+		display: contents; /* lets .pe-cap-medium and .pe-cap-title sit directly in the subgrid, each on their own row */
 	}
 
 	.render-item .description {
@@ -333,14 +314,13 @@ const pieces: Piece[] = [
 		color: var(--pe-white-soft);
 	}
 
-	.pe-cap-num,
 	.pe-cap-medium {
-		font-family: var(--pe-font-mono), serif;
+		grid-row: 2;
 		color: var(--pe-muted-dim);
-		display: block;
+		padding: 0.75em 0.2em 0;
 
-		font-size: 0.68rem;
-		letter-spacing: 0.05em;
+		font-size: 0.72rem;
+		letter-spacing: 0.03em;
 	}
 
 	.pe-cap-title {
@@ -403,14 +383,9 @@ const pieces: Piece[] = [
 		padding: 0 0.2em 0.75em;
 	}
 
-	.pe-lightbox-meta {
-		display: flex;
-		align-items: center;
-		gap: 0.5em;
-	}
-
-	.pe-lightbox-dot {
-		color: var(--pe-muted-dim);
+	.pe-lightbox-head .pe-cap-medium {
+		grid-row: auto;
+		padding: 0;
 	}
 
 	.pe-lightbox-close {
@@ -464,14 +439,8 @@ const pieces: Piece[] = [
 
 	.pe-lightbox-link {
 		white-space: nowrap;
-		font-family: var(--pe-font-mono), serif;
-		font-size: 0.78rem;
-		letter-spacing: 0.02em;
-		color: var(--pe-white);
-	}
-
-	.pe-lightbox-link .bk {
-		color: var(--pe-white-faint);
+		font-size: 0.85rem;
+		color: var(--pe-white-soft);
 	}
 
 	.pe-lightbox-link:hover {
