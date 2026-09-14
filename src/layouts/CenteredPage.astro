@@ -1,5 +1,7 @@
 ---
+import { undefined } from "astro/zod";
 import Page, {type PageProps} from "./Page.astro";
+import type {NavButtonOpts} from "../components/HeaderButtons.astro";
 
 type Props = PageProps;
 
@@ -18,6 +20,7 @@ const extraButtons = [
 
 <style>
 .wrapper {
+    position: relative;
     display: flex;
     flex-direction: row;
     justify-content: center;
