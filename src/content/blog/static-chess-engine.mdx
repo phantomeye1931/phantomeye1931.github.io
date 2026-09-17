@@ -2,7 +2,7 @@
 title: 'Static Chess Engine'
 description: 'A small dive into chess programming to create a chess engine that can validate moves without looking into the future.'
 pubDate: 'Jan 22 2026'
-updatedDate: 'Aug 25 2026'
+updatedDate: 'Sep 17 2026'
 ---
 import Wrapper from '../../components/simple/Wrapper.astro';
 import BlogLink from '../../components/blog/BlogLink.astro';
@@ -401,9 +401,7 @@ But This move is currently not being validated, because that pawn move isn't goi
 
 So we have to create a special case for pawn moves in check so that it can also move *behind* an 'En-Passantable' 'origin of check' piece.
 
-> Depending on your implementation, this edge case might already be handled with, but it's good to keep in mind.
-
-> **Implementation note:** it wasn't handled automatically for me, and I don't think it can be without an explicit special case, at least not with the "mark squares once, filter against those marks later" approach the rest of this algorithm relies on. My check-evasion filter works by checking whether a candidate move's *destination* square carries a check-resolving mark (line-of-check or check-origin). For En Passant, the move's destination is the skipped square, but the checking piece sits one rank away from it - so the destination itself carries neither mark, and the filter rejects a move that would actually resolve the check. The fix: when marking a pawn as the origin of a check, also mark the square *behind* it (where an En Passant capture would land) as a line-of-check square. That reuses the exact same "moving here resolves the check" signal the filter already understands, just extended to cover the one square a capturing pawn actually lands on instead of the checking piece's own square.
+> **Implementation note:** this wasn't handled automatically for me. My check-evasion filter looks for a check-resolving mark on a move's *destination*, but an En Passant capture lands on the skipped square, one rank from the checking pawn - so nothing marks it. Fix: when marking a pawn as a check origin, also mark the square *behind* it as a line-of-check square.
 
 ### En Passant pseudo-pin
 While looking into further possible edge cases I might have left unhandled, I found **[this](https://chess.stackexchange.com/a/18397)** scenario, in which another obvious issue with En Passant is highlighted.
@@ -420,13 +418,13 @@ If the black pawn were to capture En Passant in this position, it would reveal a
 
 Well, we have to revisit our pin detection algorithm, to include this case.
 
-In the part of the ray where we already hit one piece, to potentially be marked as pinned: **If we encounter an En-Passantable piece, we can remember this and skip it, continuing our trace.** If we then end up finding the king, **we find ourselves in our edge case**.
+**If the very first thing a ray hits is an En-Passantable piece, we can treat it as if it wasn't there and keep tracing** - it's still a real, currently-standing piece, so nothing past it counts as attacked yet, but it's one that might vanish next move. If we then hit an enemy piece, and the king beyond that, **we find ourselves in our edge case**.
 
-We can then mark the first piece we hit as **'En Passant pseudo-pinned'.**
+We can then mark that enemy piece as **'En Passant pseudo-pinned'.**
 
 With that, we now know when one of our pawns managed to get itself in this predicament, and **we can specifically not allow it to capture via En Passant in the next move.**
 
-> **Implementation note:** "skip it and continue the trace" can't be unconditional. It only makes sense the *first* time the ray hits anything - if some unrelated piece was already sitting between the attacker and the En-Passantable pawn, that piece is a completely ordinary blocker with no relationship to En Passant at all, and letting the ray see through the En-Passantable pawn anyway would falsely flag that unrelated piece as pinned. I only let this passthrough happen when nothing has been hit yet on this ray.
+> **Implementation note:** the passthrough only makes sense the *first* time the ray hits anything - if some unrelated piece was already sitting between the attacker and the En-Passantable pawn, letting the ray see through it anyway would falsely flag that unrelated piece as pinned. And "seeing through" only means the ray keeps *looking* past it for a pin candidate, not that anything beyond it is already attacked - the pawn hasn't actually been captured yet.
 
 ## Mate & Stalemate detection
 **Mate and stalemate detection** is actually quite easy to implement in our current system.
@@ -523,6 +521,7 @@ firstHit = null
 foundKing = false
 checkOrigin = false
 passedEnPassantable = false
+blocked = false
 
 function traceSpots(pos, dir) {
   // Treat an as-yet-uncaptured En-Passantable pawn as if it wasn't there, but only on the
@@ -539,12 +538,15 @@ function traceSpots(pos, dir) {
   isEnemy = !passingThrough && hasEnemyPiece(pos)
   if (isEnemy && firstHit != null) return
 
-  alreadyHitSomething = firstHit != null
+  // An En-Passantable pawn still blocks right now - track that separately from firstHit,
+  // or everything past it would falsely count as attacked until something else stops the ray
+  alreadyBlocked = blocked
+  if (hasPiece(pos)) blocked = true
   if (isEnemy) firstHit = pos
 
-  // Validate up through the first hit as normal, but during Phase.ATTACK keep going past it if
+  // Validate up through the first block as normal, but during Phase.ATTACK keep going past it if
   // that hit was the opponent king, so squares directly behind the king still get marked ATTACKED
-  if (!alreadyHitSomething || (foundKing && phase == ATTACK)) validateSpot(pos) // Move or capture
+  if (!alreadyBlocked || (foundKing && phase == ATTACK)) validateSpot(pos) // Move or capture
 
   // Anything solid that isn't an enemy (or an En-Passantable pawn) stops the ray here
   if (hasPiece(pos) && !isEnemy && !passingThrough) return

@@ -8,6 +8,7 @@ export const traceState = {
     firstHit: null as Position | null,
     foundKing: false,
     passedEnPassantable: false,
+    blocked: false,
 };
 
 export function resetTraceState() {
@@ -15,4 +16,5 @@ export function resetTraceState() {
     traceState.firstHit = null;
     traceState.foundKing = false;
     traceState.passedEnPassantable = false;
+    traceState.blocked = false;
 }

@@ -73,14 +73,16 @@ function traceSpots(move: Piece, direction: number[]) {
     const enemy = !enPassantable && hasEnemyPiece(move);
     if (enemy && traceState.firstHit != null) return;
 
-    const alreadyHadHit = traceState.firstHit != null;
+    // The En Passantable piece still blocks right now - it just isn't the pin candidate
+    const alreadyBlocked = traceState.blocked;
+    if (piece != null) traceState.blocked = true;
 
-    // If we hadn't hit anything before, we hit the current move now
+    // If we hadn't hit an enemy before, we hit the current move now
     if (enemy) traceState.firstHit = move;
 
-    // Validate up through the first hit as normal, but during Phase.ATTACK keep going past it if
+    // Validate up through the first block as normal, but during Phase.ATTACK keep going past it if
     // that hit was the opponent king, so squares directly behind the king still get marked ATTACKED
-    if (!alreadyHadHit || (traceState.foundKing && gameBoard.phase === Phase.ATTACK)) validateSpot(move);
+    if (!alreadyBlocked || (traceState.foundKing && gameBoard.phase === Phase.ATTACK)) validateSpot(move);
 
     if (piece != null && !enemy && !enPassantable) return;
 
