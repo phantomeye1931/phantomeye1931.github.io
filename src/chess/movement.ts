@@ -61,7 +61,7 @@ export function kingMoves(king: Piece) {
     for (let square of kingAdjacentSquares) {
         let move = king.offset(square[0], square[1]);
 
-        if (!move.onBoard() || hasFriendlyPiece(move)
+        if (!move.onBoard() || (hasFriendlyPiece(move) && gameBoard.phase !== Phase.ATTACK)
                 || gameBoard.markings.get(move.row, move.column).has(Marking.ATTACKED)) continue;
 
         validateSpot(move);
