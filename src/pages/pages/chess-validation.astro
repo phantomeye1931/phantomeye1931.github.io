@@ -168,7 +168,12 @@ const UNINTERESTING_SECTIONS = [
         });
 
         for (let z = 0; z < 8; z++) {
-            let cell = $("<td><div></div></td>")
+            let cellContent = $("<div></div>");
+            if (z === 0) cellContent.append(`<span class="coord coord-rank font-dotmatrix">${w + 1}</span>`);
+            if (w === 7) cellContent.append(`<span class="coord coord-file font-dotmatrix">${'abcdefgh'[z]}</span>`);
+
+            let cell = $("<td></td>")
+                .append(cellContent)
                 .appendTo(row)
                 .attr("id", `${w + 1}${z + 1}`)
                 .addClass(w % 2 !== z % 2 ? 'lightSquare' : 'darkSquare')
@@ -620,6 +625,7 @@ const UNINTERESTING_SECTIONS = [
 
     /* Cell */
     #playField > tr > td > div {
+        position: relative;
         width: var(--cell-size);
         height: var(--cell-size);
 
@@ -628,12 +634,33 @@ const UNINTERESTING_SECTIONS = [
         pointer-events: none;
     }
 
+    /* Board coordinates - rank down the left edge, file across the top edge */
+    .coord {
+        position: absolute;
+        font-size: 1rem;
+        color: var(--col-text-3);
+        line-height: 1;
+    }
+
+    .coord-rank {
+        left: 3px;
+        bottom: 2px;
+    }
+
+    .coord-file {
+        right: 3px;
+        top: 2px;
+    }
+
     #playField > tr > td > div::after,
     #playField > tr > td > div > .marking {
         grid-area: 1 / 1;
     }
 
     #playField > tr > td > div::after {
+        position: relative;
+        z-index: 1;
+
         content: '';
         width: 100%;
         height: 100%;
