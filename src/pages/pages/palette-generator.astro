@@ -273,6 +273,8 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
             hueJitterDeg: Number($hueJitter.value),
             hueJitterSeed: jitterSeed,
             chromaTaper: Number($chromaTaper.value),
+            // While dragging, use the exact captured hue - re-deriving it from the 8-bit hex each frame jitters by ~1deg
+            baseHue: chartDrag?.hue,
         });
     }
 

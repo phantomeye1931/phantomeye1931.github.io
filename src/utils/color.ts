@@ -37,6 +37,8 @@ export interface PaletteOptions {
 
     shadowHue?: number;       // hue shadows are rotated towards (blue/violet)
     highlightHue?: number;    // hue highlights are rotated towards (warm yellow)
+
+    baseHue?: number;         // overrides the hue derived from baseHex - bypasses 8-bit hex round-trip jitter while dragging
 }
 
 // Shared defaults, also used by hueAtLightness so the chart matches generatePalette
@@ -257,9 +259,11 @@ export function generatePalette(baseHex: string, options: PaletteOptions = {}): 
         lightnessCeil = DEFAULT_LIGHTNESS_CEIL,
         shadowHue = DEFAULT_SHADOW_HUE,
         highlightHue = DEFAULT_HIGHLIGHT_HUE,
+        baseHue,
     } = options;
 
-    const [L0, C0, H0] = rgbToOklch(hexToRgb(baseHex));
+    const [L0, C0, H0raw] = rgbToOklch(hexToRgb(baseHex));
+    const H0 = baseHue ?? H0raw;
 
     const swatches: PaletteSwatch[] = [];
 
