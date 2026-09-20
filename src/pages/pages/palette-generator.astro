@@ -50,20 +50,20 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
                         <div class="palette-options">
                             <div class="stepper-row">
                                 <div class="stepper">
-                                    <label>Lighter</label>
-                                    <div class="stepper-controls">
-                                        <button type="button" class="stepper-btn" id="up-dec" aria-label="Fewer lighter shades">&minus;</button>
-                                        <span id="up-count-val" class="font-dotmatrix">2</span>
-                                        <button type="button" class="stepper-btn" id="up-inc" aria-label="More lighter shades">+</button>
-                                    </div>
-                                </div>
-
-                                <div class="stepper">
                                     <label>Darker</label>
                                     <div class="stepper-controls">
                                         <button type="button" class="stepper-btn" id="down-dec" aria-label="Fewer darker shades">&minus;</button>
                                         <span id="down-count-val" class="font-dotmatrix">4</span>
                                         <button type="button" class="stepper-btn" id="down-inc" aria-label="More darker shades">+</button>
+                                    </div>
+                                </div>
+
+                                <div class="stepper">
+                                    <label>Lighter</label>
+                                    <div class="stepper-controls">
+                                        <button type="button" class="stepper-btn" id="up-dec" aria-label="Fewer lighter shades">&minus;</button>
+                                        <span id="up-count-val" class="font-dotmatrix">2</span>
+                                        <button type="button" class="stepper-btn" id="up-inc" aria-label="More lighter shades">+</button>
                                     </div>
                                 </div>
                             </div>
@@ -75,6 +75,8 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
                                 </label>
                                 <input type="range" id="delta" min="0.02" max="0.25" step="0.01" value="0.1" />
                             </div>
+
+                            <div class="extremes-row" id="extremes" aria-label="Darkest, base, and lightest colors"></div>
                         </div>
                     </section>
                 </div>
@@ -207,6 +209,7 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
     let stepsDown = DEFAULT_STEPS_DOWN;
 
     const $ramp = document.getElementById("ramp")!;
+    const $extremes = document.getElementById("extremes")!;
 
     const $space = document.getElementById("color-space") as HTMLCanvasElement;
     const spaceCtx = $space.getContext("2d")!;
@@ -329,6 +332,42 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
         return filler;
     }
 
+    // Shared by the ramp and the extremes row - click-to-copy square with a hex label revealed on hover
+    function createSwatchSquare(hex: string, extraClass = ""): HTMLButtonElement {
+        const square = document.createElement("button");
+        square.type = "button";
+        square.className = "swatch-square" + (extraClass ? ` ${extraClass}` : "");
+        square.title = hex;
+        square.setAttribute("aria-label", `Copy ${hex}`);
+
+        // Color + hover pop live on this inner element, not .swatch-square itself (see CSS)
+        const fill = document.createElement("span");
+        fill.className = "swatch-fill";
+        fill.style.backgroundColor = hex;
+        square.appendChild(fill);
+
+        const hexLabel = document.createElement("span");
+        hexLabel.className = "swatch-hex-label font-dotmatrix";
+        hexLabel.textContent = hex;
+        hexLabel.style.color = readableTextColor(hex);
+        fill.appendChild(hexLabel);
+
+        square.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(hex);
+                hexLabel.textContent = "copied";
+            } catch {
+                // Clipboard access can be denied - fall back to a visible failure
+                hexLabel.textContent = "failed";
+            }
+            setTimeout(() => {
+                hexLabel.textContent = hex;
+            }, 1000);
+        });
+
+        return square;
+    }
+
     function renderRamp(palette: PaletteSwatch[]) {
         $ramp.innerHTML = "";
         const byStep = new Map(palette.map((s) => [s.step, s]));
@@ -340,41 +379,27 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
                 continue;
             }
 
-            const hex = swatch.hex.toLowerCase();
-
-            const square = document.createElement("button");
-            square.type = "button";
-            square.className = "swatch-square" + (step === 0 ? " swatch-square-base" : "");
-            square.title = hex;
-            square.setAttribute("aria-label", `Copy ${hex}`);
-
-            // Color + hover pop live on this inner element, not .swatch-square itself (see CSS)
-            const fill = document.createElement("span");
-            fill.className = "swatch-fill";
-            fill.style.backgroundColor = hex;
-            square.appendChild(fill);
-
-            const hexLabel = document.createElement("span");
-            hexLabel.className = "swatch-hex-label font-dotmatrix";
-            hexLabel.textContent = hex;
-            hexLabel.style.color = readableTextColor(hex);
-            fill.appendChild(hexLabel);
-
-            square.addEventListener("click", async () => {
-                try {
-                    await navigator.clipboard.writeText(hex);
-                    hexLabel.textContent = "copied";
-                } catch {
-                    // Clipboard access can be denied - fall back to a visible failure
-                    hexLabel.textContent = "failed";
-                }
-                setTimeout(() => {
-                    hexLabel.textContent = hex;
-                }, 1000);
-            });
-
-            $ramp.appendChild(square);
+            $ramp.appendChild(createSwatchSquare(swatch.hex.toLowerCase(), step === 0 ? "swatch-square-base" : ""));
         }
+    }
+
+    // Plain color block, no hover/click - just a quick-reference visualization, unlike the ramp's swatches
+    function createColorBlock(hex: string, extraClass = ""): HTMLElement {
+        const block = document.createElement("span");
+        block.className = "color-block" + (extraClass ? ` ${extraClass}` : "");
+        block.style.backgroundColor = hex;
+        return block;
+    }
+
+    function renderExtremes(palette: PaletteSwatch[]) {
+        const darkest = palette.reduce((min, s) => (s.step < min.step ? s : min));
+        const lightest = palette.reduce((max, s) => (s.step > max.step ? s : max));
+        const base = palette.find((s) => s.step === 0)!;
+
+        $extremes.innerHTML = "";
+        $extremes.appendChild(createColorBlock(darkest.hex.toLowerCase()));
+        $extremes.appendChild(createColorBlock(base.hex.toLowerCase(), "color-block-base"));
+        $extremes.appendChild(createColorBlock(lightest.hex.toLowerCase()));
     }
 
     // Fixed chroma scale so the boundary's size stays comparable across hues; 0.33 is just above sRGB's real peak (~0.32)
@@ -643,6 +668,7 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
     function update() {
         const palette = currentPalette();
         renderRamp(palette);
+        renderExtremes(palette);
         updateHueShiftSwatch();
         updateChromaTaperSwatch();
 
@@ -882,9 +908,11 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
         gap: 1.25rem;
     }
 
-    /* Grows to match the color-space panel's height */
+    /* Grows to match the color-space panel's height; flex column so .palette-options can stretch to fill it */
     .palette-panel {
         flex: 1;
+        display: flex;
+        flex-direction: column;
     }
 
     .colorspace-panel {
@@ -1127,6 +1155,26 @@ import CenteredPage from "../../layouts/CenteredPage.astro";
         display: flex;
         flex-direction: column;
         gap: 1.25rem;
+        flex: 1;
+    }
+
+    /* Pinned to the bottom of the panel - fills the leftover space .palette-panel's flex:1 leaves below Delta */
+    .extremes-row {
+        margin-top: auto;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .color-block {
+        flex: 1;
+        height: 4rem;
+        box-sizing: border-box;
+        border: 1px solid var(--col-border-3);
+    }
+
+    .color-block-base {
+        outline: 2px solid var(--col-border-1);
+        outline-offset: -3px;
     }
 
     .stepper-row {
