@@ -8,7 +8,7 @@ import topLevelAwait from "vite-plugin-top-level-await";
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://phantomeye1931.github.io',
+	site: 'https://armand.dev',
 	integrations: [mdx(), sitemap()],
 	vite: {
 		plugins: [
