@@ -1,0 +1,55 @@
+---
+import CenteredPage from "./CenteredPage.astro";
+import AsciiText from "../components/AsciiText.astro";
+import type {PageProps} from "./Page.astro";
+
+type Props = PageProps & {
+    code?: number;
+};
+
+const props = Astro.props as Props;
+const text = props.code ?? "404";
+---
+
+<CenteredPage title={props.title} description={props.description}>
+    <div class="error-card">
+        <AsciiText text={ text.toString() } />
+        <div class="message font-dotmatrix">NOT FOUND</div>
+        <div class="button font-mono">
+            Take me [<a href="/">HOME</a>]
+        </div>
+    </div>
+</CenteredPage>
+
+<style>
+.error-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: min(92vw, 640px);
+    box-sizing: border-box;
+
+    padding: clamp(1.5rem, 6vw, 3rem) clamp(1.5rem, 8vw, 4rem);
+    border: 1px solid var(--col-border-1);
+    background-color: var(--col-background);
+}
+
+.message {
+    font-size: 2.1rem;
+}
+
+.button {
+    margin-top: 3rem;
+    font-size: 1.6rem;
+
+    & > * {
+        color: inherit;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+</style>

@@ -1,0 +1,367 @@
+---
+export interface Props {
+    text: string;
+}
+
+const { text } = Astro.props as Props;
+---
+
+<div class="ascii-text-container" data-text={text}></div>
+
+<script>
+    import * as THREE from "three";
+    import { onThemeChange } from "../scripts/theme.ts";
+
+    const ASCII_FONT_SIZE = 10;
+    const TEXT_FONT_SIZE = 200;
+    const PLANE_BASE_HEIGHT = 20;
+    const ENABLE_WAVES = true;
+    const FONT_FAMILY_NAME = '"IBM Plex Mono"';
+    const FONT_FAMILY = `${FONT_FAMILY_NAME}, monospace`;
+
+    const vertexShader = `
+varying vec2 vUv;
+uniform float uTime;
+uniform float uEnableWaves;
+
+void main() {
+    vUv = uv;
+    float time = uTime * 5.;
+
+    float waveFactor = uEnableWaves;
+
+    vec3 transformed = position;
+
+    transformed.x += sin(time + position.y) * 0.35 * waveFactor;
+    transformed.y += cos(time + position.z) * 0.15 * waveFactor;
+    transformed.z += sin(time + position.x) * waveFactor;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
+}
+`;
+
+    const fragmentShader = `
+varying vec2 vUv;
+uniform float uTime;
+uniform sampler2D uTexture;
+
+void main() {
+    float time = uTime;
+    vec2 pos = vUv;
+
+    float r = texture2D(uTexture, pos + cos(time * 2. - time + pos.x) * .01).r;
+    float g = texture2D(uTexture, pos + tan(time * .5 + pos.x - time) * .01).g;
+    float b = texture2D(uTexture, pos - cos(time * 2. + time + pos.y) * .01).b;
+    float a = texture2D(uTexture, pos).a;
+    gl_FragColor = vec4(r, g, b, a);
+}
+`;
+
+    // Renders the scene into a small offscreen canvas and displays that upscaled - the pixelation itself is the effect
+    interface PixelFilterOptions {
+        fontSize?: number;
+        fontFamily?: string;
+    }
+
+    class PixelFilter {
+        renderer: THREE.WebGLRenderer;
+        canvas: HTMLCanvasElement;
+        context: CanvasRenderingContext2D | null;
+        fontSize: number;
+        fontFamily: string;
+
+        constructor(renderer: THREE.WebGLRenderer, { fontSize, fontFamily }: PixelFilterOptions = {}) {
+            this.renderer = renderer;
+            this.canvas = document.createElement("canvas");
+            this.context = this.canvas.getContext("2d");
+            this.fontSize = fontSize ?? 12;
+            this.fontFamily = fontFamily ?? "'Courier New', monospace";
+
+            if (this.context) {
+                this.context.imageSmoothingEnabled = false;
+            }
+        }
+
+        // Pixel grid resolution follows a monospace character's cell size, purely as a familiar way to size the chunkiness
+        setSize(width: number, height: number) {
+            this.renderer.setSize(width, height);
+
+            if (this.context) {
+                this.context.font = `${this.fontSize}px ${this.fontFamily}`;
+                const charWidth = this.context.measureText("A").width;
+
+                this.canvas.width = Math.floor(width / charWidth);
+                this.canvas.height = Math.floor(height / this.fontSize);
+            }
+        }
+
+        render(scene: THREE.Scene, camera: THREE.Camera) {
+            this.renderer.render(scene, camera);
+
+            if (this.context) {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.context.drawImage(this.renderer.domElement, 0, 0, this.canvas.width, this.canvas.height);
+            }
+        }
+    }
+
+    interface CanvasTxtOptions {
+        fontSize?: number;
+        fontFamily?: string;
+        color?: string;
+    }
+
+    class CanvasTxt {
+        canvas: HTMLCanvasElement;
+        context: CanvasRenderingContext2D | null;
+        txt: string;
+        fontSize: number;
+        fontFamily: string;
+        color: string;
+        font: string;
+
+        constructor(txt: string, { fontSize = 200, fontFamily = "Arial", color = "#fdf9f3" }: CanvasTxtOptions = {}) {
+            this.canvas = document.createElement("canvas");
+            this.context = this.canvas.getContext("2d");
+            this.txt = txt;
+            this.fontSize = fontSize;
+            this.fontFamily = fontFamily;
+            this.color = color;
+
+            this.font = `600 ${this.fontSize}px ${this.fontFamily}`;
+        }
+
+        resize() {
+            if (this.context) {
+                this.context.font = this.font;
+                const metrics = this.context.measureText(this.txt);
+
+                const textWidth = Math.ceil(metrics.width) + 20;
+                const textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) + 20;
+
+                this.canvas.width = textWidth;
+                this.canvas.height = textHeight;
+            }
+        }
+
+        render() {
+            if (this.context) {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.context.fillStyle = this.color;
+                this.context.font = this.font;
+
+                const metrics = this.context.measureText(this.txt);
+                const yPos = 10 + metrics.actualBoundingBoxAscent;
+
+                this.context.fillText(this.txt, 10, yPos);
+            }
+        }
+
+        get width() {
+            return this.canvas.width;
+        }
+
+        get height() {
+            return this.canvas.height;
+        }
+
+        get texture() {
+            return this.canvas;
+        }
+    }
+
+    interface CanvAsciiOptions {
+        text: string;
+        asciiFontSize: number;
+        textFontSize: number;
+        textColor: string;
+        planeBaseHeight: number;
+        enableWaves: boolean;
+    }
+
+    class CanvAscii {
+        textString: string;
+        asciiFontSize: number;
+        textFontSize: number;
+        textColor: string;
+        planeBaseHeight: number;
+        container: HTMLElement;
+        width: number;
+        height: number;
+        enableWaves: boolean;
+        camera: THREE.PerspectiveCamera;
+        scene: THREE.Scene;
+        textCanvas!: CanvasTxt;
+        texture!: THREE.CanvasTexture;
+        geometry: THREE.PlaneGeometry | undefined;
+        material: THREE.ShaderMaterial | undefined;
+        mesh!: THREE.Mesh;
+        renderer!: THREE.WebGLRenderer;
+        filter!: PixelFilter;
+
+        constructor(
+            { text, asciiFontSize, textFontSize, textColor, planeBaseHeight, enableWaves }: CanvAsciiOptions,
+            containerElem: HTMLElement,
+            width: number,
+            height: number
+        ) {
+            this.textString = text;
+            this.asciiFontSize = asciiFontSize;
+            this.textFontSize = textFontSize;
+            this.textColor = textColor;
+            this.planeBaseHeight = planeBaseHeight;
+            this.container = containerElem;
+            this.width = width;
+            this.height = height;
+            this.enableWaves = enableWaves;
+
+            this.camera = new THREE.PerspectiveCamera(45, this.width / this.height, 1, 1000);
+            this.camera.position.z = 30;
+
+            this.scene = new THREE.Scene();
+        }
+
+        async init() {
+            try {
+                await document.fonts.load(`600 ${this.textFontSize}px ${FONT_FAMILY_NAME}`);
+                await document.fonts.load(`600 ${this.asciiFontSize}px ${FONT_FAMILY_NAME}`);
+            } catch {}
+            await document.fonts.ready;
+            this.setMesh();
+            this.setRenderer();
+        }
+
+        setMesh() {
+            this.textCanvas = new CanvasTxt(this.textString, {
+                fontSize: this.textFontSize,
+                fontFamily: FONT_FAMILY,
+                color: this.textColor
+            });
+            this.textCanvas.resize();
+            this.textCanvas.render();
+
+            this.texture = new THREE.CanvasTexture(this.textCanvas.texture);
+            this.texture.minFilter = THREE.NearestFilter;
+
+            const textAspect = this.textCanvas.width / this.textCanvas.height;
+            const baseH = this.planeBaseHeight;
+            const planeW = baseH * textAspect;
+
+            this.geometry = new THREE.PlaneGeometry(planeW, baseH, 36, 36);
+            this.material = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                transparent: true,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uTexture: { value: this.texture },
+                    uEnableWaves: { value: this.enableWaves ? 1.0 : 0.0 }
+                }
+            });
+
+            this.mesh = new THREE.Mesh(this.geometry, this.material);
+            this.scene.add(this.mesh);
+        }
+
+        setRenderer() {
+            this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+            this.renderer.setPixelRatio(1);
+            this.renderer.setClearColor(0x000000, 0);
+
+            this.filter = new PixelFilter(this.renderer, {
+                fontFamily: FONT_FAMILY,
+                fontSize: this.asciiFontSize
+            });
+
+            this.container.appendChild(this.filter.canvas);
+            this.setSize(this.width, this.height);
+        }
+
+        setSize(w: number, h: number) {
+            this.width = w;
+            this.height = h;
+
+            this.camera.aspect = w / h;
+            this.camera.updateProjectionMatrix();
+
+            this.filter.setSize(w, h);
+        }
+
+        animate() {
+            const loop = () => {
+                requestAnimationFrame(loop);
+                this.render();
+            };
+            loop();
+        }
+
+        render() {
+            (this.mesh.material as THREE.ShaderMaterial).uniforms.uTime.value = performance.now() * 0.001;
+
+            this.texture.needsUpdate = true;
+            this.filter.render(this.scene, this.camera);
+        }
+
+        setColor(color: string) {
+            this.textCanvas.color = color;
+            this.textCanvas.render();
+        }
+    }
+
+    function readColor(el: HTMLElement, name: string, fallback: string) {
+        const value = getComputedStyle(el).getPropertyValue(name).trim();
+        return value || fallback;
+    }
+
+    async function initOne(container: HTMLElement) {
+        const text = container.dataset.text ?? "";
+        if (!text) return;
+
+        const { width, height } = container.getBoundingClientRect();
+        if (width === 0 || height === 0) return;
+
+        const textColor = readColor(container, "--ascii-text-color", "black");
+
+        const instance = new CanvAscii(
+            { text, asciiFontSize: ASCII_FONT_SIZE, textFontSize: TEXT_FONT_SIZE, textColor, planeBaseHeight: PLANE_BASE_HEIGHT, enableWaves: ENABLE_WAVES },
+            container,
+            width,
+            height
+        );
+        await instance.init();
+        instance.animate();
+
+        onThemeChange(() => instance.setColor(readColor(container, "--ascii-text-color", "black")));
+
+        const ro = new ResizeObserver(entries => {
+            const entry = entries[0];
+            if (!entry) return;
+            const { width: w, height: h } = entry.contentRect;
+            if (w > 0 && h > 0) instance.setSize(w, h);
+        });
+        ro.observe(container);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll<HTMLElement>(".ascii-text-container").forEach(initOne);
+    });
+</script>
+
+<style>
+.ascii-text-container {
+    --ascii-text-color: var(--col-text-1);
+
+    position: relative;
+    width: 100%;
+    height: clamp(100px, 40vw, 240px);
+
+    & :global(canvas) {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+    }
+}
+</style>
